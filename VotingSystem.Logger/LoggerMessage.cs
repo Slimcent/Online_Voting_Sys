@@ -2,7 +2,7 @@
 
 namespace VotingSystem.Logger
 {
-    internal class LoggerMessage : ILoggerMessage
+    public class LoggerMessage : ILoggerMessage
     {
         private static ILogger logger = LogManager.GetCurrentClassLogger();
 
