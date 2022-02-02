@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <Folder Include="Dtos\Response\" />
-    <Folder Include="Dtos\Request\" />
   </ItemGroup>
 
   <ItemGroup>
