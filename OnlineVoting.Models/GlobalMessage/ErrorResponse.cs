@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OnlineVoting.Models.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,10 +8,10 @@ using System.Threading.Tasks;
 
 namespace OnlineVoting.Models.GlobalMessage
 {
-    public class ErrorDetails
+    public class ErrorResponse
     {
-        public int StatusCode { get; set; }
-        public string Message { get; set; }
+        public ResponseStatus Status { get; set; }
+        public string? Message { get; set; }
         public override string ToString() => JsonSerializer.Serialize(this);
     }
 }
