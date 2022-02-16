@@ -2,6 +2,10 @@
 using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
+using OnlineVoting.Services.Implementation;
+using OnlineVoting.Services.Interfaces;
+using VotingSystem.Data.Implementation;
+using VotingSystem.Data.Interfaces;
 using VotingSystem.Logger;
 
 namespace OnlineVoting.Api.Middlewares
@@ -22,6 +26,17 @@ namespace OnlineVoting.Api.Middlewares
 
         public static void ConfigureLoggerService(this IServiceCollection services) =>
             services.AddScoped<ILoggerMessage, VotingSystem.Logger.LoggerMessage>();
+
+        public static IServiceCollection AddRepositories(this IServiceCollection services)
+        {
+            services.AddTransient<IUnitOfWork, UnitOfWork<VotingDbContext>>();
+            services.AddTransient<IStudentService, StudentService>();
+            services.AddTransient<IUserService, UserService>();
+            services.AddScoped<DbContext, VotingDbContext>();
+            services.AddTransient<IServiceFactory, ServiceFactory>();
+
+            return services;
+        }
 
         public static IServiceCollection AddDBConnection(this IServiceCollection services, IConfiguration configuration)
         {

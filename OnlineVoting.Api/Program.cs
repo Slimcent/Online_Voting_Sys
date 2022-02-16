@@ -1,4 +1,5 @@
 using NLog;
+using OnlineVoting.Api.Mapper;
 using OnlineVoting.Api.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,8 @@ builder.Services.ConfigureLoggerService();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+builder.Services.AddRepositories();
 
 var app = builder.Build();
 

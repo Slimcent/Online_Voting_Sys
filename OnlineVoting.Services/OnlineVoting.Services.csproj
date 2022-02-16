@@ -7,12 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.JsonPatch" Version="6.0.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Interfaces\" />
-    <Folder Include="Implementation\" />
+    <ProjectReference Include="..\OnlineVoting.Models\OnlineVoting.Models.csproj" />
+    <ProjectReference Include="..\VotingSystem.Data\VotingSystem.Data.csproj" />
   </ItemGroup>
 
 </Project>
