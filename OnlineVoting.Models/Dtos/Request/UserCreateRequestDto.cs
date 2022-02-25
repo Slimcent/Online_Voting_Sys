@@ -22,5 +22,6 @@ namespace OnlineVoting.Models.Dtos.Request
 
         [RegularExpression(@"^[0]\d{10}$", ErrorMessage = "Invalid Phone Number")]
         public string? PhoneNumber { get; set; }
+        public string? ClaimValue { get; set; }
     }
 }

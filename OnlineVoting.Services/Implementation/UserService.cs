@@ -66,21 +66,23 @@ namespace OnlineVoting.Services.Implementation
             }
             await _userManager.AddToRoleAsync(user, "Staff");
 
+            await CreateUserClaims(user.Email, ClaimTypes.Role, model.ClaimValue);
+
             return new Response(true, $"User with email {user.Email} created successfully");
         }
 
-        public async Task<UserClaimsResponseDto> CreateUserClaims(UserClaimsRequestDto request)
+        public async Task<UserClaimsResponseDto> CreateUserClaims(string email, string claimType, string claimValue)
         {
-            var user = await _userManager.FindByEmailAsync(request.Email.ToString().ToLower());
+            var user = await _userManager.FindByEmailAsync(email.ToString().ToLower());
             if (user == null)
-                throw new UserNotFoundException(request.Email);
+                throw new UserNotFoundException(email);
 
-            Claim claim = new Claim(request.ClaimType, request.ClaimValue, ClaimValueTypes.String);
+            Claim claim = new Claim(claimType, claimValue, ClaimValueTypes.String);
 
             IdentityResult result = await _userManager.AddClaimAsync(user, claim);
 
             if (result.Succeeded)
-                return new UserClaimsResponseDto { ClaimType = request.ClaimType, ClaimValue = request.ClaimValue };
+                return new UserClaimsResponseDto { ClaimType = claimType, ClaimValue = claimValue };
 
             var errorMessage = string.Empty;
 

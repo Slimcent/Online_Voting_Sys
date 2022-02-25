@@ -11,10 +11,9 @@ namespace OnlineVoting.Models.Entities
     {
         public Guid Id { get; set; }
         public string? RegNo { get; set; }
-        public string? Email { get; set; }
         public string? UserId { get; set; }
-        public User? User { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public User? User { get; set; }
     }
 }

@@ -12,9 +12,8 @@ namespace OnlineVoting.Models.Entities
         public string? StudentRegNo { get; set; }
         public  string? ContestantRegNo { get; set; }
         public string? UserId { get; set; }
+        public DateTime VotedAt { get; set; } = DateTime.Now;
         public User? User { get; set; }
         public Student? Student { get; set; }
-        public DateTime VotedAt { get; set; }
-
     }
 }

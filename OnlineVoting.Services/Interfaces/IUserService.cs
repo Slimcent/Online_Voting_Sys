@@ -12,7 +12,7 @@ namespace OnlineVoting.Services.Interfaces
     public interface IUserService
     {
         Task<Response> CreateUser(UserCreateRequestDto model);
-        Task<UserClaimsResponseDto> CreateUserClaims(UserClaimsRequestDto request);
+        Task<UserClaimsResponseDto> CreateUserClaims(string email, string claimType, string claimValue);
         Task<string> DeleteClaims(UserClaimsRequestDto request);
         Task<EditUserClaimsDto> EditUserClaims(EditUserClaimsDto userClaimsDto);
         Task<IEnumerable<UserClaimsResponseDto>> GetUserClaims(string email);

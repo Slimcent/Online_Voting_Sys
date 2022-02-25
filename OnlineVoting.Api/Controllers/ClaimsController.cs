@@ -15,9 +15,9 @@ namespace OnlineVoting.Api.Controllers
         public ClaimsController(IUserService userService) => _userService = userService;
 
         [HttpPost("addusertoclaims")]
-        public async Task<IActionResult> AddUserToClaims(UserClaimsRequestDto request)
+        public async Task<IActionResult> AddUserToClaims(string email, string claimType, string claimValue)
         {
-            var user = await _userService.CreateUserClaims(request);
+            var user = await _userService.CreateUserClaims(email, claimType, claimValue);
 
             return Ok(user);
         }
