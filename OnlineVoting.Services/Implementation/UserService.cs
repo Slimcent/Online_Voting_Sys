@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.GlobalMessage;
+using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -31,25 +32,25 @@ namespace OnlineVoting.Services.Implementation
             _userManager = serviceFactory.GetService<UserManager<User>>();
             _roleManager = serviceFactory.GetService<RoleManager<Role>>();
             _studentRepo = _unitOfWork.GetRepository<Student>();
+            _mapper = _serviceFactory.GetService<IMapper>();
         }
 
         public async Task<Response> CreateUser(UserCreateRequestDto model)
         {
-            var user = new User
-            {
-                FullName = $"{model.FirstName} {model.LastName}",
-                Email = model.Email,
-                EmailConfirmed = true,
-                PhoneNumber = model.PhoneNumber,
-                UserName = model.Email
-            };
-            var password = "123456";
+            var existingUser = await _userManager.FindByEmailAsync(model.Email.Trim().ToLower());
 
+            if (existingUser != null)
+                throw new UserExistException(model.Email);
+
+            var user = _mapper.Map<User>(model);
+            user.EmailConfirmed = true;
+
+            var password = "123456";
             var res = await _userManager.CreateAsync(user, password);
 
             if (!res.Succeeded)
             {
-                return new Response(false, "User creation failed");
+                throw new InvalidOperationException($"User creation failed");
             }
 
             if (!_roleManager.RoleExistsAsync("Staff").Result)
@@ -61,13 +62,12 @@ namespace OnlineVoting.Services.Implementation
                 var roleResult = _roleManager.CreateAsync(role).Result;
                 if (!roleResult.Succeeded)
                 {
-                    return new Response(false, "Error while creating role");
+                    throw new InvalidOperationException($"Role creation failed");
                 }
             }
             await _userManager.AddToRoleAsync(user, "Staff");
 
-            return new Response(true, $"User with email {model.Email} created successfully");
-
+            return new Response(true, $"User with email {user.Email} created successfully");
         }
     }
 }

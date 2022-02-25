@@ -2,22 +2,24 @@
 using OnlineVoting.Models.Enums;
 using OnlineVoting.Models.GlobalMessage;
 using OnlineVoting.Services.Exceptions;
-using System.Net;
 using VotingSystem.Logger;
 
 namespace OnlineVoting.Api.Middlewares
 {
-    public static class GlobalExceptionMiddleware
+    public static class ExceptionMiddleware
     {
-        public static void ConfigureExceptionHandler(this IApplicationBuilder app, ILoggerMessage logger)
+        public static void ConfigureExceptionHandler(this IApplicationBuilder app)
         {
             app.UseExceptionHandler(appError =>
             {
                 appError.Run(async context =>
                 {
+                    //context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+
                     context.Response.ContentType = "application/json";
 
                     var contextFeature = context.Features.Get<IExceptionHandlerFeature>();
+
                     if (contextFeature != null)
                     {
                         var status = ResponseStatus.FATAL_ERROR;
@@ -39,11 +41,13 @@ namespace OnlineVoting.Api.Middlewares
                                 break;
                         }
 
-                        logger.LogError($"Something went wrong: {contextFeature.Error.Message}");
+                        //logger.LogError($"Something went wrong: {contextFeature.Error}");
                         await context.Response.WriteAsync(new ErrorResponse()
                         {
                             Status = status,
                             Message = contextFeature.Error.Message
+                            //StatusCode = context.Response.StatusCode,
+                            //Message = contextFeature.Error.InnerException.Message
                         }.ToString());
 
                         await context.Response.CompleteAsync();

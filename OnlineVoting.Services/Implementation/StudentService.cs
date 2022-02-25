@@ -5,6 +5,7 @@ using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Enums;
 using OnlineVoting.Models.GlobalMessage;
+using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Interfaces;
 using VotingSystem.Data.Interfaces;
 
@@ -28,20 +29,23 @@ namespace OnlineVoting.Services.Implementation
             _userManager = serviceFactory.GetService<UserManager<User>>();
             _roleManager = serviceFactory.GetService<RoleManager<Role>>();
             _studentRepo = _unitOfWork.GetRepository<Student>();
+            _mapper = _serviceFactory.GetService<IMapper>();
         }
 
         public async Task<Response> CreateStudent(StudentCreateRequestDto model)
         {
-            var user = new User
-            {
-                FullName = $"{model.FirstName} {model.LastName}",
-                Email = model.Email,
-                EmailConfirmed = true,
-                UserName = model.Email,
-                PhoneNumber = model.PhoneNumber
-            };
-            var password = "123456";
+            var userExists = await _userManager.FindByEmailAsync(model.Email.Trim().ToLower());
+            if (userExists != null)
+                throw new UserExistException(model.Email);
 
+            var regNumberExists = await _studentRepo.GetSingleByAsync(r => r.RegNo == model.RegNo);
+            if (regNumberExists != null)
+                throw new RegNoExistException(model.RegNo);
+
+            var user = _mapper.Map<User>(model);
+            user.EmailConfirmed = true;
+
+            var password = "123456";
             var res = await _userManager.CreateAsync(user, password);
 
             if (!res.Succeeded)
@@ -49,27 +53,20 @@ namespace OnlineVoting.Services.Implementation
 
             if (!_roleManager.RoleExistsAsync("Student").Result)
             {
-                var role = new Role
-                {
-                    Name = "Student"
-                };
+                var role = new Role { Name = "Student" };
                 var roleResult = _roleManager.CreateAsync(role).Result;
+
                 if (!roleResult.Succeeded)
-                    return new Response(false, "Error while creating role");
-                
+                    return new Response(false, "Error while creating role");                
             }
             await _userManager.AddToRoleAsync(user, "Student");
 
-            var stu = new Student
-            {
-                UserId = user.Id,
-                RegNo = model.RegNo
-            };
-            await _studentRepo.AddAsync(stu);
+            var student = new Student { UserId = user.Id, RegNo = model.RegNo };
+            await _studentRepo.AddAsync(student);
             var add = await _unitOfWork.SaveChangesAsync();
 
             if (add > 0) return new Response(true, "student created");
-            return new Response(true, $"Student with {model.Email} created successfully");
+            return new Response(true, $"Student with email {model.Email} created successfully");
         }
     }
 }

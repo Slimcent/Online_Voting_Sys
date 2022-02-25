@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using NLog;
 using OnlineVoting.Api.Mapper;
 using OnlineVoting.Api.Middlewares;
@@ -28,6 +29,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.ConfigureExceptionHandler();
 
 app.UseHttpsRedirection();
 
