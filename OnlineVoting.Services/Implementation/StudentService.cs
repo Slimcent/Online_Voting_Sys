@@ -34,6 +34,8 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<Response> CreateStudent(StudentCreateRequestDto model)
         {
+            var service = _serviceFactory.GetService<UserService>();
+
             var userExists = await _userManager.FindByEmailAsync(model.Email.Trim().ToLower());
             if (userExists != null)
                 throw new UserExistException(model.Email);
