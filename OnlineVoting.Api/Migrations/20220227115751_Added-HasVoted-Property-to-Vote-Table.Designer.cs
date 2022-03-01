@@ -12,8 +12,8 @@ using OnlineVoting.Models.Context;
 namespace OnlineVoting.Api.Migrations
 {
     [DbContext(typeof(VotingDbContext))]
-    [Migration("20220225210248_Edited-Contestant-Table")]
-    partial class EditedContestantTable
+    [Migration("20220227115751_Added-HasVoted-Property-to-Vote-Table")]
+    partial class AddedHasVotedPropertytoVoteTable
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -139,25 +139,27 @@ namespace OnlineVoting.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid>("PositionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("StudentId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("UserId1")
+                    b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PositionId");
+
                     b.HasIndex("StudentId");
 
-                    b.HasIndex("UserId1");
+                    b.HasIndex("UserId");
 
-                    b.ToTable("Contestants");
+                    b.ToTable("Contestans");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Position", b =>
@@ -318,26 +320,27 @@ namespace OnlineVoting.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("ContestantRegNo")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<Guid>("ContestantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("HasVoted")
+                        .HasColumnType("bit");
 
                     b.Property<Guid?>("StudentId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("StudentRegNo")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("VotedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid>("VoterId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("StudentId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Votes");
                 });
@@ -395,6 +398,12 @@ namespace OnlineVoting.Api.Migrations
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Contestant", b =>
                 {
+                    b.HasOne("OnlineVoting.Models.Entities.Position", "Position")
+                        .WithMany()
+                        .HasForeignKey("PositionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("OnlineVoting.Models.Entities.Student", "Student")
                         .WithMany()
                         .HasForeignKey("StudentId")
@@ -403,7 +412,9 @@ namespace OnlineVoting.Api.Migrations
 
                     b.HasOne("OnlineVoting.Models.Entities.User", "User")
                         .WithMany()
-                        .HasForeignKey("UserId1");
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("Position");
 
                     b.Navigation("Student");
 
@@ -425,13 +436,7 @@ namespace OnlineVoting.Api.Migrations
                         .WithMany()
                         .HasForeignKey("StudentId");
 
-                    b.HasOne("OnlineVoting.Models.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
-
                     b.Navigation("Student");
-
-                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

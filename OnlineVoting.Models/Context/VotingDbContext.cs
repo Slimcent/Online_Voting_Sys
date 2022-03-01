@@ -58,7 +58,7 @@ namespace OnlineVoting.Models.Context
 
         public DbSet<Student> Students { get; set; }
         public DbSet<Vote> Votes { get; set; }
-        public DbSet<Contestant> Contestants { get; set; }
+        public DbSet<Contestant> Contestans { get; set; }
         public DbSet<Position> Positions { get; set; }
     }
 }

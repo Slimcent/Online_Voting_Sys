@@ -12,8 +12,8 @@ using OnlineVoting.Models.Context;
 namespace OnlineVoting.Api.Migrations
 {
     [DbContext(typeof(VotingDbContext))]
-    [Migration("20220225195946_Removed-Email-from-Student-Table")]
-    partial class RemovedEmailfromStudentTable
+    [Migration("20220227120057_Made-Has-Voted-Property-Nullable-Bool")]
+    partial class MadeHasVotedPropertyNullableBool
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -139,24 +139,27 @@ namespace OnlineVoting.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<Guid>("PositionId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("FirstName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LastName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RegNo")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
 
-                    b.ToTable("Contestants");
+                    b.HasIndex("PositionId");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Contestans");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Position", b =>
@@ -317,26 +320,27 @@ namespace OnlineVoting.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("ContestantRegNo")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<Guid>("ContestantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool?>("HasVoted")
+                        .HasColumnType("bit");
 
                     b.Property<Guid?>("StudentId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("StudentRegNo")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("VotedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid>("VoterId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("StudentId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Votes");
                 });
@@ -392,6 +396,31 @@ namespace OnlineVoting.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Contestant", b =>
+                {
+                    b.HasOne("OnlineVoting.Models.Entities.Position", "Position")
+                        .WithMany()
+                        .HasForeignKey("PositionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OnlineVoting.Models.Entities.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OnlineVoting.Models.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("Position");
+
+                    b.Navigation("Student");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("OnlineVoting.Models.Entities.Student", b =>
                 {
                     b.HasOne("OnlineVoting.Models.Entities.User", "User")
@@ -407,13 +436,7 @@ namespace OnlineVoting.Api.Migrations
                         .WithMany()
                         .HasForeignKey("StudentId");
 
-                    b.HasOne("OnlineVoting.Models.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
-
                     b.Navigation("Student");
-
-                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

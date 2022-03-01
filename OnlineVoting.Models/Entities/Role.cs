@@ -10,7 +10,7 @@ namespace OnlineVoting.Models.Entities
 {
     public class Role : IdentityRole, ITracker
     {
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-        public DateTime UpdatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 }

@@ -23,5 +23,13 @@ namespace OnlineVoting.Api.Controllers
 
             return Ok(student);
         }
+
+        [HttpPost("create-contestant")]
+        public async Task<IActionResult> CreateContestant(string regNo, string position)
+        {
+            var contestant = await _studentService.CreateContestant(regNo, position);
+
+            return Ok(contestant);
+        }
     }
 }
