@@ -1,0 +1,13 @@
+<app-home-layout>
+    <app-home-header (sidenavToggle)="sidenav.toggle()"></app-home-header>
+    <mat-sidenav-container>
+      <mat-sidenav #sidenav role="navigation">
+        <app-home-sidebar></app-home-sidebar>
+      </mat-sidenav>
+      <mat-sidenav-content>
+        <main>
+          <router-outlet></router-outlet>
+        </main>
+      </mat-sidenav-content>
+    </mat-sidenav-container>
+  </app-home-layout>

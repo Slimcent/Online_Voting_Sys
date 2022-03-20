@@ -1,0 +1,36 @@
+section{
+    padding: 20px;
+}
+
+section div p{
+    color: #cd5c5c;
+    font-size: 24px;
+    text-shadow: 2px 5px 10px rgb(226, 24, 24);
+    margin: 40px 0;
+    text-align: center;
+}
+
+::ng-deep .mat-tab-label{
+    border-bottom: saddlebrown;
+    color: skyblue;
+}
+
+::ng-deep .mat-tab-label.mat-tab-label-active{
+    background-color: thistle;
+    color: violet;
+    font-weight: 700;
+    border-bottom: 4px solid green;
+}
+
+::ng-deep .mat-ink-bar{
+    background-color: 4px solid rgb(0, 128, 11);
+}
+
+mat-tab-group {
+    text-align: center;
+    color:rgb(226, 24, 24);
+}
+
+mat-tab-group p {
+    padding-top: 20px;
+}

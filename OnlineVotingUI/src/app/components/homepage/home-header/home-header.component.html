@@ -1,0 +1,24 @@
+<mat-toolbar>
+    <div fxHide.gt-xs>
+        <button mat-icon-button (click)="onToggleSidenav()">
+            <mat-icon>menu</mat-icon>
+            <mat-icon class="close">close</mat-icon>
+        </button>
+    </div>
+    <div>
+        <a routerLink="/home">VotingUI</a>
+    </div>
+    <div fxFlex fxLayout fxLayoutAlign="end" fxHide.xs>
+        <ul fxLayout fxLayoutGap="15px" class="navigation-items">
+            <li>
+                <a routerLink="/login">Login</a>
+            </li>
+            <li>
+                <a routerLink="/register">Register</a>
+            </li>
+            <li>
+                <a routerLink="/about">About</a>
+            </li>
+        </ul>
+    </div>
+  </mat-toolbar>
