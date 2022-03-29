@@ -24,6 +24,7 @@ namespace OnlineVoting.Services.Implementation
 
         public RolesService(IServiceFactory serviceFactory)
         {
+            _serviceFactory = serviceFactory;
             _unitOfWork = _serviceFactory.GetService<IUnitOfWork>();
             _userManager = _serviceFactory.GetService<UserManager<User>>();
             _roleManager = _serviceFactory.GetService<RoleManager<Role>>();
@@ -44,11 +45,6 @@ namespace OnlineVoting.Services.Implementation
                 throw new InvalidOperationException("Role creation failed");
 
             return $"Role with name {request.Name} created successfully";
-        }
-
-        public Task<IEnumerable<RoleResponseDto>> GetAllRoles()
-        {
-            throw new NotImplementedException();
         }
 
         public async Task EditRole(string id, RoleDto request)

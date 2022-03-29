@@ -11,6 +11,5 @@ namespace OnlineVoting.Services.Interfaces
         Task<string> AddUserToRole(AddUserToRoleDto request);
         Task<string> RemoveUserFromRole(AddUserToRoleDto request);
         Task<IList<string>> GetUserRoles(string userName);
-        Task<IEnumerable<RoleResponseDto>> GetAllRoles();
     }
 }

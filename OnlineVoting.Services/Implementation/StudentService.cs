@@ -8,6 +8,7 @@ using OnlineVoting.Models.Enums;
 using OnlineVoting.Models.GlobalMessage;
 using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Interfaces;
+using System.Security.Claims;
 using VotingSystem.Data.Interfaces;
 
 namespace OnlineVoting.Services.Implementation
@@ -60,7 +61,6 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<Response> CreateStudent(StudentCreateRequestDto model)
         {
-            var service = _serviceFactory.GetService<UserService>();
             if (model == null)
                 throw new InvalidOperationException("Invalid data sent");
 
@@ -90,6 +90,8 @@ namespace OnlineVoting.Services.Implementation
                     return new Response(false, "Error while creating role");                
             }
             await _userManager.AddToRoleAsync(user, "Student");
+
+            var service = _serviceFactory.GetService<IUserService>().CreateUserClaims(model.Email, ClaimTypes.Role, model.ClaimValue);
 
             var student = new Student { UserId = user.Id, RegNo = model.RegNo };
             await _studentRepo.AddAsync(student);
