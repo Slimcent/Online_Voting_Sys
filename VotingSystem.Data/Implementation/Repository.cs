@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
+using OnlineVoting.Models.Pagination;
 using System.Linq.Expressions;
+using VotingSystem.Data.Extensions;
 using VotingSystem.Data.Interfaces;
 
 namespace VotingSystem.Data.Implementation
@@ -352,6 +354,37 @@ namespace VotingSystem.Data.Implementation
             }
         }
 
+        public async Task<PagedList<T>> GetPagedItems(RequestParameters parameters, Expression<Func<T, bool>> predicate = null, Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null)
+        {
+            var skip = (parameters.PageNumber - 1) * parameters.PageSize;
+            var items = await ConstructQueryable(predicate, parameters.OrderBy.ToLower(), skip, parameters.PageSize, include).ToListAsync();
+            var count = await CountAsync(predicate);
+            return new PagedList<T>(items, count, parameters.PageNumber, parameters.PageSize);
+        }
+
+        private IQueryable<T> ConstructQueryable(Expression<Func<T, bool>> predicate = null, string orderBy = null, int? skip = null, int? take = null, Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null)
+        {
+            try
+            {
+                IQueryable<T> query = _dbSet;
+                if (predicate != null)
+                    query = _dbSet.Where(predicate);
+
+                if (!string.IsNullOrWhiteSpace(orderBy))
+                    query = query.Sort(orderBy);
+
+                if (include != null)
+                    query = include(query);
+
+                if (take != null && skip != null)
+                    return query.Skip(skip.Value).Take(take.Value);
+                return query;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
 
         private IQueryable<T> GetAllIncluding(Expression<Func<T, object>>[] includeProperties)
         {

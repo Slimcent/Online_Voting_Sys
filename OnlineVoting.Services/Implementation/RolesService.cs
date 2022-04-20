@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
+using OnlineVoting.Models.Pagination;
 using OnlineVoting.Services.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -114,6 +115,13 @@ namespace OnlineVoting.Services.Implementation
             await _roleManager.DeleteAsync(role);
 
             return $"Role with Name {role.Name} has been deleted Successfully";
+        }
+
+        public async Task<PagedResponse<RoleResponseDto>> GetAllRoles(RoleRequestDto request)
+        {
+            PagedList<Role> roles = await _roleRepo.GetPagedItems(request);
+
+            return _mapper.Map<PagedResponse<RoleResponseDto>>(roles);
         }
     }
 }

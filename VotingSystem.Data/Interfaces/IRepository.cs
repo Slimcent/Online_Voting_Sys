@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Query;
+using OnlineVoting.Models.Pagination;
 using System.Linq.Expressions;
 
 namespace VotingSystem.Data.Interfaces
@@ -37,6 +38,7 @@ namespace VotingSystem.Data.Interfaces
         T GetSingleBy(Expression<Func<T, bool>> predicate);
         Task<T> GetSingleByAsync(Expression<Func<T, bool>> predicate);
         Task<T> GetSingleByAsync(Expression<Func<T, bool>> predicate = null, Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null, Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null, bool tracking = false);
+        Task<PagedList<T>> GetPagedItems(RequestParameters parameters, Expression<Func<T, bool>> predicate = null, Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null);
         int Save();
         Task<int> SaveAsync();
         void Dispose();

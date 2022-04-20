@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace OnlineVoting.Models.Entities
+﻿namespace OnlineVoting.Models.Entities
 {
     public class Vote
     {
@@ -14,6 +8,6 @@ namespace OnlineVoting.Models.Entities
         public string? UserId { get; set; }
         public bool? HasVoted { get; set; }
         public DateTime VotedAt { get; set; } = DateTime.Now;
-        public Student? Student { get; set; }
+        public virtual Student? Student { get; set; }
     }
 }

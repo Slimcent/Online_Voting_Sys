@@ -38,7 +38,7 @@ namespace OnlineVoting.Api.Controllers
             return Ok(user);
         }
 
-        [HttpGet("getuserclaims")]
+        [HttpGet("userclaims")]
         public async Task<IActionResult> GetUserClaims(string email)
         {
             var userClaims = await _userService.GetUserClaims(email);

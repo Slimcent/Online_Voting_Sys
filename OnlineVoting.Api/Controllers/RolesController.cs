@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using OnlineVoting.Models.Dtos.Request;
-using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Services.Interfaces;
 
 namespace OnlineVoting.Api.Controllers
@@ -12,7 +11,7 @@ namespace OnlineVoting.Api.Controllers
         private readonly IRolesService _roleService;
         public RolesController(IRolesService roleService) => _roleService = roleService;
 
-        [HttpGet("get-user-roles")]
+        [HttpGet("user-roles")]
         public async Task<IActionResult> GetUserRoles([FromQuery] string userName)
         {
             var roles = await _roleService.GetUserRoles(userName);
