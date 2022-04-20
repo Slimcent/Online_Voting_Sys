@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OnlineVoting.Models.Context;
 
@@ -11,9 +12,10 @@ using OnlineVoting.Models.Context;
 namespace OnlineVoting.Api.Migrations
 {
     [DbContext(typeof(VotingDbContext))]
-    partial class VotingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220420110400_Added_RegisteredVoter")]
+    partial class Added_RegisteredVoter
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -187,27 +189,6 @@ namespace OnlineVoting.Api.Migrations
                     b.ToTable("Positions");
                 });
 
-            modelBuilder.Entity("OnlineVoting.Models.Entities.RegisteredVoter", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("StudentId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("VotingCode")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StudentId")
-                        .IsUnique()
-                        .HasFilter("[StudentId] IS NOT NULL");
-
-                    b.ToTable("RegisteredVoter");
-                });
-
             modelBuilder.Entity("OnlineVoting.Models.Entities.Role", b =>
                 {
                     b.Property<string>("Id")
@@ -259,12 +240,6 @@ namespace OnlineVoting.Api.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("FirstName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LastName")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("RegNo")
                         .HasColumnType("nvarchar(max)");
 
@@ -308,6 +283,9 @@ namespace OnlineVoting.Api.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<string>("FullName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -462,15 +440,6 @@ namespace OnlineVoting.Api.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("OnlineVoting.Models.Entities.RegisteredVoter", b =>
-                {
-                    b.HasOne("OnlineVoting.Models.Entities.Student", "Student")
-                        .WithOne("RegisteredVoter")
-                        .HasForeignKey("OnlineVoting.Models.Entities.RegisteredVoter", "StudentId");
-
-                    b.Navigation("Student");
-                });
-
             modelBuilder.Entity("OnlineVoting.Models.Entities.Student", b =>
                 {
                     b.HasOne("OnlineVoting.Models.Entities.User", "User")
@@ -487,11 +456,6 @@ namespace OnlineVoting.Api.Migrations
                         .HasForeignKey("StudentId");
 
                     b.Navigation("Student");
-                });
-
-            modelBuilder.Entity("OnlineVoting.Models.Entities.Student", b =>
-                {
-                    b.Navigation("RegisteredVoter");
                 });
 #pragma warning restore 612, 618
         }

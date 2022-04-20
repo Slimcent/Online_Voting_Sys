@@ -52,7 +52,7 @@ namespace OnlineVoting.Services.Implementation
             var contestant = new Contestant
             {
                 StudentId = student.Id,
-                UserId = student.UserId
+                //UserId = student.UserId
             };
             await _contestantRepo.AddAsync(contestant);
 
@@ -91,9 +91,9 @@ namespace OnlineVoting.Services.Implementation
             }
             await _userManager.AddToRoleAsync(user, "Student");
 
-            var service = _serviceFactory.GetService<IUserService>().CreateUserClaims(model.Email, ClaimTypes.Role, model.ClaimValue);
+            var service = await _serviceFactory.GetService<IUserService>().CreateUserClaims(model.Email, ClaimTypes.Role, model.ClaimValue);
 
-            var student = new Student { UserId = user.Id, RegNo = model.RegNo };
+            var student = new Student { UserId = user.Id, RegNo = model.RegNo, FirstName = model.FirstName, LastName = model.LastName };
             await _studentRepo.AddAsync(student);
             var add = await _unitOfWork.SaveChangesAsync();
 
@@ -101,12 +101,12 @@ namespace OnlineVoting.Services.Implementation
             return new Response(true, $"Student with email {model.Email} created successfully");
         }
 
-        public Task<Response> Vote(VoteRequestDto request)
+        public async Task<Response> Vote(VoteRequestDto request)
         {
             if (request == null)
                 throw new InvalidOperationException("Invalid data sent");
 
-            var voterExists = _studentRepo.GetSingleByAsync(s => s.RegNo == request.VoterRegNo);
+            var voterExists = await _studentRepo.GetSingleByAsync(s => s.RegNo == request.VoterRegNo);
             if (voterExists == null)
                 throw new RegNoNotFoundException(request.VoterRegNo);
 
