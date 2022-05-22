@@ -6,12 +6,7 @@ using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.GlobalMessage;
 using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 using VotingSystem.Data.Interfaces;
 
 namespace OnlineVoting.Services.Implementation
@@ -37,10 +32,10 @@ namespace OnlineVoting.Services.Implementation
             _mapper = _serviceFactory.GetService<IMapper>();
         }
 
-        public async Task<Response> CreateUser(UserCreateRequestDto model)
+        public async Task<string> CreateUser(UserCreateRequestDto model)
         {
             if (model == null)
-                return new Response(false, "Invalid data sent");
+                throw new InvalidOperationException("Invalid data sent");
 
             var existingUser = await _userManager.FindByEmailAsync(model.Email.Trim().ToLower());
             if (existingUser != null)
@@ -54,21 +49,12 @@ namespace OnlineVoting.Services.Implementation
 
             if (!res.Succeeded)
                 throw new InvalidOperationException($"User creation failed");
-            
 
-            if (!_roleManager.RoleExistsAsync("Staff").Result)
-            {
-                var role = new Role { Name = "Staff" };
-                var roleResult = _roleManager.CreateAsync(role).Result;
-                if (!roleResult.Succeeded)
-                    throw new InvalidOperationException($"Role creation failed");
-                
-            }
-            await _userManager.AddToRoleAsync(user, "Staff");
+            AddUserToRoleDto userRole = new() { UserName = user.Email, Name = model.Role };
 
-            await CreateUserClaims(user.Email, ClaimTypes.Role, model.ClaimValue);
+            await _serviceFactory.GetService<IRolesService>().AddUserToRole(userRole);
 
-            return new Response(true, $"User with email {user.Email} created successfully");
+            return user.Id;
         }
 
         public async Task<UserClaimsResponseDto> CreateUserClaims(string email, string claimType, string claimValue)

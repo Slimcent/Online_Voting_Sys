@@ -63,42 +63,32 @@ namespace OnlineVoting.Services.Implementation
         {
             if (model == null)
                 throw new InvalidOperationException("Invalid data sent");
-
-            var userExists = await _userManager.FindByEmailAsync(model.Email.Trim().ToLower());
-            if (userExists != null)
-                throw new UserExistException(model.Email);
-
+                        
             var regNumberExists = await _studentRepo.GetSingleByAsync(r => r.RegNo == model.RegNo);
             if (regNumberExists != null)
                 throw new RegNoExistException(model.RegNo);
 
-            var user = _mapper.Map<User>(model);
-            user.EmailConfirmed = true;
-
-            var password = "123456";
-            var res = await _userManager.CreateAsync(user, password);
-
-            if (!res.Succeeded)
-                return new Response(false, "User creation failed");
-
-            if (!_roleManager.RoleExistsAsync("Student").Result)
+            UserCreateRequestDto user = new()
             {
-                var role = new Role { Name = "Student" };
-                var roleResult = _roleManager.CreateAsync(role).Result;
+                Email = model.Email,
+                FirstName = model.FirstName,
+                Role = model.Role,
+            };
+            var userId = await _serviceFactory.GetService<IUserService>().CreateUser(user);
 
-                if (!roleResult.Succeeded)
-                    return new Response(false, "Error while creating role");                
-            }
-            await _userManager.AddToRoleAsync(user, "Student");
-
-            var service = await _serviceFactory.GetService<IUserService>().CreateUserClaims(model.Email, ClaimTypes.Role, model.ClaimValue);
-
-            var student = new Student { UserId = user.Id, RegNo = model.RegNo, FirstName = model.FirstName, LastName = model.LastName };
+            var student = _mapper.Map<Student>(model);
+            student.UserId = userId;
+                        
             await _studentRepo.AddAsync(student);
-            var add = await _unitOfWork.SaveChangesAsync();
 
-            if (add > 0) return new Response(true, "student created");
+            await _unitOfWork.SaveChangesAsync();
+
             return new Response(true, $"Student with email {model.Email} created successfully");
+        }
+
+        public async Task<string> UploadStudents(UploadStudentRequestDto model)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<Response> Vote(VoteRequestDto request)

@@ -26,6 +26,7 @@ namespace OnlineVoting.Models.Dtos.Request
         [Required(ErrorMessage = "Phone Number is required")]
         public string? PhoneNumber { get; set; }
 
-        public string? ClaimValue { get; set; }
+        [Required]
+        public string? Role { get; set; }
     }
 }

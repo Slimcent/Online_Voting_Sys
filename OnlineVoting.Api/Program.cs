@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using NLog;
+using OnlineVoting.Api.Data;
 using OnlineVoting.Api.Mapper;
 using OnlineVoting.Api.Middlewares;
 
@@ -39,3 +40,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+SeedStudent.EnsurePopulated(app);
