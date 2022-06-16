@@ -10,6 +10,8 @@ using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Interfaces;
 using System.Security.Claims;
 using VotingSystem.Data.Interfaces;
+using OnlineVoting.Services.Extension;
+using OnlineVoting.Services.Infrastructures;
 
 namespace OnlineVoting.Services.Implementation
 {
@@ -21,6 +23,7 @@ namespace OnlineVoting.Services.Implementation
         private readonly IRepository<Role> _roleRepo;
         private readonly IRepository<Student> _studentRepo;
         private readonly IRepository<Contestant> _contestantRepo;
+        private readonly IFileDataExtractorService _fileDataExtractor;
         private readonly IMapper _mapper;
         private readonly IServiceFactory _serviceFactory;
         private readonly IUnitOfWork _unitOfWork;
@@ -33,6 +36,7 @@ namespace OnlineVoting.Services.Implementation
             _roleManager = serviceFactory.GetService<RoleManager<Role>>();
             _studentRepo = _unitOfWork.GetRepository<Student>();
             _contestantRepo = _unitOfWork.GetRepository<Contestant>();
+            _fileDataExtractor = _serviceFactory.GetService<IFileDataExtractorService>();
             _mapper = _serviceFactory.GetService<IMapper>();
         }
 
@@ -88,7 +92,36 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<string> UploadStudents(UploadStudentRequestDto model)
         {
-            throw new NotImplementedException();
+            //string[] requiredHeaders = new[] {"RegNo", "FirstName", "LastName", "Email", "PhoneNumber", "Sex"};
+            //string[] nullableFields = new[] {"SN", "PhoneNumber", "Sex"};
+                        
+            List<Dictionary<string, string>> studentData = _fileDataExtractor.ExtractFromExcel(model.File, null, ignoreFields: model.IgnoreFields);
+            studentData.ValidateFields(model.RequiredFields);
+
+            IEnumerable<Student> studentsToUpload = DictionaryToObjectConverter.DictionaryToObjects<Student>(studentData);
+
+            foreach (Student student in studentsToUpload)
+            {
+                User exisitingUser = await _userManager.FindByEmailAsync(student.Email);
+
+                if (exisitingUser != null)
+                {
+                    continue;
+                }
+
+                UserCreateRequestDto user = new()
+                {
+                    Email = student.Email,
+                    FirstName = student.FirstName,
+                    Role = "Student"
+                };
+
+                string userId = await _serviceFactory.GetService<IUserService>().CreateUser(user);
+                student.UserId = userId;
+            }
+            await _studentRepo.AddRangeAsync(studentsToUpload);
+
+            return "Students uploaded successfully";
         }
 
         public async Task<Response> Vote(VoteRequestDto request)

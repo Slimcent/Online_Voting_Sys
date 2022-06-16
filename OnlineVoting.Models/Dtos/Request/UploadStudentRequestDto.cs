@@ -7,16 +7,15 @@ namespace OnlineVoting.Models.Dtos.Request
     {
         public UploadStudentRequestDto()
         {
-            RequiredHeaders = new[] { "RegNo", "LastName", "FirstName", "Sex", "PhoneNumber", "Email" };
-            NullableFields = new[] { "Sex", "PhoneNumber" };
+            RequiredFields = new[] { "RegNo", "FirstName", "LastName", "Email" };
+            IgnoreFields = new[] { "SN" };
         }
 
         [JsonIgnore]
-        public string[] RequiredHeaders { get; set; }
+        public string[] RequiredFields { get; set; }
 
         [JsonIgnore]
-        public string[] NullableFields { get; set; }
-
+        public string[] IgnoreFields { get; set; }
         public IFormFile File { get; set; }
     }
 }

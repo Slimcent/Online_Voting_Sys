@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using DinkToPdf;
+using DinkToPdf.Contracts;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
@@ -33,8 +35,10 @@ namespace OnlineVoting.Api.Middlewares
             services.AddTransient<IStudentService, StudentService>();
             services.AddTransient<IUserService, UserService>();
             services.AddTransient<IRolesService, RolesService>();
+            services.AddTransient<IFileDataExtractorService, FileDataExtractorService>();
             services.AddScoped<DbContext, VotingDbContext>();
             services.AddTransient<IServiceFactory, ServiceFactory>();
+            services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
             return services;
         }

@@ -10,6 +10,8 @@ namespace VotingSystem.Data.Interfaces
         Task<T> AddAsync(T obj);
         void AddRange(IList<T> obj);
         Task AddRangeAsync(IList<T> obj);
+        void AddRange(IEnumerable<T> records);
+        Task AddRangeAsync(IEnumerable<T> records);
         Task DeleteByIdAsync(object id);
         bool Delete(Expression<Func<T, bool>> predicate);
         bool Delete(T obj);

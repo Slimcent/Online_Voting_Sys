@@ -56,6 +56,24 @@ namespace VotingSystem.Data.Implementation
             await SaveAsync();
         }
 
+        public virtual void AddRange(IEnumerable<T> records)
+        {
+            try
+            {
+                _dbSet.AddRange(records);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public virtual async Task AddRangeAsync(IEnumerable<T> records)
+        {
+            AddRange(records);
+            await SaveAsync();
+        }
+
         public virtual bool Delete(T obj)
         {
             try
