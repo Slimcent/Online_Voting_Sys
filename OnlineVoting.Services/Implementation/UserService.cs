@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Identity;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
-using OnlineVoting.Models.GlobalMessage;
 using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Interfaces;
 using System.Security.Claims;

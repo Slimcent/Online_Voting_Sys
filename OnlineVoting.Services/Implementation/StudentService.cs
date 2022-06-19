@@ -12,6 +12,7 @@ using System.Security.Claims;
 using VotingSystem.Data.Interfaces;
 using OnlineVoting.Services.Extension;
 using OnlineVoting.Services.Infrastructures;
+using OnlineVoting.Services.Utilities;
 
 namespace OnlineVoting.Services.Implementation
 {
@@ -88,6 +89,24 @@ namespace OnlineVoting.Services.Implementation
             await _unitOfWork.SaveChangesAsync();
 
             return new Response(true, $"Student with email {model.Email} created successfully");
+        }
+
+        public async Task<FileStreamDto> DownloadStudentsList()
+        {
+            return new List<StudentListDownload>()
+            {
+                new()
+                {
+                    SN = 1,
+                    RegNo = "Esut/2012/43569",
+                    LastName = "Ach",
+                    FirstName = "Obi",
+                    Email = "achobi@example.com",
+                    PhoneNumber = "09078786543",
+                    Gender = "Male"
+                }
+
+            }.ConvertToExcel(new ExcelDownloadConfig { Name = "StudentList" });
         }
 
         public async Task<string> UploadStudents(UploadStudentRequestDto model)
