@@ -161,6 +161,75 @@ namespace OnlineVoting.Api.Migrations
                     b.ToTable("Contestans");
                 });
 
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Department", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<bool>("Activated")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("FacultyId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FacultyId");
+
+                    b.ToTable("Departments");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Faculty", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<bool>("Activated")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Faculties");
+                });
+
             modelBuilder.Entity("OnlineVoting.Models.Entities.Position", b =>
                 {
                     b.Property<Guid>("Id")
@@ -262,6 +331,9 @@ namespace OnlineVoting.Api.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("DepartmentId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
 
@@ -290,6 +362,8 @@ namespace OnlineVoting.Api.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
 
                     b.HasIndex("UserId");
 
@@ -476,6 +550,17 @@ namespace OnlineVoting.Api.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Department", b =>
+                {
+                    b.HasOne("OnlineVoting.Models.Entities.Faculty", "Faculty")
+                        .WithMany("Departments")
+                        .HasForeignKey("FacultyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Faculty");
+                });
+
             modelBuilder.Entity("OnlineVoting.Models.Entities.RegisteredVoter", b =>
                 {
                     b.HasOne("OnlineVoting.Models.Entities.Student", "Student")
@@ -487,9 +572,17 @@ namespace OnlineVoting.Api.Migrations
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Student", b =>
                 {
+                    b.HasOne("OnlineVoting.Models.Entities.Department", "Department")
+                        .WithMany("Students")
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("OnlineVoting.Models.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId");
+
+                    b.Navigation("Department");
 
                     b.Navigation("User");
                 });
@@ -509,6 +602,16 @@ namespace OnlineVoting.Api.Migrations
                     b.Navigation("RegisteredVoter");
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Department", b =>
+                {
+                    b.Navigation("Students");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Faculty", b =>
+                {
+                    b.Navigation("Departments");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Student", b =>

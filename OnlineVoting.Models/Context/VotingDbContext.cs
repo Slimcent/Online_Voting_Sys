@@ -3,10 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OnlineVoting.Models.Context
 {
@@ -60,5 +56,70 @@ namespace OnlineVoting.Models.Context
         public DbSet<Vote> Votes { get; set; }
         public DbSet<Contestant> Contestans { get; set; }
         public DbSet<Position> Positions { get; set; }
+        public virtual DbSet<Department> Departments { get; set; }
+        public virtual DbSet<Faculty> Faculties { get; set; }
+
+
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            //modelBuilder.HasAnnotation("Relational:Collation", "SQL_Latin1_General_CP1_CI_AS");
+
+            //modelBuilder.Entity<Department>(entity =>
+            //{
+            //    entity.ToTable("DEPARTMENT");
+
+            //    entity.Property(e => e.Id)
+            //        .HasMaxLength(10)
+            //        .IsUnicode(false)
+            //        .HasColumnName("DEPARTMENT_ID");
+
+            //    entity.Property(e => e.Activated).HasColumnName("ACTIVATED");
+
+            //    entity.Property(e => e.Name)
+            //        .IsRequired()
+            //        .HasMaxLength(50)
+            //        .IsUnicode(false)
+            //        .HasColumnName("DEPARTMENT_NAME");
+
+                
+            //    entity.Property(e => e.FacultyId)
+            //        .IsRequired()
+            //        .HasMaxLength(5)
+            //        .HasColumnName("FACULTY_ID")
+            //        .IsFixedLength(false);
+
+                
+            //    entity.HasOne(d => d.Faculty)
+            //        .WithMany(p => p.Departments)
+            //        .HasForeignKey(d => d.FacultyId)
+            //        .OnDelete(DeleteBehavior.ClientSetNull)
+            //        .HasConstraintName("FK_DEPARTMENT_FACULTY");
+            //});
+                       
+            //modelBuilder.Entity<Faculty>(entity =>
+            //{
+            //    entity.ToTable("FACULTY");
+
+            //    entity.Property(e => e.Id)
+            //        .HasMaxLength(5)
+            //        .HasColumnName("FACULTY_ID")
+            //        .IsFixedLength(false);
+
+            //    entity.Property(e => e.Activated).HasColumnName("ACTIVATED");
+
+            //    entity.Property(e => e.Name)
+            //        .IsRequired()
+            //        .HasMaxLength(50)
+            //        .IsUnicode(false)
+            //        .HasColumnName("FACULTY_NAME");
+            //});                   
+
+            //OnModelCreatingPartial(modelBuilder);
+        }
+
+        //partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
     }
 }

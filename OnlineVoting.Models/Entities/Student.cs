@@ -16,7 +16,9 @@ namespace OnlineVoting.Models.Entities
         public DateTime UpdatedAt { get; set; }
         public string? CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }
+        public int DepartmentId { get; set; }
         public virtual User? User { get; set; }
         public virtual RegisteredVoter? RegisteredVoter { get; set; }
+        public virtual Department? Department { get; set; }
     }
 }
