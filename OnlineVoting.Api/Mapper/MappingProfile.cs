@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using OnlineVoting.Models.Dtos.Request;
+using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
 
 namespace OnlineVoting.Api.Mapper
@@ -15,6 +16,9 @@ namespace OnlineVoting.Api.Mapper
 
             CreateMap<StudentCreateRequestDto, Student>();
 
+            CreateMap<PositionDto, Position>();
+            CreateMap<Position, PositionDto>();
+            CreateMap<Position, PositionResponseDto>();
         }
     }
 }

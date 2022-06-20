@@ -35,6 +35,7 @@ namespace OnlineVoting.Api.Middlewares
             services.AddTransient<IStudentService, StudentService>();
             services.AddTransient<IUserService, UserService>();
             services.AddTransient<IRolesService, RolesService>();
+            services.AddTransient<IPositionService, PositionService>();
             services.AddTransient<IFileDataExtractorService, FileDataExtractorService>();
             services.AddScoped<DbContext, VotingDbContext>();
             services.AddTransient<IServiceFactory, ServiceFactory>();

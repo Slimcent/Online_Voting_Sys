@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace OnlineVoting.Models.Pagination
+﻿namespace OnlineVoting.Models.Pagination
 {
     public abstract class RequestParameters
     {
@@ -24,7 +18,7 @@ namespace OnlineVoting.Models.Pagination
             }
         }
 
-        public string OrderBy { get; set; }
-        public string SearchTerm { get; set; }
+        public string? OrderBy { get; set; }
+        public string? SearchTerm { get; set; }
     }
 }
