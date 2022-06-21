@@ -16,9 +16,13 @@ namespace OnlineVoting.Api.Mapper
 
             CreateMap<StudentCreateRequestDto, Student>();
 
+            //Positions
             CreateMap<PositionDto, Position>();
             CreateMap<Position, PositionDto>();
             CreateMap<Position, PositionResponseDto>();
+
+            //Faculty
+            CreateMap<CreateFacultyDto, Faculty>();
         }
     }
 }
