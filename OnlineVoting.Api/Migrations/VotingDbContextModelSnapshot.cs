@@ -265,13 +265,30 @@ namespace OnlineVoting.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("DepartmentId")
+                        .HasColumnType("int");
+
                     b.Property<Guid?>("StudentId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("VotingCode")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
 
                     b.HasIndex("StudentId")
                         .IsUnique()
@@ -393,6 +410,9 @@ namespace OnlineVoting.Api.Migrations
                         .HasColumnType("nvarchar(256)");
 
                     b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<bool>("LockoutEnabled")
@@ -563,9 +583,17 @@ namespace OnlineVoting.Api.Migrations
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.RegisteredVoter", b =>
                 {
+                    b.HasOne("OnlineVoting.Models.Entities.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("OnlineVoting.Models.Entities.Student", "Student")
                         .WithOne("RegisteredVoter")
                         .HasForeignKey("OnlineVoting.Models.Entities.RegisteredVoter", "StudentId");
+
+                    b.Navigation("Department");
 
                     b.Navigation("Student");
                 });
