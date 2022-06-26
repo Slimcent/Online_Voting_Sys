@@ -1,7 +1,9 @@
-﻿namespace OnlineVoting.Services.Interfaces
+﻿using OnlineVoting.Models.Dtos.Request;
+
+namespace OnlineVoting.Services.Interfaces
 {
     public interface IVoterService
     {
-        Task<string> CreateVoter();
+        Task<string> CreateVoter(VoterCreateDto request);
     }
 }
