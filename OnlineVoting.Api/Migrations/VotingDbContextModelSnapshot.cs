@@ -274,6 +274,9 @@ namespace OnlineVoting.Api.Migrations
                     b.Property<int>("DepartmentId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsDeActivated")
+                        .HasColumnType("bit");
+
                     b.Property<Guid?>("StudentId")
                         .HasColumnType("uniqueidentifier");
 
