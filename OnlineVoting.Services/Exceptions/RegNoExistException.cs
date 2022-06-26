@@ -8,7 +8,7 @@ namespace OnlineVoting.Services.Exceptions
 {
     public class RegNoExistException : NotFoundException
     {
-        public RegNoExistException(string regNo)
+        public RegNoExistException(string? regNo)
          : base($"This RegNo: {regNo} already exist in the database.")
         {
         }

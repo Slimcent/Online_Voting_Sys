@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
+using OnlineVoting.Models.Entities.Email;
 using OnlineVoting.Services.Implementation;
 using OnlineVoting.Services.Interfaces;
 using VotingSystem.Data.Implementation;
@@ -38,10 +39,13 @@ namespace OnlineVoting.Api.Middlewares
             services.AddTransient<IPositionService, PositionService>();
             services.AddTransient<IFacultyService, FacultyService>();
             services.AddTransient<IDepartmentService, DepartmentService>();
+            services.AddTransient<IVoterService, VoterService>();
+            services.AddSingleton<IEmailService, EmailService>();
             services.AddTransient<IFileDataExtractorService, FileDataExtractorService>();
             services.AddScoped<DbContext, VotingDbContext>();
             services.AddTransient<IServiceFactory, ServiceFactory>();
             services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
+            //services.Configure<EmailSettings>(Configuration.GetSection("SmtpSettings"));
 
             return services;
         }

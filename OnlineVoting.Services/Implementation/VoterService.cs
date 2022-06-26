@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Dtos.Request;
+using OnlineVoting.Models.Dtos.Request.Email;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Extension;
@@ -33,7 +34,7 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<string> CreateVoter(VoterCreateDto request)
         {
-            Student checkIfStudentExists = await _studentRepo.GetSingleByAsync(x => x.RegNo == request.RegNo, 
+            Student checkIfStudentExists = await _studentRepo.GetSingleByAsync(x => x.RegNo == request.RegNo,
                 include: x => x.Include(d => d.Department).ThenInclude(f => f.Faculty));
 
             if (checkIfStudentExists == null)
@@ -54,9 +55,39 @@ namespace OnlineVoting.Services.Implementation
                 DepartmentId = checkIfStudentExists.DepartmentId,
             };
 
-            await _registeredVoterRepo.AddAsync(registerVoter);
+            _registeredVoterRepo.Add(registerVoter);
+
+            VoterEmailDto emailDto = new()
+            {
+                Email = checkIfStudentExists.Email,
+                VotingCode= votingCode,
+                FirstName = checkIfStudentExists.FirstName,
+            };
+
+            await _serviceFactory.GetService<IEmailService>().SendVoterEmail(emailDto);
+
+            await _unitOfWork.SaveChangesAsync();
 
             return "Voter registration was successful";
+        }
+
+        public async Task<string> ToggleVoter(Guid id)
+        {
+            RegisteredVoter registeredVoter = await _registeredVoterRepo.GetSingleByAsync(x => x.Id == id);
+
+            if (registeredVoter == null)
+                throw new InvalidOperationException("Student not found");
+
+            registeredVoter.IsDeActivated = !registeredVoter.IsDeActivated;
+
+            if(registeredVoter.IsDeActivated == true)
+            {
+                return "Voter Deactivated successfully";
+            }
+            else
+            {
+                return "Voter activated successfully";
+            }
         }
     }
 }

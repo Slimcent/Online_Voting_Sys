@@ -44,7 +44,7 @@
         }
     }
 
-    public static class ShuffleExtension
+    static class ShuffleExtension
     {
         public static string Shuffle(this string result)
         {

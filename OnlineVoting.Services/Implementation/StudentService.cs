@@ -50,7 +50,7 @@ namespace OnlineVoting.Services.Implementation
             if (contestantExists != null)
                 throw new RegNoExistException(regNo);
 
-            var student = await _studentRepo.GetSingleByAsync(s => s.RegNo == regNo, include: s => s.Include(u => u.User));
+            Student student = await _studentRepo.GetSingleByAsync(s => s.RegNo == regNo, include: s => s.Include(u => u.User));
             if (student == null)
                 throw new RegNoNotFoundException(regNo);
 

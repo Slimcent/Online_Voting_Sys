@@ -23,5 +23,13 @@ namespace OnlineVoting.Api.Controllers
 
             return Ok(voter);
         }
+
+        [HttpPut("toggle-voter-status", Name = "Toggle-Voter-Status")]
+        public async Task<IActionResult> ToggleVoterStatus([FromQuery] Guid id )
+        {
+            string voter = await _voterService.ToggleVoter(id);
+
+            return Ok(voter);
+        }
     }
 }

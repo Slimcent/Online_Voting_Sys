@@ -5,6 +5,7 @@ using NLog;
 using OnlineVoting.Api.Data;
 using OnlineVoting.Api.Mapper;
 using OnlineVoting.Api.Middlewares;
+using OnlineVoting.Models.Entities.Email;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,7 @@ LogManager.LoadConfiguration(string.Concat(Directory.GetCurrentDirectory(),
 // Add services to the container.
 
 //builder.Services.AddControllers();
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.AddControllers(setupAction =>
 {
     setupAction.ReturnHttpNotAcceptable = true;
