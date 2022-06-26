@@ -35,11 +35,12 @@ namespace OnlineVoting.Services.Implementation
             if (facultyExists != null)
                 throw new InvalidOperationException("Faculty already exists");
 
-            Faculty addPosition = _mapper.Map<Faculty>(request);
+            Faculty addFaculty = _mapper.Map<Faculty>(request);
+            addFaculty.Activated = true;
 
-            await _facultyRepo.AddAsync(addPosition);
+            await _facultyRepo.AddAsync(addFaculty);
 
-            return $"Faculty with name {addPosition.Name} created successfully";
+            return $"Faculty with name {addFaculty.Name} created successfully";
         }
     }
 }

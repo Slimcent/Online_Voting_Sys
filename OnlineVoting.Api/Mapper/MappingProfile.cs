@@ -23,6 +23,9 @@ namespace OnlineVoting.Api.Mapper
 
             //Faculty
             CreateMap<CreateFacultyDto, Faculty>();
+
+            //Department
+            CreateMap<DeptCreateDto, Department>();
         }
     }
 }

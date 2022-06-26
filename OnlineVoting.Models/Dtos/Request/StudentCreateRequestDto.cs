@@ -27,6 +27,9 @@ namespace OnlineVoting.Models.Dtos.Request
         public string? PhoneNumber { get; set; }
 
         [Required]
+        public int DepartmentId { get; set; }
+
+        [Required]
         public string? Role { get; set; }
     }
 }
