@@ -70,7 +70,6 @@ namespace OnlineVoting.Services.Implementation
             }
 
             return _mapper.Map<IEnumerable<PositionResponseDto>>(allPositions);
-
         }
 
         public async Task<IEnumerable<PositionResponseDto>> GetAllDeletedPositions()

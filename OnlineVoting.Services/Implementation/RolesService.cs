@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.JsonPatch;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
@@ -39,24 +40,26 @@ namespace OnlineVoting.Services.Implementation
             if (roleExists != null)
                 throw new InvalidOperationException($"Role with name {request.Name} already exist");
 
-            var roleToCreate = _mapper.Map<Role>(request);
+            Role roleToCreate = _mapper.Map<Role>(request);
 
-            var result = await _roleManager.CreateAsync(roleToCreate);
+            IdentityResult result = await _roleManager.CreateAsync(roleToCreate);
             if (!result.Succeeded)
                 throw new InvalidOperationException("Role creation failed");
 
             return $"Role with name {request.Name} created successfully";
         }
 
-        public async Task EditRole(string id, RoleDto request)
+        public async Task<string> EditRole(string id, RoleDto request)
         {
-            var role = await _roleManager.FindByIdAsync(id);
+            Role role = await _roleManager.FindByIdAsync(id);
             if (role == null)
                 throw new InvalidOperationException($"Role with {id} not found");
 
-            var roleUpdate = _mapper.Map(request, role);
+            Role roleUpdate = _mapper.Map(request, role);
 
             await _roleManager.UpdateAsync(roleUpdate);
+
+            return $"Role updated successfully";
         }
 
         public async Task<string> AddUserToRole(AddUserToRoleDto request)
@@ -107,7 +110,7 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<string> DeleteRole(RoleDto request)
         {
-            var role = await _roleManager.FindByNameAsync(request.Name.Trim().ToLower());
+            Role role = await _roleManager.FindByNameAsync(request.Name.Trim().ToLower());
 
             if (role is null)
                 return $"Role {request.Name} does not Exist";
@@ -117,9 +120,98 @@ namespace OnlineVoting.Services.Implementation
             return $"Role with Name {role.Name} has been deleted Successfully";
         }
 
-        public async Task<PagedResponse<RoleResponseDto>> GetAllRoles(RoleRequestDto request)
+        public async Task<string> DeleteUserRole(string Id)
         {
-            PagedList<Role> roles = await _roleRepo.GetPagedItems(request);
+            Role role = await _roleManager.FindByIdAsync(Id);
+
+            if (role is null)
+                return $"Role with Id {Id} does not Exist";
+
+            await _roleManager.DeleteAsync(role);
+
+            return $"Role with Name {role.Name} deleted Successfully";
+        }
+
+        public async Task<string> ToggleRoleStatus(string roleId)
+        {
+            Role role = await _roleManager.FindByIdAsync(roleId);
+
+            if (role == null)
+                throw new InvalidOperationException("Role does not exist");
+
+            role.IsActive = !role.IsActive;
+
+            await _roleManager.UpdateAsync(role);
+
+            if (role.IsActive == true)
+            {
+                return $"Role {role.Name} activated successfully";
+            }
+            else
+            {
+                return $"Role {role.Name} deactivated successfully";
+            }
+        }
+
+        public async Task<IEnumerable<RoleResponseDto>> GetAllRoles()
+        {
+            IEnumerable<Role> allRoles = await _roleRepo.GetAllAsync();
+
+            if (!allRoles.Any())
+            {
+                return new List<RoleResponseDto>();
+            }
+
+            return _mapper.Map<IEnumerable<RoleResponseDto>>(allRoles);
+        }
+
+        public async Task<IEnumerable<RoleResponseDto>> GetAllActiveRoles()
+        {
+            IEnumerable<Role> allRoles = await _roleRepo.GetByAsync(x => x.IsActive == true);
+
+            if (!allRoles.Any())
+            {
+                return new List<RoleResponseDto>();
+            }
+
+            return _mapper.Map<IEnumerable<RoleResponseDto>>(allRoles);
+        }
+
+        public async Task<IEnumerable<RoleResponseDto>> GetAllDeactivatedRoles()
+        {
+            IEnumerable<Role> allRoles = await _roleRepo.GetByAsync(x => x.IsActive == false);
+
+            if (!allRoles.Any())
+            {
+                return new List<RoleResponseDto>();
+            }
+
+            return _mapper.Map<IEnumerable<RoleResponseDto>>(allRoles);
+        }
+
+        public async Task<PagedResponse<RoleResponseDto>> AllRoles(RoleRequestDto request)
+        {
+            PagedList<Role> roles = string.IsNullOrWhiteSpace(request.SearchTerm)
+                ? await _roleRepo.GetPagedItems(request)
+                : await _roleRepo.GetPagedItems(request, x => x.Name.Contains(request.SearchTerm.ToLower().Trim()));
+
+            return _mapper.Map<PagedResponse<RoleResponseDto>>(roles);
+        }
+
+        public async Task<PagedResponse<RoleResponseDto>> AllActiveRoles(RoleRequestDto request)
+        {
+            PagedList<Role> roles = string.IsNullOrWhiteSpace(request.SearchTerm)
+                ? await _roleRepo.GetPagedItems(request, x => x.IsActive == true)
+                : await _roleRepo.GetPagedItems(request, x => x.Name.Contains(request.SearchTerm.ToLower().Trim()));
+
+            return _mapper.Map<PagedResponse<RoleResponseDto>>(roles);
+        }
+
+        public async Task<PagedResponse<RoleResponseDto>> AllDeactivatedRoles(RoleRequestDto request)
+        {
+            PagedList<Role> roles = string.IsNullOrWhiteSpace(request.SearchTerm)
+                ? await _roleRepo.GetPagedItems(request, x => x.IsActive == false)
+                : await _roleRepo.GetPagedItems(request, x => x.Name.Contains(request.SearchTerm.ToLower().Trim()));
 
             return _mapper.Map<PagedResponse<RoleResponseDto>>(roles);
         }

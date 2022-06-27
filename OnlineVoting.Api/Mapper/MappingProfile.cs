@@ -26,6 +26,10 @@ namespace OnlineVoting.Api.Mapper
 
             //Department
             CreateMap<DeptCreateDto, Department>();
+
+            // Role
+            CreateMap<RoleDto, Role>();
+            CreateMap<Role, RoleResponseDto>();
         }
     }
 }
