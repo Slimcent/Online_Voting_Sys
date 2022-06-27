@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Identity;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
+using OnlineVoting.Models.Dtos.Response.Jwt;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Services.Exceptions;
+using OnlineVoting.Services.Infrastructures.Jwt;
 using OnlineVoting.Services.Interfaces;
 using System.Security.Claims;
 using VotingSystem.Data.Interfaces;
@@ -142,6 +144,14 @@ namespace OnlineVoting.Services.Implementation
             });
 
             return dto;
+        }
+
+        private async Task<JwtToken> GetTokenAsync(User user)
+        {
+            JwtAuthentication authenticator = _serviceFactory.GetService<JwtAuthentication>();
+            JwtToken jwt = await authenticator.GenerateJwtToken(user);
+
+            return jwt;
         }
     }
 }

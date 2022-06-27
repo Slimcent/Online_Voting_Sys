@@ -6,6 +6,7 @@ using OnlineVoting.Api.Data;
 using OnlineVoting.Api.Mapper;
 using OnlineVoting.Api.Middlewares;
 using OnlineVoting.Models.Entities.Email;
+using OnlineVoting.Services.Infrastructures.Jwt;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,11 @@ LogManager.LoadConfiguration(string.Concat(Directory.GetCurrentDirectory(),
 
 //builder.Services.AddControllers();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("SmtpSettings"));
+
+builder.Services.ConfigureJWT(builder.Configuration);
+
+builder.Services.AddAuthentication();
+
 builder.Services.AddControllers(setupAction =>
 {
     setupAction.ReturnHttpNotAcceptable = true;
@@ -32,6 +38,7 @@ builder.Services.AddControllers(setupAction =>
     options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
 
 });
+
 builder.Services.ConfigureCors();
 builder.Services.ConfigureIISIntegration();
 builder.Services.AddDBConnection(builder.Configuration);
