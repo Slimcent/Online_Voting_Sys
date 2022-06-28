@@ -20,5 +20,6 @@ namespace OnlineVoting.Models.Entities
         public virtual User? User { get; set; }
         public virtual RegisteredVoter? RegisteredVoter { get; set; }
         public virtual Department? Department { get; set; }
+        public virtual Address? Address { get; set; }
     }
 }

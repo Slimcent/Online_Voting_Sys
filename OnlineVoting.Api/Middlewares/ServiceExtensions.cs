@@ -44,12 +44,12 @@ namespace OnlineVoting.Api.Middlewares
             services.AddTransient<IDepartmentService, DepartmentService>();
             services.AddTransient<IVoterService, VoterService>();
             services.AddSingleton<IEmailService, EmailService>();
+            services.AddTransient<IStaffService, StaffService>();
             services.AddTransient<IFileDataExtractorService, FileDataExtractorService>();
             services.AddScoped<DbContext, VotingDbContext>();
             services.AddTransient<IServiceFactory, ServiceFactory>();
             services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
-            //services.Configure<EmailSettings>(Configuration.GetSection("SmtpSettings"));
-
+            
             return services;
         }
 

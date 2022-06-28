@@ -128,6 +128,58 @@ namespace OnlineVoting.Api.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Address", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("City")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Nationality")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("PlotNo")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("StaffId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("State")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StreetName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("StudentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StaffId")
+                        .IsUnique()
+                        .HasFilter("[StaffId] IS NOT NULL");
+
+                    b.HasIndex("StudentId")
+                        .IsUnique()
+                        .HasFilter("[StudentId] IS NOT NULL");
+
+                    b.ToTable("Addresses");
+                });
+
             modelBuilder.Entity("OnlineVoting.Models.Entities.Contestant", b =>
                 {
                     b.Property<Guid>("Id")
@@ -342,6 +394,51 @@ namespace OnlineVoting.Api.Migrations
                     b.ToTable("AspNetRoles", (string)null);
                 });
 
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Staff", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FirstName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Gender")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LastName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NOT NULL");
+
+                    b.ToTable("StaffProfile");
+                });
+
             modelBuilder.Entity("OnlineVoting.Models.Entities.Student", b =>
                 {
                     b.Property<Guid>("Id")
@@ -418,7 +515,7 @@ namespace OnlineVoting.Api.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsDeleted")
+                    b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
                     b.Property<bool>("LockoutEnabled")
@@ -557,6 +654,21 @@ namespace OnlineVoting.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Address", b =>
+                {
+                    b.HasOne("OnlineVoting.Models.Entities.Staff", "Staff")
+                        .WithOne("Address")
+                        .HasForeignKey("OnlineVoting.Models.Entities.Address", "StaffId");
+
+                    b.HasOne("OnlineVoting.Models.Entities.Student", "Student")
+                        .WithOne("Address")
+                        .HasForeignKey("OnlineVoting.Models.Entities.Address", "StudentId");
+
+                    b.Navigation("Staff");
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("OnlineVoting.Models.Entities.Contestant", b =>
                 {
                     b.HasOne("OnlineVoting.Models.Entities.Position", "Position")
@@ -604,6 +716,15 @@ namespace OnlineVoting.Api.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Staff", b =>
+                {
+                    b.HasOne("OnlineVoting.Models.Entities.User", "User")
+                        .WithOne("Staff")
+                        .HasForeignKey("OnlineVoting.Models.Entities.Staff", "UserId");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("OnlineVoting.Models.Entities.Student", b =>
                 {
                     b.HasOne("OnlineVoting.Models.Entities.Department", "Department")
@@ -648,9 +769,21 @@ namespace OnlineVoting.Api.Migrations
                     b.Navigation("Departments");
                 });
 
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Staff", b =>
+                {
+                    b.Navigation("Address");
+                });
+
             modelBuilder.Entity("OnlineVoting.Models.Entities.Student", b =>
                 {
+                    b.Navigation("Address");
+
                     b.Navigation("RegisteredVoter");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.User", b =>
+                {
+                    b.Navigation("Staff");
                 });
 #pragma warning restore 612, 618
         }
