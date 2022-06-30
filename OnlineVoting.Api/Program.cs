@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -5,6 +6,7 @@ using NLog;
 using OnlineVoting.Api.Data;
 using OnlineVoting.Api.Mapper;
 using OnlineVoting.Api.Middlewares;
+using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities.Email;
 using OnlineVoting.Services.Infrastructures.Jwt;
 using System.Text.Json.Serialization;
@@ -19,7 +21,17 @@ LogManager.LoadConfiguration(string.Concat(Directory.GetCurrentDirectory(),
 //builder.Services.AddControllers();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("SmtpSettings"));
 
+//builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+
+builder.Services.AddScoped<DbContext, VotingDbContext>();
+
 builder.Services.ConfigureJWT(builder.Configuration);
+
+//builder.Services.AddScoped<IAuthenticationManager, AuthenticationManager>();
+
+builder.Services.AddScoped<IJwtAuthenticator, JwtAuthenticator>();
+
+//builder.Services.AddScoped<JwtAuthentication>();
 
 builder.Services.AddAuthentication();
 

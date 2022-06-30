@@ -3,7 +3,8 @@
     public class JwtToken
     {
         public string? Token { get; set; }
-        public DateTime Issued { get; set; }
+        public string? Issuer { get; set; }
+        public DateTime IssuedAt { get; set; }
         public DateTime? Expires { get; set; }
     }
 }

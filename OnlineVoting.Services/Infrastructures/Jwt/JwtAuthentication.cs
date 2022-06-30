@@ -43,7 +43,7 @@ namespace OnlineVoting.Services.Infrastructures.Jwt
             {
                 Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddHours(double.Parse(_jwtSettings.Expires)),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
             };
 
             var token = jwtTokenHandler.CreateToken(tokenDescriptor);
@@ -52,7 +52,7 @@ namespace OnlineVoting.Services.Infrastructures.Jwt
             return new JwtToken
             {
                 Token = jwtToken,
-                Issued = DateTime.UtcNow,
+                IssuedAt = DateTime.UtcNow,
                 Expires = tokenDescriptor.Expires
             };
         }

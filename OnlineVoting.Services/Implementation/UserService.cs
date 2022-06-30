@@ -19,6 +19,7 @@ namespace OnlineVoting.Services.Implementation
         private readonly IRepository<User> _userRepo;
         private readonly IRepository<Role> _roleRepo;
         private readonly IRepository<Student> _studentRepo;
+        private readonly IRepository<Staff> _staffRepo;
         private readonly IMapper _mapper;
         private readonly IServiceFactory _serviceFactory;
         private readonly IUnitOfWork _unitOfWork;
@@ -30,6 +31,7 @@ namespace OnlineVoting.Services.Implementation
             _userManager = serviceFactory.GetService<UserManager<User>>();
             _roleManager = serviceFactory.GetService<RoleManager<Role>>();
             _studentRepo = _unitOfWork.GetRepository<Student>();
+            _staffRepo = _unitOfWork.GetRepository<Staff>();
             _mapper = _serviceFactory.GetService<IMapper>();
         }
 
@@ -56,6 +58,62 @@ namespace OnlineVoting.Services.Implementation
             await _serviceFactory.GetService<IRolesService>().AddUserToRole(userRole);
 
             return user.Id;
+        }
+
+        public async Task<LoggedInUserDto> UserLogin(LoginDto request)
+        {
+            User user = await _userManager.FindByNameAsync(request.Email.ToLower().Trim());
+
+            if (user == null)
+                throw new InvalidOperationException("Invalid email or password");
+
+            if (user.IsActive == false)
+                throw new InvalidOperationException("Account is not active, contact the admin");
+
+            bool result = await _userManager.CheckPasswordAsync(user, request.Password);
+
+            if (!result)
+                throw new InvalidOperationException("Invalid email or password");
+
+            JwtToken userToken = await GetTokenAsync(user);
+
+            List<Claim> userClaims = (await _userManager.GetClaimsAsync(user)).ToList();
+            List<string> userRoles = (await _userManager.GetRolesAsync(user)).ToList();
+
+            foreach (string userRole in userRoles)
+            {
+                Role role = await _roleManager.FindByNameAsync(userRole);
+                if (role != null)
+                {
+                    IList<Claim> roleClaims = await _roleManager.GetClaimsAsync(role);
+                    foreach (Claim roleClaim in roleClaims)
+                    {
+                        userClaims.Add(roleClaim);
+                    }
+                }
+            }
+
+            List<string> claims = userClaims.Select(x => x.Value).ToList();
+            string? userType = userRoles.Contains("Student") ? "Student" : userRoles.Contains("Staff") ? "Staff" : userRoles.FirstOrDefault();
+            string fullName = string.Empty;
+                        
+            switch (userType)
+            {
+                case "Staff":
+                    {
+                        Staff staff = await _staffRepo.GetSingleByAsync(x => x.UserId == user.Id);
+                        fullName = $"{staff.LastName} {staff.FirstName}";
+                        break;
+                    }
+                case "Student":
+                    {
+                        Student student = await _studentRepo.GetSingleByAsync(x => x.UserId == user.Id);
+                                                
+                        fullName = $"{student.LastName} {student.FirstName}";
+                        break;
+                    }
+            }
+            return new LoggedInUserDto { JwtToken = userToken, UserType = userType, FullName = fullName };
         }
 
         public async Task<UserClaimsResponseDto> CreateUserClaims(string email, string claimType, string claimValue)
@@ -148,7 +206,7 @@ namespace OnlineVoting.Services.Implementation
 
         private async Task<JwtToken> GetTokenAsync(User user)
         {
-            JwtAuthentication authenticator = _serviceFactory.GetService<JwtAuthentication>();
+            var authenticator = _serviceFactory.GetService<IJwtAuthenticator>();
             JwtToken jwt = await authenticator.GenerateJwtToken(user);
 
             return jwt;

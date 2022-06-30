@@ -8,6 +8,7 @@ using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Entities.Email;
 using OnlineVoting.Services.Implementation;
+using OnlineVoting.Services.Infrastructures.Jwt;
 using OnlineVoting.Services.Interfaces;
 using System.Text;
 using VotingSystem.Data.Implementation;
@@ -79,10 +80,13 @@ namespace OnlineVoting.Api.Middlewares
 
         public static void ConfigureJWT(this IServiceCollection services, IConfiguration configuration)
         {
-            var jwtSettings = configuration.GetSection("JwtSettings");
-            //var secretKey = Environment.GetEnvironmentVariable("SECRET");
+            //var jwtSettings = services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
 
-            var secretKey = jwtSettings.GetSection("Secret").Value;
+            var jwtSettings = configuration.GetSection("JwtSettings");
+            
+            //var secretKey = jwtSettings.GetSection("Secret").Value;
+
+            var key = Encoding.ASCII.GetBytes(jwtSettings.GetSection("Secret").Value);
 
             services.AddAuthentication(opt => {
                 opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -91,15 +95,18 @@ namespace OnlineVoting.Api.Middlewares
             })
             .AddJwtBearer(options =>
             {
+                //var key = Encoding.ASCII.GetBytes(configuration["JwtSettings:Secret"]);
+
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings.GetSection("validIssuer").Value,
-                    ValidAudience = jwtSettings.GetSection("validAudience").Value,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+                    //ValidIssuer = jwtSettings.GetSection("validIssuer").Value,
+                    //ValidAudience = jwtSettings.GetSection("validAudience").Value,
+                    //IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+                    IssuerSigningKey = new SymmetricSecurityKey(key)
                 };
             });
         }
