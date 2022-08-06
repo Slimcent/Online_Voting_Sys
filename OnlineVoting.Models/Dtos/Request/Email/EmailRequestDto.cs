@@ -8,5 +8,7 @@
         public string? FromName { get; set; }
         public string? AppUrl { get; set; }
         public string? VotingCode { get; set; }
+        public string? EmailConfirmationToken { get; set; }
+        public string? ResetPasswordToken { get; set; }
     }
 }
