@@ -32,13 +32,16 @@ namespace OnlineVoting.Services.Extension
 
             emailMessage.Date = DateTime.Now;
 
+            string url = $"{request.AppUrl}";
+
             string filePath = Directory.GetCurrentDirectory() + "\\Template\\EmailTemplate.html";
             string MailText = GetFilePath(filePath);
 
-            MailText = MailText.Replace("[Header]", $"Hello {request.ToName}").
-                Replace("[Body]", $"Your voting registration was successful and your voting code is {request.VotingCode}.\n" +
-                $"Please, do not disclose it to anyone").
-                Replace("[Button-Text]", "Return to site");
+            MailText = MailText.Replace("[Header]", $"Hello {request.ToName}")
+                .Replace("[Body]", $"Your voting registration was successful and your voting code is {request.VotingCode}.\n" +
+                    $"Please, do not disclose it to anyone")
+                .Replace("[Button-Text]", "Return to site")
+                .Replace("[url]", url);
 
             BodyBuilder emailBodyBuilder = new BodyBuilder();
             emailBodyBuilder.HtmlBody = MailText;
@@ -74,19 +77,18 @@ namespace OnlineVoting.Services.Extension
             string encodedResetPasswordToken = MessageEncoder.EncodeString(request.ResetPasswordToken);
                         
             string url = $"{request.AppUrl}/reset_password?q={encodedUsername}&w={encodedEmailConfirmationToken}&e={encodedResetPasswordToken}&i=cu";
-                                   
-
+            
             MailText = MailText.Replace("[Header]", $"Hello {request.ToName}").
                 Replace("[Body]", $"Your registration was successful.\n" +
-                $"Click on the link below to change your password in order to verify your account. " +
-                $"\n{request.AppUrl}/reset_password?q={encodedUsername}&w={encodedEmailConfirmationToken}&e={encodedResetPasswordToken}&i=cu").
-                Replace("[Button-Text]", "Reset Passord");
+                   $"To verify your account, click on the button below to change your password.")
+                .Replace("[Button-Text]", "Reset Passord")
+                .Replace("[url]", url);
 
             BodyBuilder emailBodyBuilder = new BodyBuilder();
             emailBodyBuilder.HtmlBody = MailText;
             emailMessage.Body = emailBodyBuilder.ToMessageBody();
 
-            EmailDataDto emailData = new EmailDataDto()
+            EmailDataDto emailData = new()
             {
                 MessageBody = emailMessage
             };

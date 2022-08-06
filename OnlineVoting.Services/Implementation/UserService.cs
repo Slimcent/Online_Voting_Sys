@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using OnlineVoting.Models.Dtos.Request;
+using OnlineVoting.Models.Dtos.Request.Email;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Dtos.Response.Jwt;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Services.Exceptions;
+using OnlineVoting.Services.Extension;
 using OnlineVoting.Services.Infrastructures.Jwt;
 using OnlineVoting.Services.Interfaces;
 using System.Security.Claims;
@@ -35,27 +37,35 @@ namespace OnlineVoting.Services.Implementation
             _mapper = _serviceFactory.GetService<IMapper>();
         }
 
-        public async Task<string> CreateUser(UserCreateRequestDto model)
+        public async Task<string> CreateUser(UserCreateRequestDto request)
         {
-            if (model == null)
+            if (request == null)
                 throw new InvalidOperationException("Invalid data sent");
 
-            var existingUser = await _userManager.FindByEmailAsync(model.Email.Trim().ToLower());
+            User existingUser = await _userManager.FindByEmailAsync(request.Email.Trim().ToLower());
             if (existingUser != null)
-                throw new UserExistException(model.Email);
+                throw new UserExistException(request.Email);
 
-            var user = _mapper.Map<User>(model);
-            user.EmailConfirmed = true;
+            User user = _mapper.Map<User>(request);
+           
+            string password = AuthExtension.GenerateRandomPassword();
 
-            var password = "123456";
-            var res = await _userManager.CreateAsync(user, password);
+            IdentityResult result = await _userManager.CreateAsync(user, password);
 
-            if (!res.Succeeded)
+            if (!result.Succeeded)
                 throw new InvalidOperationException($"User creation failed");
 
-            AddUserToRoleDto userRole = new() { UserName = user.Email, Name = model.Role };
+            AddUserToRoleDto userRole = new() { UserName = user.Email, Name = request.Role };
 
             await _serviceFactory.GetService<IRolesService>().AddUserToRole(userRole);
+
+            UserMailDto userMailDto = new()
+            {
+                User = user,
+                FirstName = request.FirstName
+            };
+
+            await _serviceFactory.GetService<IEmailService>().SendCreateUserEmail(userMailDto);
 
             return user.Id;
         }

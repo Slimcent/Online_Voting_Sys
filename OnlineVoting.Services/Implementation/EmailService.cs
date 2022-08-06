@@ -1,7 +1,6 @@
 ﻿using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Request.Email;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Entities.Email;
@@ -67,7 +66,7 @@ namespace OnlineVoting.Services.Implementation
 
         private async Task<bool> SendEmail(EmailDataDto request)
         {
-            var client = new SmtpClient();
+            SmtpClient client = new();
 
             try
             {

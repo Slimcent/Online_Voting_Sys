@@ -43,7 +43,7 @@ namespace OnlineVoting.Api.SeedData.Admin
 
             if (!await userManager.Users.AnyAsync())
             {
-                User user = new User
+                User user = new()
                 {
                     FirstName = seed.AdminUser.FirstName,
                     LastName = seed.AdminUser.LastName,
@@ -52,7 +52,6 @@ namespace OnlineVoting.Api.SeedData.Admin
                     UserTypeId = seed.AdminUser.UserType,
                     IsActive = true,
                     EmailConfirmed = true,
-
                 };
 
                 IdentityResult createUser = await userManager.CreateAsync(user, seed.AdminUser.Password);

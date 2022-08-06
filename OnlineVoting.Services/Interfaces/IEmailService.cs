@@ -1,5 +1,4 @@
-﻿using OnlineVoting.Models.Dtos.Request;
-using OnlineVoting.Models.Dtos.Request.Email;
+﻿using OnlineVoting.Models.Dtos.Request.Email;
 
 namespace OnlineVoting.Services.Interfaces
 {
