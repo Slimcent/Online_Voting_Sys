@@ -6,6 +6,7 @@ using NLog;
 using OnlineVoting.Api.Data;
 using OnlineVoting.Api.Mapper;
 using OnlineVoting.Api.Middlewares;
+using OnlineVoting.Api.SeedData.Admin;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities.Email;
 using OnlineVoting.Services.Infrastructures.Jwt;
@@ -34,6 +35,9 @@ builder.Services.AddScoped<IJwtAuthenticator, JwtAuthenticator>();
 //builder.Services.AddScoped<JwtAuthentication>();
 
 builder.Services.AddAuthentication();
+
+// Configure SeedData
+builder.Services.BindSeedConfig(builder.Configuration);
 
 builder.Services.AddControllers(setupAction =>
 {
@@ -78,6 +82,9 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+await SeedAppData.EnsurePopulated(app);
+
+//SeedStudent.EnsurePopulated(app);
+
 app.Run();
 
-SeedStudent.EnsurePopulated(app);

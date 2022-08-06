@@ -11,6 +11,9 @@ namespace OnlineVoting.Models.Entities
             IsActive = true;
         }
 
+
+        public string? LastName { get; set; }
+        public string? FirstName { get; set; }
         public bool IsActive { get; set; }
         public UserType UserTypeId { get; set; }
         public DateTime CreatedAt { get; set; }
