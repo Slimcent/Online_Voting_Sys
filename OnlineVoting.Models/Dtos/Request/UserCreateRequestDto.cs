@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using OnlineVoting.Models.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace OnlineVoting.Models.Dtos.Request
 {
@@ -10,6 +11,9 @@ namespace OnlineVoting.Models.Dtos.Request
 
         [Required(ErrorMessage = "Email is required"), EmailAddress]
         public string? Email { get; set; }
+
+        [Required]
+        public UserType UserType { get; set; }
 
         [Required]
         public string? Role { get; set; }
