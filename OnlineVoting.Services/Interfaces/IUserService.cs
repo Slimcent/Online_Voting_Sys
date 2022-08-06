@@ -7,6 +7,7 @@ namespace OnlineVoting.Services.Interfaces
     {
         Task<string> CreateUser(UserCreateRequestDto model);
         Task<LoggedInUserDto> UserLogin(LoginDto request);
+        Task<string> VerifyUser(VerifyAccountRequestDto request);
         Task<UserClaimsResponseDto> CreateUserClaims(string email, string claimType, string claimValue);
         Task<string> DeleteClaims(UserClaimsRequestDto request);
         Task<EditUserClaimsDto> EditUserClaims(EditUserClaimsDto userClaimsDto);

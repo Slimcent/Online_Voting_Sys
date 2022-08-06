@@ -6,12 +6,6 @@ namespace OnlineVoting.Models.Entities
 {
     public class User : IdentityUser, ITracker
     {
-        public User()
-        {
-            IsActive = true;
-        }
-
-
         public string? LastName { get; set; }
         public string? FirstName { get; set; }
         public bool IsActive { get; set; }

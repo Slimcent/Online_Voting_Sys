@@ -72,7 +72,7 @@ namespace OnlineVoting.Services.Extension
             string filePath = Directory.GetCurrentDirectory() + "\\Template\\EmailTemplate.html";
             string MailText = GetFilePath(filePath);
 
-            string encodedUsername = MessageEncoder.EncodeString(request.ToName);
+            string encodedUsername = MessageEncoder.EncodeString(request.ToEmail);
             string encodedEmailConfirmationToken = MessageEncoder.EncodeString(request.EmailConfirmationToken);
             string encodedResetPasswordToken = MessageEncoder.EncodeString(request.ResetPasswordToken);
                         

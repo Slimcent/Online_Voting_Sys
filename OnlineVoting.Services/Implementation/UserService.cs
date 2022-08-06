@@ -7,6 +7,7 @@ using OnlineVoting.Models.Dtos.Response.Jwt;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Extension;
+using OnlineVoting.Services.Infrastructures;
 using OnlineVoting.Services.Infrastructures.Jwt;
 using OnlineVoting.Services.Interfaces;
 using System.Security.Claims;
@@ -124,6 +125,41 @@ namespace OnlineVoting.Services.Implementation
                     }
             }
             return new LoggedInUserDto { JwtToken = userToken, UserType = userType, FullName = fullName };
+        }
+
+        public async Task<string> VerifyUser(VerifyAccountRequestDto request)
+        {
+            string username = MessageEncoder.DecodeString(request.Username);
+            string emailConfirmationToken = MessageEncoder.DecodeString(request.EmailConfirmationToken);
+            string resetPasswordToken = MessageEncoder.DecodeString(request.ResetPasswordToken);
+
+            User user = await _userManager.FindByNameAsync(username);
+
+            if (user == null)
+                throw new InvalidOperationException("Invalid username");
+
+            if (!await _userManager.VerifyUserTokenAsync(user, _userManager.Options.Tokens.EmailConfirmationTokenProvider, "EmailConfirmation", emailConfirmationToken))
+                throw new InvalidOperationException("Invalid Authentication Token");
+
+            if (!await _userManager.VerifyUserTokenAsync(user, _userManager.Options.Tokens.PasswordResetTokenProvider, "ResetPassword", resetPasswordToken))
+                throw new InvalidOperationException("Invalid Authentication Token");
+
+            IdentityResult emailResult = await _userManager.ConfirmEmailAsync(user, emailConfirmationToken);
+            IdentityResult passwordResult = await _userManager.ResetPasswordAsync(user, resetPasswordToken, request.NewPassword);
+
+
+            if (emailResult.Succeeded && passwordResult.Succeeded)
+            {
+                user.IsActive = true;
+                await _userManager.UpdateAsync(user);
+
+                return "Password reset was successful";
+            }
+
+            string errorMessage = string.Join("\n", emailResult.Errors.Select(e => e.Description).ToList()) +
+                                  string.Join("\n", passwordResult.Errors.Select(e => e.Description).ToList());
+
+            throw new InvalidOperationException(errorMessage);
         }
 
         public async Task<UserClaimsResponseDto> CreateUserClaims(string email, string claimType, string claimValue)
