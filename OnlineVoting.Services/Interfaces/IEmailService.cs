@@ -7,5 +7,6 @@ namespace OnlineVoting.Services.Interfaces
         Task SendVoterEmail(VoterEmailDto request);
         Task SendCreateUserEmail(UserMailDto request);
         Task<string> SendResetPasswordEmail(string email);
+        Task<string> SendChangeEmail(ChangeEmailDto request);
     }
 }

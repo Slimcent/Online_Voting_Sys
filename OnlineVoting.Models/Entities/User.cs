@@ -8,6 +8,7 @@ namespace OnlineVoting.Models.Entities
     {
         public string? LastName { get; set; }
         public string? FirstName { get; set; }
+        public string? RecoveryEmail { get; set; }
         public bool IsActive { get; set; }
         public UserType UserTypeId { get; set; }
         public DateTime CreatedAt { get; set; }

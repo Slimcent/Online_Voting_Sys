@@ -92,6 +92,36 @@ namespace OnlineVoting.Services.Implementation
             return "A link to reset your password will be sent to you if an account with this email exist";
         }
 
+        public async Task<string> SendChangeEmail(ChangeEmailDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.NewEmail.ToLower().Trim()) || string.IsNullOrWhiteSpace(request.RecoveryEmail.ToLower().Trim()))
+                throw new InvalidOperationException("Invalid data sent");
+
+            User user = await _userManager.FindByEmailAsync(request.Email);
+            if (user == null)
+                return "User not found";
+
+            string changeEmailToken = await _userManager.GenerateChangeEmailTokenAsync(user, request.NewEmail);
+
+            EmailRequestDto emailRequest = new()
+            {
+                FromName = _emailSettings.SenderName,
+                FromEmail = _emailSettings.SenderEmail,
+                ToName = user.FirstName,
+                ToEmail = user.RecoveryEmail,
+                AppUrl = _emailSettings?.AppUrl,
+                RecoveryEmail = user.RecoveryEmail,
+                NewEmail = request.NewEmail,
+                ChangeEmailToken = changeEmailToken
+            };
+
+            EmailDataDto emailData = EmailExtension.ChangeEmailData(emailRequest);
+
+            await SendEmail(emailData);
+
+            return "A link to change your email will be sent to you if an account with this email exist";
+        }
+
         private async Task<bool> SendEmail(EmailDataDto request)
         {
             SmtpClient client = new();

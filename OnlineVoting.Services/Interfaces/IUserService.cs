@@ -11,6 +11,8 @@ namespace OnlineVoting.Services.Interfaces
         Task<string> VerifyUser(VerifyAccountRequestDto request);
         Task<string> ResetPassword(ResetPasswordRequestDto request);
         Task<string> ChangePassword(string userId, ChangePasswordRequestDto request);
+        Task<string> UpdateRecoveryEmail(string userId, string email);
+        Task<string> ChangeEmail(string userId, ChangeEmailRequestDto request);
         Task<UserClaimsResponseDto> CreateUserClaims(string email, string claimType, string claimValue);
         Task<string> DeleteClaims(UserClaimsRequestDto request);
         Task<EditUserClaimsDto> EditUserClaims(EditUserClaimsDto userClaimsDto);

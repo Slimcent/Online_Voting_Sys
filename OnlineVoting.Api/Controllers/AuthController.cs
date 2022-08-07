@@ -55,5 +55,25 @@ namespace OnlineVoting.Api.Controllers
         {
             return Ok(await _userService.ChangePassword(userId, request));
         }
+
+        [HttpPost("update-recovery-email", Name = "Update-Recovery-Email")]
+        public async Task<IActionResult> UpdateRecoveryEmail(string userId, string email)
+        {
+            await _userService.UpdateRecoveryEmail(userId, email);
+            return Ok();
+        }
+
+        [HttpPost("send-change-email-mail", Name = "send-change-email-mail")]
+        public async Task<IActionResult> SendResetEmail(ChangeEmailDto request)
+        {
+            return Ok(await _emailService.SendChangeEmail(request));
+        }
+
+        [AllowAnonymous]
+        [HttpPost("change-email", Name = "Change-Email")]
+        public async Task<IActionResult> ChangeEmail(string userId, ChangeEmailRequestDto request)
+        {
+            return Ok(await _userService.ChangeEmail(userId, request));
+        }
     }
 }

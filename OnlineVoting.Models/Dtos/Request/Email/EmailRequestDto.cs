@@ -9,6 +9,9 @@
         public string? AppUrl { get; set; }
         public string? VotingCode { get; set; }
         public string? EmailConfirmationToken { get; set; }
+        public string? ChangeEmailToken { get; set; }
         public string? ResetPasswordToken { get; set; }
+        public string? NewEmail { get; set; }
+        public string? RecoveryEmail { get; set; }
     }
 }

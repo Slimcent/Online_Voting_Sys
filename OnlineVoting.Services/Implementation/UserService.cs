@@ -202,6 +202,47 @@ namespace OnlineVoting.Services.Implementation
             throw new InvalidOperationException(errorMessage);
         }
 
+        public async Task<string> UpdateRecoveryEmail(string userId, string email)
+        {
+
+            User user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+                throw new InvalidOperationException("User not found!");
+
+            if (email == user.Email)
+                return "Recovery emsil cannot be same as your email";
+
+            user.RecoveryEmail = email;
+            await _userManager.UpdateAsync(user);
+
+            return "Recovery email updated successfully";
+        }
+
+        public async Task<string> ChangeEmail(string userId, ChangeEmailRequestDto request)
+        {
+            string decodedNewEmail = MessageEncoder.DecodeString(request.NewEmail);
+            string decodedToken = MessageEncoder.DecodeString(request.Token);
+
+            User user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+                return "User not found";
+
+            await SaveChangedEmail(user, decodedNewEmail, decodedToken);
+
+            return "Email changed successfully";
+        }
+
+        private async Task SaveChangedEmail(User user, string decodedNewEmail, string decodedToken)
+        {
+            var rse = await _userManager.ChangeEmailAsync(user, decodedNewEmail, decodedToken);
+            await _userManager.UpdateNormalizedEmailAsync(user);
+            user.UserName = decodedNewEmail;
+            await _userManager.UpdateNormalizedUserNameAsync(user);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
         public async Task<UserClaimsResponseDto> CreateUserClaims(string email, string claimType, string claimValue)
         {
             var user = await _userManager.FindByEmailAsync(email.ToString().ToLower());
