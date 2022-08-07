@@ -64,6 +64,34 @@ namespace OnlineVoting.Services.Implementation
             await SendEmail(emailData);
         }
 
+        public async Task<string> SendResetPasswordEmail(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+                throw new InvalidOperationException("Enter an email");
+
+            User user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+                return "A link to reset your password will be sent to you if an account with this email exist";
+
+            string resetPasswordToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            EmailRequestDto emailRequest = new()
+            {
+                FromName = _emailSettings.SenderName,
+                FromEmail = _emailSettings.SenderEmail,
+                ToName = user.FirstName,
+                ToEmail = user.Email,
+                AppUrl = _emailSettings?.AppUrl,
+                ResetPasswordToken = resetPasswordToken
+            };
+
+            EmailDataDto emailData = EmailExtension.ResetPasswordEmailData(emailRequest);
+
+            await SendEmail(emailData);
+
+            return "A link to reset your password will be sent to you if an account with this email exist";
+        }
+
         private async Task<bool> SendEmail(EmailDataDto request)
         {
             SmtpClient client = new();

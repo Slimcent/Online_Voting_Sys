@@ -111,18 +111,19 @@ namespace OnlineVoting.Services.Implementation
             switch (userType)
             {
                 case "Staff":
-                    {
-                        Staff staff = await _staffRepo.GetSingleByAsync(x => x.UserId == user.Id);
-                        fullName = $"{staff.LastName} {staff.FirstName}";
-                        break;
-                    }
+                {
+                    Staff staff = await _staffRepo.GetSingleByAsync(x => x.UserId == user.Id);
+
+                    fullName = $"{staff.LastName} {staff.FirstName}";
+                    break;
+                }
                 case "Student":
-                    {
-                        Student student = await _studentRepo.GetSingleByAsync(x => x.UserId == user.Id);
+                {
+                    Student student = await _studentRepo.GetSingleByAsync(x => x.UserId == user.Id);
                                                 
-                        fullName = $"{student.LastName} {student.FirstName}";
-                        break;
-                    }
+                    fullName = $"{student.LastName} {student.FirstName}";
+                    break;
+                }
             }
             return new LoggedInUserDto { JwtToken = userToken, UserType = userType, FullName = fullName };
         }
@@ -147,7 +148,6 @@ namespace OnlineVoting.Services.Implementation
             IdentityResult emailResult = await _userManager.ConfirmEmailAsync(user, emailConfirmationToken);
             IdentityResult passwordResult = await _userManager.ResetPasswordAsync(user, resetPasswordToken, request.NewPassword);
 
-
             if (emailResult.Succeeded && passwordResult.Succeeded)
             {
                 user.IsActive = true;
@@ -158,6 +158,46 @@ namespace OnlineVoting.Services.Implementation
 
             string errorMessage = string.Join("\n", emailResult.Errors.Select(e => e.Description).ToList()) +
                                   string.Join("\n", passwordResult.Errors.Select(e => e.Description).ToList());
+
+            throw new InvalidOperationException(errorMessage);
+        }
+
+        public async Task<string> ResetPassword(ResetPasswordRequestDto request)
+        {
+            string decodedEmail = MessageEncoder.DecodeString(request.Email);
+            string decodedToken = MessageEncoder.DecodeString(request.ResetPasswordToken);
+
+            User user = await _userManager.FindByEmailAsync(decodedEmail);
+
+            if (user == null)
+                throw new InvalidOperationException("Invalid email");
+
+            if (!await _userManager.VerifyUserTokenAsync(user, _userManager.Options.Tokens.PasswordResetTokenProvider, "ResetPassword", decodedToken))
+                throw new InvalidOperationException("Invalid Authentication Token");
+
+            IdentityResult result = await _userManager.ResetPasswordAsync(user, decodedToken, request.NewPassword);
+
+            if (result.Succeeded)
+                return "Password reset was successful";
+
+            string errorMessage = string.Join("\n", result.Errors.Select(e => e.Description).ToList());
+
+            throw new InvalidOperationException(errorMessage);
+        }
+
+        public async Task<string> ChangePassword(string userId, ChangePasswordRequestDto request)
+        {
+            User user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+                throw new InvalidOperationException("User not found");
+
+            IdentityResult result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+
+            if (result.Succeeded)
+                return "Password changed successfully";
+
+            string errorMessage = string.Join("\n", result.Errors.Select(e => e.Description).ToList());
 
             throw new InvalidOperationException(errorMessage);
         }
