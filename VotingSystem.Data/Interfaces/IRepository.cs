@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Query;
 using OnlineVoting.Models.Pagination;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace VotingSystem.Data.Interfaces
 {

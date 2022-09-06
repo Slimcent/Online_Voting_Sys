@@ -1,4 +1,6 @@
-﻿namespace VotingSystem.Data.Interfaces
+﻿using System.Threading.Tasks;
+
+namespace VotingSystem.Data.Interfaces
 {
     public interface IUnitOfWork : IDisposable
     {

@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OnlineVoting.Services", "On
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VotingSystem.Logger", "VotingSystem.Logger\VotingSystem.Logger.csproj", "{A2985313-E011-4B63-A7C7-BA96AC9CD5FC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VotingSystem.Data", "VotingSystem.Data\VotingSystem.Data.csproj", "{AF59832A-8238-4A9E-9486-88FF346A3ED9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VotingSystem.Data", "VotingSystem.Data\VotingSystem.Data.csproj", "{AF59832A-8238-4A9E-9486-88FF346A3ED9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

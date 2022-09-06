@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using VotingSystem.Data.Interfaces;
+using System.Threading.Tasks;
 
 namespace VotingSystem.Data.Implementation
 {

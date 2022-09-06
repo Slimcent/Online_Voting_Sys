@@ -60,6 +60,8 @@ namespace OnlineVoting.Models.Context
         public virtual DbSet<Faculty> Faculties { get; set; }
         public virtual DbSet<Staff> StaffProfile { get; set; }
         public virtual DbSet<Address> Addresses { get; set; }
+        public virtual DbSet<Menu> Menus { get; set; }
+        public virtual DbSet<Claims> Claims { get; set; }
 
 
 

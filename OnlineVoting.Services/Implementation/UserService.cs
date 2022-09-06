@@ -88,7 +88,7 @@ namespace OnlineVoting.Services.Implementation
 
             JwtToken userToken = await GetTokenAsync(user);
 
-            List<Claim> userClaims = (await _userManager.GetClaimsAsync(user)).ToList();
+            List<System.Security.Claims.Claim> userClaims = (await _userManager.GetClaimsAsync(user)).ToList<System.Security.Claims.Claim>();
             List<string> userRoles = (await _userManager.GetRolesAsync(user)).ToList();
 
             foreach (string userRole in userRoles)
@@ -96,8 +96,8 @@ namespace OnlineVoting.Services.Implementation
                 Role role = await _roleManager.FindByNameAsync(userRole);
                 if (role != null)
                 {
-                    IList<Claim> roleClaims = await _roleManager.GetClaimsAsync(role);
-                    foreach (Claim roleClaim in roleClaims)
+                    IList<System.Security.Claims.Claim> roleClaims = await _roleManager.GetClaimsAsync(role);
+                    foreach (System.Security.Claims.Claim roleClaim in roleClaims)
                     {
                         userClaims.Add(roleClaim);
                     }
@@ -241,94 +241,6 @@ namespace OnlineVoting.Services.Implementation
             user.UserName = decodedNewEmail;
             await _userManager.UpdateNormalizedUserNameAsync(user);
             await _unitOfWork.SaveChangesAsync();
-        }
-
-        public async Task<UserClaimsResponseDto> CreateUserClaims(string email, string claimType, string claimValue)
-        {
-            var user = await _userManager.FindByEmailAsync(email.ToString().ToLower());
-            if (user == null)
-                throw new UserNotFoundException(email);
-
-            Claim claim = new Claim(claimType, claimValue, ClaimValueTypes.String);
-
-            IdentityResult result = await _userManager.AddClaimAsync(user, claim);
-
-            if (result.Succeeded)
-                return new UserClaimsResponseDto { ClaimType = claimType, ClaimValue = claimValue };
-
-            var errorMessage = string.Empty;
-
-            if (result.Errors.Any())
-            {
-                errorMessage = string.Join('\n', result.Errors);
-            }
-
-            throw new InvalidOperationException(errorMessage);
-        }
-
-        public async Task<string> DeleteClaims(UserClaimsRequestDto request)
-        {
-            var user = await _userManager.FindByEmailAsync(request.Email);
-            if (user == null)
-                throw new UserNotFoundException(request.Email);
-
-            var claim = new Claim(request.ClaimType, request.ClaimValue);
-
-            IdentityResult result = await _userManager.RemoveClaimAsync(user, claim);
-
-            if (result.Succeeded)
-                return "User removed from claim successfully";
-
-            var errorMessage = string.Empty;
-
-            if (result.Errors.Any())
-            {
-                errorMessage = string.Join('\n', result.Errors);
-            }
-
-            throw new InvalidOperationException(errorMessage);
-        }
-
-        public async Task<EditUserClaimsDto> EditUserClaims(EditUserClaimsDto userClaimsDto)
-        {
-            var user = await _userManager.FindByEmailAsync(userClaimsDto.Email.ToString().Trim());
-            if (user == null)
-                throw new UserNotFoundException(userClaimsDto.Email);
-
-            Claim newClaim = new(userClaimsDto.ClaimType.Trim().ToLower(), userClaimsDto.ClaimValue.Trim().ToLower());
-
-            var oldClaim = new Claim(userClaimsDto.ClaimType.Trim().ToLower(), userClaimsDto.OldValue.Trim().ToLower());
-
-            var result = await _userManager.ReplaceClaimAsync(user, oldClaim, newClaim);
-
-            if (result.Succeeded)
-                return new EditUserClaimsDto { Email = userClaimsDto.Email, ClaimType = userClaimsDto.ClaimType, ClaimValue = userClaimsDto.ClaimValue, OldValue = userClaimsDto.OldValue };
-
-
-            var errorMessage = string.Empty;
-
-            if (result.Errors.Any())
-                errorMessage = string.Join('\n', result.Errors);
-            
-            throw new InvalidOperationException(errorMessage);
-        }
-
-        public async Task<IEnumerable<UserClaimsResponseDto>> GetUserClaims(string email)
-        {
-            var user = await _userManager.FindByEmailAsync(email);
-
-            if (user == null)
-                throw new UserNotFoundException(email);
-
-            var claim = await _userManager.GetClaimsAsync(user);
-
-            var dto = claim.Select(x => new UserClaimsResponseDto
-            {
-                ClaimType = x.Type,
-                ClaimValue = x.Value
-            });
-
-            return dto;
         }
 
         private async Task<JwtToken> GetTokenAsync(User user)

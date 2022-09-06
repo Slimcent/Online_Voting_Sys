@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.GlobalMessage;
 using OnlineVoting.Services.Interfaces;
@@ -10,14 +9,14 @@ namespace OnlineVoting.Api.Controllers
     [ApiController]
     public class ClaimsController : ControllerBase
     {
-        private readonly IUserService _userService;
+        private readonly IClaimsService _claimsService;
 
-        public ClaimsController(IUserService userService) => _userService = userService;
+        public ClaimsController(IClaimsService claimsService) => _claimsService = claimsService;
 
         [HttpPost("addusertoclaims")]
         public async Task<IActionResult> AddUserToClaims(string email, string claimType, string claimValue)
         {
-            var user = await _userService.CreateUserClaims(email, claimType, claimValue);
+            var user = await _claimsService.CreateUserClaims(email, claimType, claimValue);
 
             return Ok(user);
         }
@@ -25,7 +24,7 @@ namespace OnlineVoting.Api.Controllers
         [HttpPost("deleteclaim")]
         public async Task<IActionResult> DeleteClaim(UserClaimsRequestDto request)
         {
-            var user = await _userService.DeleteClaims(request);
+            var user = await _claimsService.DeleteClaims(request);
 
             return Ok(user);
         }
@@ -33,7 +32,7 @@ namespace OnlineVoting.Api.Controllers
         [HttpPost("editclaim")]
         public async Task<IActionResult> EditClaim(EditUserClaimsDto editUserClaims)
         {
-            var user = await _userService.EditUserClaims(editUserClaims);
+            var user = await _claimsService.EditUserClaims(editUserClaims);
 
             return Ok(user);
         }
@@ -41,7 +40,7 @@ namespace OnlineVoting.Api.Controllers
         [HttpGet("userclaims")]
         public async Task<IActionResult> GetUserClaims(string email)
         {
-            var userClaims = await _userService.GetUserClaims(email);
+            var userClaims = await _claimsService.GetUserClaims(email);
 
             if (userClaims.Any())
                 return Ok(userClaims);

@@ -35,7 +35,7 @@ namespace OnlineVoting.Services.Infrastructures.Jwt
             return new JwtSecurityTokenHandler().WriteToken(tokenOptions);
         }
 
-        private JwtSecurityToken GenerateTokenOptions(SigningCredentials signingCredentials, List<Claim> claims)
+        private JwtSecurityToken GenerateTokenOptions(SigningCredentials signingCredentials, List<System.Security.Claims.Claim> claims)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
             IdentityOptions _options = new();
@@ -64,9 +64,9 @@ namespace OnlineVoting.Services.Infrastructures.Jwt
             return new SigningCredentials(secret, SecurityAlgorithms.HmacSha256);
         }
 
-        public async Task<List<Claim>> GetRoleClaims()
+        public async Task<List<System.Security.Claims.Claim>> GetRoleClaims()
         {
-            List<Claim> claims = new();      // Declared an empty list of claims
+            List<System.Security.Claims.Claim> claims = new();      // Declared an empty list of claims
 
             var userClaims = await _userManager.GetClaimsAsync(_user);      // Get all the claims associated to a user
 
@@ -76,14 +76,14 @@ namespace OnlineVoting.Services.Infrastructures.Jwt
 
             foreach (var userRole in userRoles)       // Looping through all the roles of the user
             {
-                claims.Add(new Claim(ClaimTypes.Role, userRole));        // Adding userRole to the list of claims declared above
+                claims.Add(new System.Security.Claims.Claim(ClaimTypes.Role, userRole));        // Adding userRole to the list of claims declared above
 
                 var role = await _roleManager.FindByNameAsync(userRole);      // Get the name of the role in the list of the userRoles above
                 if (role != null)
                 {
                     var roleClaims = await _roleManager.GetClaimsAsync(role);      // Get all the claims associated to a role
 
-                    foreach (Claim roleClaim in roleClaims)           // Looping through those claims from a particalar role
+                    foreach (System.Security.Claims.Claim roleClaim in roleClaims)           // Looping through those claims from a particalar role
                     {
                         claims.Add(roleClaim);           // Adding those claims from a role to a user
                     }
