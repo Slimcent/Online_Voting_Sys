@@ -37,8 +37,6 @@ namespace OnlineVoting.Services.Helpers
             List<Claim> userClaims = (await _userManager.GetClaimsAsync(user)).ToList();
             List<string> userRoles = (await _userManager.GetRolesAsync(user)).ToList();
 
-
-
             foreach (string userRole in userRoles)
             {
                 Role role = await _roleManager.FindByNameAsync(userRole);
