@@ -88,7 +88,7 @@ namespace OnlineVoting.Services.Implementation
 
             JwtToken userToken = await GetTokenAsync(user);
 
-            List<System.Security.Claims.Claim> userClaims = (await _userManager.GetClaimsAsync(user)).ToList<System.Security.Claims.Claim>();
+            List<Claim> userClaims = (await _userManager.GetClaimsAsync(user)).ToList<System.Security.Claims.Claim>();
             List<string> userRoles = (await _userManager.GetRolesAsync(user)).ToList();
 
             foreach (string userRole in userRoles)
@@ -96,8 +96,8 @@ namespace OnlineVoting.Services.Implementation
                 Role role = await _roleManager.FindByNameAsync(userRole);
                 if (role != null)
                 {
-                    IList<System.Security.Claims.Claim> roleClaims = await _roleManager.GetClaimsAsync(role);
-                    foreach (System.Security.Claims.Claim roleClaim in roleClaims)
+                    IList<Claim> roleClaims = await _roleManager.GetClaimsAsync(role);
+                    foreach (Claim roleClaim in roleClaims)
                     {
                         userClaims.Add(roleClaim);
                     }
