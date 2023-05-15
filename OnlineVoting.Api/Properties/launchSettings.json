@@ -22,7 +22,7 @@
   },
   "AspNetCore": {
     "ProcessPath": "dotnet",
-    "Arguments": "C:/Users/obinn/source/repos/Online_Voting_Sys/OnlineVoting.Api/bin/Release/net6.0/OnlineVoting.Api.dll"
+    "Arguments": "./OnlineVoting.Api.dll"
   },
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "iisSettings": {
