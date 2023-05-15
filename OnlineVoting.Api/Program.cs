@@ -12,6 +12,7 @@ using OnlineVoting.Models.Entities.Email;
 using OnlineVoting.Services.Infrastructures.Jwt;
 using System.Text.Json.Serialization;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 LogManager.LoadConfiguration(string.Concat(Directory.GetCurrentDirectory(),
@@ -20,6 +21,7 @@ LogManager.LoadConfiguration(string.Concat(Directory.GetCurrentDirectory(),
 // Add services to the container.
 
 //builder.Services.AddControllers();
+
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("SmtpSettings"));
 
 //builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
