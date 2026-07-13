@@ -1,3 +1,4 @@
+using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,15 @@ using OnlineVoting.Services.Infrastructures.Jwt;
 using System.Text;
 using System.Text.Json.Serialization;
 
+
+string environmentFilePath = Path.Combine(Directory.GetCurrentDirectory(), "OnlineVoting.Api", ".env");
+
+if (!File.Exists(environmentFilePath))
+{
+    environmentFilePath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+}
+
+Env.Load(environmentFilePath);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -117,4 +127,3 @@ await SeedAppData.EnsurePopulated(app);
 //SeedStudent.EnsurePopulated(app);
 
 app.Run();
-
