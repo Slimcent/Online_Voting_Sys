@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Pagination;
@@ -8,7 +9,8 @@ namespace OnlineVoting.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class RolesController : ControllerBase
+    [Authorize]
+    public class RolesController : BaseController
     {
         private readonly IRolesService _roleService;
         public RolesController(IRolesService roleService) => _roleService = roleService;

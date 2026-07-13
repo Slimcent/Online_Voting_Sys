@@ -1,5 +1,10 @@
+using DotNetEnv;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NLog;
@@ -9,35 +14,70 @@ using OnlineVoting.Api.Middlewares;
 using OnlineVoting.Api.SeedData.Admin;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities.Email;
+using OnlineVoting.Services.Helpers;
+using OnlineVoting.Services.Infrastructures;
 using OnlineVoting.Services.Infrastructures.Jwt;
+using System.Text;
 using System.Text.Json.Serialization;
+
+
+string environmentFilePath = Path.Combine(Directory.GetCurrentDirectory(), "OnlineVoting.Api", ".env");
+
+if (!File.Exists(environmentFilePath))
+{
+    environmentFilePath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+}
+
+Env.Load(environmentFilePath);
 
 var builder = WebApplication.CreateBuilder(args);
 
 LogManager.LoadConfiguration(string.Concat(Directory.GetCurrentDirectory(),
                 "/Nlog/nlog.config"));
 
-// Add services to the container.
-
-//builder.Services.AddControllers();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("SmtpSettings"));
 
 //builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 
 builder.Services.AddScoped<DbContext, VotingDbContext>();
 
-builder.Services.ConfigureJWT(builder.Configuration);
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+    .AddJwtBearer(jwt =>
+    {
 
-//builder.Services.AddScoped<IAuthenticationManager, AuthenticationManager>();
+            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+            var key = Encoding.ASCII.GetBytes(jwtSettings.GetSection("Secret").Value);
 
-builder.Services.AddScoped<IJwtAuthenticator, JwtAuthenticator>();
+            jwt.SaveToken = true;
+            jwt.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                RequireExpirationTime = true,
+                ValidIssuer = jwtSettings.GetSection("validIssuer").Value,
+                ValidAudience = jwtSettings.GetSection("validAudience").Value,
+                ClockSkew = TimeSpan.Zero
+            };
+    });
 
-//builder.Services.AddScoped<JwtAuthentication>();
+builder.Services.AddAuthorization(cfg =>
+{
+    cfg.AddPolicy("Authorization", policy => policy.Requirements.Add(new AuthorizationRequirment()));
+});
 
-builder.Services.AddAuthentication();
 
 // Configure SeedData
 builder.Services.BindSeedConfig(builder.Configuration);
+builder.Services.AddRepositories();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddControllers(setupAction =>
 {
@@ -61,9 +101,8 @@ builder.Services.AddDBConnection(builder.Configuration);
 builder.Services.ConfigureLoggerService();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.ConfigureSwagger();
 builder.Services.AddAutoMapper(typeof(MappingProfile));
-builder.Services.AddRepositories();
 
 var app = builder.Build();
 
@@ -78,6 +117,7 @@ app.ConfigureExceptionHandler();
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
@@ -87,4 +127,3 @@ await SeedAppData.EnsurePopulated(app);
 //SeedStudent.EnsurePopulated(app);
 
 app.Run();
-

@@ -71,7 +71,7 @@ namespace OnlineVoting.Services.Implementation
             return user.Id;
         }
 
-        public async Task<LoggedInUserDto> UserLogin(LoginDto request)
+        public async Task<LoggedInUserResponse> UserLogin(LoginDto request)
         {
             User user = await _userManager.FindByNameAsync(request.Email.ToLower().Trim());
 
@@ -82,11 +82,13 @@ namespace OnlineVoting.Services.Implementation
                 throw new InvalidOperationException("Account is not active, contact the admin");
 
             bool result = await _userManager.CheckPasswordAsync(user, request.Password);
-
             if (!result)
                 throw new InvalidOperationException("Invalid email or password");
 
-            JwtToken userToken = await GetTokenAsync(user);
+            List<string> allUserRoles = (await _userManager.GetRolesAsync(user)).ToList();
+            string uRole = allUserRoles.FirstOrDefault();
+
+            JwtToken userToken = await GetTokenAsync(user, uRole);
 
             List<Claim> userClaims = (await _userManager.GetClaimsAsync(user)).ToList<Claim>();
             List<string> userRoles = (await _userManager.GetRolesAsync(user)).ToList();
@@ -125,7 +127,7 @@ namespace OnlineVoting.Services.Implementation
                     break;
                 }
             }
-            return new LoggedInUserDto { JwtToken = userToken, UserType = userType, FullName = fullName };
+            return new LoggedInUserResponse { JwtToken = userToken, UserType = userType, FullName = fullName };
         }
 
         public async Task<string> VerifyUser(VerifyAccountRequestDto request)
@@ -243,10 +245,10 @@ namespace OnlineVoting.Services.Implementation
             await _unitOfWork.SaveChangesAsync();
         }
 
-        private async Task<JwtToken> GetTokenAsync(User user)
+        private async Task<JwtToken> GetTokenAsync(User user, string role)
         {
             var authenticator = _serviceFactory.GetService<IJwtAuthenticator>();
-            JwtToken jwt = await authenticator.GenerateJwtToken(user);
+            JwtToken jwt = await authenticator.GenerateJwtToken(user, role);
 
             return jwt;
         }

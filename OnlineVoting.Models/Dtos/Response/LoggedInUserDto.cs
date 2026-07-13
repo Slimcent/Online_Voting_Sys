@@ -2,7 +2,7 @@
 
 namespace OnlineVoting.Models.Dtos.Response
 {
-    public class LoggedInUserDto
+    public class LoggedInUserResponse
     {
         public JwtToken? JwtToken { get; set; }
         public string? UserType { get; set; }
