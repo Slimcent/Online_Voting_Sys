@@ -7,7 +7,7 @@ namespace OnlineVoting.Services.Interfaces
     public interface IUserService
     {
         Task<string> CreateUser(UserCreateRequestDto model);
-        Task<LoggedInUserDto> UserLogin(LoginDto request);
+        Task<LoggedInUserResponse> UserLogin(LoginDto request);
         Task<string> VerifyUser(VerifyAccountRequestDto request);
         Task<string> ResetPassword(ResetPasswordRequestDto request);
         Task<string> ChangePassword(string userId, ChangePasswordRequestDto request);
