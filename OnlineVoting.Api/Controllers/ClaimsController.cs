@@ -45,7 +45,7 @@ namespace OnlineVoting.Api.Controllers
             if (userClaims.Any())
                 return Ok(userClaims);
 
-            return BadRequest(new ErrorResponse { Message = $"No Claims found for user {email}" });
+            return BadRequest(new ResponseError { Message = $"No Claims found for user {email}" });
         }
 
     }
