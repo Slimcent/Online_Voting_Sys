@@ -61,11 +61,13 @@ namespace OnlineVoting.Api.Middlewares
 
         public static IServiceCollection AddDBConnection(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<VotingDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("VotingConnection"),
-                     b => b.MigrationsAssembly("OnlineVoting.Api")
-                ));
+            string connectionString = configuration.GetConnectionString("VotingConnection");
 
+            if (string.IsNullOrWhiteSpace(connectionString))
+                throw new InvalidOperationException("The connection string 'VotingConnection' was not found.");
+
+            services.AddDbContext<VotingDbContext>(options => options.UseSqlServer(connectionString, b => b.MigrationsAssembly("OnlineVoting.Api")
+                ));
 
             services.AddIdentity<User, Role>(o =>
             {
