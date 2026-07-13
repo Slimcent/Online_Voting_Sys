@@ -90,7 +90,7 @@ namespace OnlineVoting.Services.Implementation
 
             JwtToken userToken = await GetTokenAsync(user, uRole);
 
-            List<Claim> userClaims = (await _userManager.GetClaimsAsync(user)).ToList<Claim>();
+            List<Claim> userClaims = (await _userManager.GetClaimsAsync(user)).ToList<System.Security.Claims.Claim>();
             List<string> userRoles = (await _userManager.GetRolesAsync(user)).ToList();
 
             foreach (string userRole in userRoles)
