@@ -1,12 +1,15 @@
 ﻿using DinkToPdf;
 using DinkToPdf.Contracts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Entities.Email;
+using OnlineVoting.Services.Helpers;
 using OnlineVoting.Services.Implementation;
 using OnlineVoting.Services.Infrastructures.Jwt;
 using OnlineVoting.Services.Interfaces;
@@ -37,6 +40,8 @@ namespace OnlineVoting.Api.Middlewares
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
             services.AddTransient<IUnitOfWork, UnitOfWork<VotingDbContext>>();
+            services.AddTransient<IJwtAuthenticator, JwtAuthenticator>();
+            services.AddTransient<IAuthorizationHandler, CustomAuthorizationHandler>();
             services.AddTransient<IStudentService, StudentService>();
             services.AddTransient<IUserService, UserService>();
             services.AddTransient<IRolesService, RolesService>();
@@ -56,11 +61,13 @@ namespace OnlineVoting.Api.Middlewares
 
         public static IServiceCollection AddDBConnection(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<VotingDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("VotingConnection"),
-                     b => b.MigrationsAssembly("OnlineVoting.Api")
-                ));
+            string connectionString = configuration.GetConnectionString("VotingConnection");
 
+            if (string.IsNullOrWhiteSpace(connectionString))
+                throw new InvalidOperationException("The connection string 'VotingConnection' was not found.");
+
+            services.AddDbContext<VotingDbContext>(options => options.UseSqlServer(connectionString, b => b.MigrationsAssembly("OnlineVoting.Api")
+                ));
 
             services.AddIdentity<User, Role>(o =>
             {
@@ -108,6 +115,40 @@ namespace OnlineVoting.Api.Middlewares
                     //IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
                     IssuerSigningKey = new SymmetricSecurityKey(key)
                 };
+            });
+        }
+
+        public static void ConfigureSwagger(this IServiceCollection services)
+        {
+            services.AddSwaggerGen(c =>
+            {
+                c.EnableAnnotations();
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Online-Voting", Version = "v1" });
+
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer 1safsfsdfdfd\""
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    },
+                });
             });
         }
     }

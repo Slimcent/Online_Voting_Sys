@@ -29,7 +29,7 @@ namespace OnlineVoting.Api.Controllers
             if (allStaff.Any())
                 return Ok(allStaff);
 
-            return BadRequest(new ErrorResponse { Status = ResponseStatus.NOT_FOUND, Message = $"No User found" });
+            return BadRequest(new ResponseError { Status = ResponseStatus.NOT_FOUND, Message = $"No User found" });
         }
 
         [HttpGet("all-active-staff", Name = "All-Active-Staff")]
@@ -40,7 +40,7 @@ namespace OnlineVoting.Api.Controllers
             if (allStaff.Any())
                 return Ok(allStaff);
 
-            return BadRequest(new ErrorResponse { Status = ResponseStatus.NOT_FOUND, Message = $"No User found" });
+            return BadRequest(new ResponseError { Status = ResponseStatus.NOT_FOUND, Message = $"No User found" });
         }
 
         [HttpGet("all-deleted-staff", Name = "All-Deleted-Staff")]
@@ -51,7 +51,7 @@ namespace OnlineVoting.Api.Controllers
             if (allStaff.Any())
                 return Ok(allStaff);
 
-            return BadRequest(new ErrorResponse { Status = ResponseStatus.NOT_FOUND, Message = $"No User found" });
+            return BadRequest(new ResponseError { Status = ResponseStatus.NOT_FOUND, Message = $"No User found" });
         }
 
         [HttpGet("all-paged-staff", Name = "All-Paged-Staff")]
@@ -149,7 +149,7 @@ namespace OnlineVoting.Api.Controllers
             int staff = _staffService.GetTotalNumberOfStaff().Count();
 
             if (staff <= 0)
-                return BadRequest(new ErrorResponse { Status = ResponseStatus.NOT_FOUND, Message = $"0 Staff found" });
+                return BadRequest(new ResponseError { Status = ResponseStatus.NOT_FOUND, Message = $"0 Staff found" });
 
             return Ok($"{staff} Staff");
         }

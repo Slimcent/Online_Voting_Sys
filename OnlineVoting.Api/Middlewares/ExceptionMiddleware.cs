@@ -42,7 +42,7 @@ namespace OnlineVoting.Api.Middlewares
                         }
 
                         //logger.LogError($"Something went wrong: {contextFeature.Error}");
-                        await context.Response.WriteAsync(new ErrorResponse()
+                        await context.Response.WriteAsync(new ResponseError()
                         {
                             Status = status,
                             Message = contextFeature.Error.Message

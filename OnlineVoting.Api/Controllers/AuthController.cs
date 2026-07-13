@@ -24,7 +24,7 @@ namespace OnlineVoting.Api.Controllers
         [HttpPost("login", Name = "Login")]
         public async Task<ActionResult> Login([FromBody] LoginDto loginDto)
         {
-            LoggedInUserDto user = await _userService.UserLogin(loginDto);
+            LoggedInUserResponse user = await _userService.UserLogin(loginDto);
 
             return Ok(user);
         }
