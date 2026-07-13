@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Pagination;
+using OnlineVoting.Services.Extension;
 using OnlineVoting.Services.Interfaces;
 using VotingSystem.Data.Interfaces;
 
@@ -18,6 +20,8 @@ namespace OnlineVoting.Services.Implementation
         private readonly IMapper _mapper;
         private readonly IServiceFactory _serviceFactory;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly string userId;
+        private readonly IHttpContextAccessor _contextAccessor;
 
         public StaffService(IServiceFactory serviceFactory)
         {
@@ -27,6 +31,8 @@ namespace OnlineVoting.Services.Implementation
             _addressRepo = _unitOfWork.GetRepository<Address>();
             _userRepo = _unitOfWork.GetRepository<User>();
             _mapper = _serviceFactory.GetService<IMapper>();
+            _contextAccessor = _serviceFactory.GetService<IHttpContextAccessor>();
+            userId = _contextAccessor.HttpContext.User.GetUserId();
         }
 
 
