@@ -55,3 +55,9 @@ The modernization focuses on the following objectives:
 - Improve API documentation and project documentation to make the system easier to understand and contribute to.
 - Adopt modern development practices such as environment-based configuration, centralized logging, configuration validation, and consistent coding standards.
 - Produce a backend project that reflects the quality and practices expected of a professional ASP.NET Core application while preserving the original functionality of the system.
+
+### Existing Swagger change pending review
+
+Before beginning the authentication review, an `ApiKey` reference was added to the Swagger security requirements alongside the existing bearer-token requirement.
+
+This change has not yet been treated as complete because the corresponding API-key security definition and backend validation still need to be reviewed.

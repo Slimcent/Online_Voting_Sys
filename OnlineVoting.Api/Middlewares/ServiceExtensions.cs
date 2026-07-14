@@ -147,7 +147,7 @@ namespace OnlineVoting.Api.Middlewares
                             }
                         },
                         Array.Empty<string>()
-                    },
+                    }
                 });
             });
         }
