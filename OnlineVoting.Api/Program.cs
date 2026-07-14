@@ -110,7 +110,11 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Online_Voting_Api v1");
+        c.InjectStylesheet("/css/swagger-dark-theme.css");
+    });
 }
 
 app.ConfigureExceptionHandler();
@@ -121,6 +125,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseStaticFiles();
 
 await SeedAppData.EnsurePopulated(app);
 

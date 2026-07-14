@@ -147,17 +147,6 @@ namespace OnlineVoting.Api.Middlewares
                             }
                         },
                         Array.Empty<string>()
-                    },
-                    {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                 Type = ReferenceType.SecurityScheme,
-                                 Id = "ApiKey"
-                            }
-                        },
-                        Array.Empty<string>()
                     }
                 });
             });
