@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using OnlineVoting.Models.Dtos.Request;
@@ -10,6 +10,7 @@ namespace OnlineVoting.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "Authorization")]
     public class PositionController : ControllerBase
     {
         private readonly IPositionService _positionService;
