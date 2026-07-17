@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using VotingSystem.Data.Interfaces;
+using SchMgr_FUTO.Data.Implementation;
+using SchMgr_FUTO.Data.Interfaces;
 using System.Threading.Tasks;
+using VotingSystem.Data.Interfaces;
 
 namespace VotingSystem.Data.Implementation
 {
@@ -37,6 +39,5 @@ namespace VotingSystem.Data.Implementation
         {
             return await _context.SaveChangesAsync();
         }
-    }
-    
+    }   
 }

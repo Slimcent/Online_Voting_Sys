@@ -8,11 +8,11 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
-using OnlineVoting.Models.Entities.Email;
-using OnlineVoting.Services.Helpers;
 using OnlineVoting.Services.Implementation;
-using OnlineVoting.Services.Infrastructures.Jwt;
+using OnlineVoting.Services.Infrastructures.Authorization;
+using OnlineVoting.Services.Infrastructures.Authorization.Jwt;
 using OnlineVoting.Services.Interfaces;
+using System.Security.Claims;
 using System.Text;
 using VotingSystem.Data.Implementation;
 using VotingSystem.Data.Interfaces;
@@ -85,37 +85,38 @@ namespace OnlineVoting.Api.Middlewares
             return services;
         }
 
-        public static void ConfigureJWT(this IServiceCollection services, IConfiguration configuration)
+        public static void ConfigureJWT(this IServiceCollection services)
         {
-            //var jwtSettings = services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
-
-            var jwtSettings = configuration.GetSection("JwtSettings");
-            
-            //var secretKey = jwtSettings.GetSection("Secret").Value;
-
-            var key = Encoding.ASCII.GetBytes(jwtSettings.GetSection("Secret").Value);
-
-            services.AddAuthentication(opt => {
-                opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;                
-                opt.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
+            services.AddAuthentication(options =>
             {
-                //var key = Encoding.ASCII.GetBytes(configuration["JwtSettings:Secret"]);
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer();
 
-                options.TokenValidationParameters = new TokenValidationParameters
+            services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+                .Configure<JwtSettings>((options, jwtSettings) =>
                 {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    //ValidIssuer = jwtSettings.GetSection("validIssuer").Value,
-                    //ValidAudience = jwtSettings.GetSection("validAudience").Value,
-                    //IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
-                    IssuerSigningKey = new SymmetricSecurityKey(key)
-                };
-            });
+                    byte[] key = Encoding.UTF8.GetBytes(jwtSettings.Secret!);
+
+                    options.SaveToken = true;
+                    options.TokenValidationParameters =
+                        new TokenValidationParameters
+                        {
+                            ValidateIssuer = true,
+                            ValidateAudience = true,
+                            ValidateLifetime = true,
+                            ValidateIssuerSigningKey = true,
+                            RequireExpirationTime = true,
+                            ValidIssuer = jwtSettings.Issuer,
+                            ValidAudience = jwtSettings.Audience,
+                            IssuerSigningKey = new SymmetricSecurityKey(key),
+                            ClockSkew = TimeSpan.Zero,
+                            NameClaimType = ClaimTypes.Name,
+                            RoleClaimType = ClaimTypes.Role
+                        };
+                });
         }
 
         public static void ConfigureSwagger(this IServiceCollection services)
@@ -147,7 +148,7 @@ namespace OnlineVoting.Api.Middlewares
                             }
                         },
                         Array.Empty<string>()
-                    },
+                    }
                 });
             });
         }

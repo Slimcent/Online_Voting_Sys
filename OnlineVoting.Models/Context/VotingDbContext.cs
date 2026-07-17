@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Interfaces;
@@ -6,7 +7,8 @@ using System;
 
 namespace OnlineVoting.Models.Context
 {
-    public class VotingDbContext : IdentityDbContext<User, Role, string>
+    public class VotingDbContext : IdentityDbContext<User, Role, string, ApplicationUserClaim, ApplicationUserRole, 
+        IdentityUserLogin<string>, ApplicationRoleClaim, IdentityUserToken<string>>
     {
         public VotingDbContext(DbContextOptions<VotingDbContext> options) : base(options)
         {
@@ -62,12 +64,53 @@ namespace OnlineVoting.Models.Context
         public virtual DbSet<Address> Addresses { get; set; }
         public virtual DbSet<Menu> Menus { get; set; }
         public virtual DbSet<Claims> Claims { get; set; }
+        public virtual DbSet<UserType> UserTypes { get; set; }
 
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<User>(b =>
+            {
+                b.Property(e => e.Id)
+                    .ValueGeneratedOnAdd();
+
+                b.HasMany(e => e.Claims)
+                    .WithOne()
+                    .HasForeignKey(uc => uc.UserId)
+                    .IsRequired();
+
+                b.HasMany(e => e.Logins)
+                    .WithOne()
+                    .HasForeignKey(ul => ul.UserId)
+                    .IsRequired();
+
+                b.HasMany(e => e.Tokens)
+                    .WithOne()
+                    .HasForeignKey(ut => ut.UserId)
+                    .IsRequired();
+
+
+                b.HasMany(e => e.UserRoles)
+                    .WithOne(e => e.User)
+                    .HasForeignKey(ur => ur.UserId)
+                    .IsRequired();
+            });
+
+            modelBuilder.Entity<Role>(b =>
+            {
+                b.HasMany(e => e.UserRoles)
+                    .WithOne(e => e.Role)
+                    .HasForeignKey(ur => ur.RoleId)
+                    .IsRequired();
+
+                b.HasMany(e => e.RoleClaims)
+                    .WithOne(e => e.Role)
+                    .HasForeignKey(rc => rc.RoleId)
+                    .IsRequired();
+            });
 
             //modelBuilder.HasAnnotation("Relational:Collation", "SQL_Latin1_General_CP1_CI_AS");
 
@@ -88,21 +131,21 @@ namespace OnlineVoting.Models.Context
             //        .IsUnicode(false)
             //        .HasColumnName("DEPARTMENT_NAME");
 
-                
+
             //    entity.Property(e => e.FacultyId)
             //        .IsRequired()
             //        .HasMaxLength(5)
             //        .HasColumnName("FACULTY_ID")
             //        .IsFixedLength(false);
 
-                
+
             //    entity.HasOne(d => d.Faculty)
             //        .WithMany(p => p.Departments)
             //        .HasForeignKey(d => d.FacultyId)
             //        .OnDelete(DeleteBehavior.ClientSetNull)
             //        .HasConstraintName("FK_DEPARTMENT_FACULTY");
             //});
-                       
+
             //modelBuilder.Entity<Faculty>(entity =>
             //{
             //    entity.ToTable("FACULTY");

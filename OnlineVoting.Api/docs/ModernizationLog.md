@@ -55,3 +55,165 @@ The modernization focuses on the following objectives:
 - Improve API documentation and project documentation to make the system easier to understand and contribute to.
 - Adopt modern development practices such as environment-based configuration, centralized logging, configuration validation, and consistent coding standards.
 - Produce a backend project that reflects the quality and practices expected of a professional ASP.NET Core application while preserving the original functionality of the system.
+
+### Existing Swagger change pending review
+
+Before beginning the authentication review, an `ApiKey` reference was added to the Swagger security requirements alongside the existing bearer-token requirement.
+
+This change has not yet been treated as complete because the corresponding API-key security definition and backend validation still need to be reviewed.
+
+## Verification
+
+The strongly typed JWT configuration was tested through Swagger.
+
+A valid token was generated during login and supplied through Swagger's bearer authentication option. Swagger added the token to the request using the `Authorization` header and sent the request to a protected roles endpoint.
+
+The request confirmed that:
+
+- `JwtSettings` was successfully bound from configuration;
+- the JWT generation service used the bound settings;
+- the authentication middleware accepted the generated token; and
+- Swagger correctly supplied the bearer token to protected endpoints.
+
+
+# Custom Authorization Infrastructure
+
+## Objective
+
+The original project relied primarily on ASP.NET Core Identity for authentication and authorization. As the application evolved to support 
+
+a custom role and permission model, the authorization process needed to be redesigned to work with the application's own database entities 
+
+instead of the default Identity implementation.
+
+The objective of this update was to implement a centralized authorization infrastructure that validates a user's permissions using the 
+
+custom `ApplicationUserRole`, `Role`, `ApplicationRoleClaim`, and `ApplicationUserClaim` entities.
+
+---
+
+## Changes Made
+
+To improve maintainability and project organization, all authentication and authorization components were reorganized into a 
+
+dedicated **Authorization** module under the `Infrastructures` folder.
+
+The following components were introduced or refactored:
+
+- **JwtAuthenticator** – Generates JWT access tokens for authenticated users.
+- **JwtSettings** – Provides strongly typed configuration for JWT authentication.
+- **AuthorizationRequirement** – Represents the application's custom authorization requirement.
+- **CustomAuthorizationHandler** – Performs permission validation during request authorization.
+- **ClaimsPrincipalExtension** – Provides helper methods for retrieving the authenticated user's information, including:
+  - User ID
+  - Username
+  - Roles
+  - Claims
+
+The authorization infrastructure is now organized as follows:
+
+```text
+Infrastructures
+└── Authorization
+    ├── Jwt
+    │   ├── JwtAuthenticator.cs
+    │   └── JwtSettings.cs
+    │
+    ├── Extensions
+    │   └── ClaimsPrincipalExtension.cs
+    │
+    ├── AuthorizationRequirement.cs
+    └── CustomAuthorizationHandler.cs
+```
+
+---
+
+## Authorization Flow
+
+The application now uses a permission-based authorization model.
+
+Each protected endpoint exposes an endpoint name using the ASP.NET Core `Name` property. The endpoint name represents the permission required 
+
+to access that resource. For example:
+
+```csharp
+[HttpGet("all-roles", Name = "all-roles")]
+```
+
+During authorization, the following steps are performed:
+
+1. The JWT access token is validated by the ASP.NET Core authentication middleware.
+2. The authenticated user's ID is retrieved from the `ClaimsPrincipal`.
+3. The authorization handler loads all active roles assigned to the user.
+4. The active permission claims associated with those roles are loaded.
+5. The endpoint name is treated as the required permission.
+6. The authorization handler checks whether any active role contains an active claim whose `ClaimValue` matches the endpoint name.
+7. If no matching role claim exists, any direct permission claims assigned to the user are also evaluated.
+8. Authorization succeeds if either a role claim or a direct user claim matches the endpoint name.
+9. Otherwise, access is denied with **403 Forbidden**.
+
+The authorization flow can be summarized as follows:
+
+```text
+Incoming Request
+        │
+        ▼
+JWT Authentication
+        │
+        ▼
+ClaimsPrincipal
+        │
+        ▼
+Retrieve User ID
+        │
+        ▼
+Load User Roles
+        │
+        ▼
+Load Role Claims
+        │
+        ▼
+Endpoint Name == ClaimValue ?
+        │
+   Yes ─┴─ No
+    │       │
+    ▼       ▼
+200 OK   Check Direct User Claims
+                │
+          Match Found?
+            │      │
+           Yes     No
+            │      │
+            ▼      ▼
+         200 OK   403 Forbidden
+```
+
+---
+
+## Benefits
+
+This redesign introduces several improvements over the previous implementation:
+
+- Centralizes all authorization logic within a single authorization handler.
+- Uses the application's custom role and permission model instead of relying solely on ASP.NET Core Identity.
+- Allows permissions to be managed entirely through the database.
+- Simplifies the addition of new protected endpoints, since authorization is driven by endpoint names and permission claims rather than hardcoded permission checks.
+- Improves project organization by grouping all authentication and authorization infrastructure into a dedicated module.
+- Clearly separates authentication (JWT validation) from authorization (permission evaluation), making the security architecture easier to understand, maintain and extend.
+
+---
+
+## Validation
+
+| Scenario | Expected Result | Observed Result |
+|----------|-----------------|-----------------|
+| Request without JWT | 401 Unauthorized | 401 Unauthorized |
+| Authenticated user without required permission | 403 Forbidden | 403 Forbidden |
+| Authenticated user with matching role permission | 200 OK | 200 OK |
+| Inactive role | 403 Forbidden | 403 Forbidden |
+| Inactive role claim | 403 Forbidden | 403 Forbidden |
+| Matching direct user permission | 200 OK | 200 OK |
+
+The successful completion of these tests confirms that the custom authorization infrastructure correctly authenticates users, 
+
+evaluates role and user permissions, and grants or denies access based on the configured permission model.

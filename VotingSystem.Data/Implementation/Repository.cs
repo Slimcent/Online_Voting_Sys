@@ -1,477 +1,549 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using OnlineVoting.Models.Pagination;
+using SchMgr_FUTO.Data.Interfaces;
 using System.Linq.Expressions;
 using VotingSystem.Data.Extensions;
-using VotingSystem.Data.Interfaces;
-using System.Threading.Tasks;
 
-namespace VotingSystem.Data.Implementation
+namespace SchMgr_FUTO.Data.Implementation;
+
+public class Repository<T> : IRepository<T> where T : class
 {
-    public class Repository<T> : IRepository<T> where T : class
+    private readonly DbContext _dbContext;
+    private readonly DbSet<T> _dbSet;
+    private bool disposedValue;
+
+    public Repository(DbContext context)
     {
-        private readonly DbContext _dbContext;
-        private readonly DbSet<T> _dbSet;
+        _dbContext = context ?? throw new ArgumentException(null, nameof(context));
+        _dbSet = _dbContext.Set<T>();
+    }
 
-        public Repository(DbContext context)
+    public virtual T Add(T obj)
+    {
+        try
         {
-            _dbContext = context ?? throw new ArgumentException(nameof(context));
-            _dbSet = _dbContext.Set<T>();
-        }
-
-        public T Add(T obj)
-        {
-            try
-            {
-                _dbSet.Add(obj);
-                return obj;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
-
-        public async Task<T> AddAsync(T obj)
-        {
-            Add(obj);
-            await _dbContext.SaveChangesAsync();
+            _dbSet.Add(obj);
             return obj;
         }
-
-        public void AddRange(IList<T> obj)
+        catch (Exception ex)
         {
-            try
-            {
-                _dbSet.AddRange(obj);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+            throw new Exception(ex.Message);
         }
+    }
 
-        public async Task AddRangeAsync(IList<T> obj)
+    public virtual async Task<T> AddAsync(T obj, bool tracking = false)
+    {
+        Add(obj);
+        await SaveAsync();
+        if (!tracking)
+            _dbContext.Entry(obj).State = EntityState.Detached;
+        return obj;
+    }
+
+    public virtual void AddRange(IEnumerable<T> records)
+    {
+        try
         {
-            AddRange(obj);
-            await SaveAsync();
+            _dbSet.AddRange(records);
         }
-
-        public virtual void AddRange(IEnumerable<T> records)
+        catch (Exception ex)
         {
-            try
-            {
-                _dbSet.AddRange(records);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+            throw new Exception(ex.Message);
         }
+    }
 
-        public virtual async Task AddRangeAsync(IEnumerable<T> records)
+    public virtual async Task AddRangeAsync(IEnumerable<T> records)
+    {
+        AddRange(records);
+        await SaveAsync();
+    }
+
+    public bool Any(Expression<Func<T, bool>> predicate = null)
+    {
+        if (predicate == null) return _dbSet.Any();
+        return _dbSet.Any(predicate);
+    }
+
+    public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate = null)
+    {
+        if (predicate == null) return await _dbSet.AnyAsync();
+        return await _dbSet.AnyAsync(predicate);
+    }
+
+    public virtual long Count(Expression<Func<T, bool>> predicate = null)
+    {
+        try
         {
-            AddRange(records);
-            await SaveAsync();
+            if (predicate == null)
+                return _dbSet.LongCount();
+            return _dbSet.LongCount(predicate);
         }
-
-        public virtual bool Delete(T obj)
+        catch (Exception ex)
         {
-            try
+            throw new Exception(ex.Message);
+        }
+    }
+
+    public virtual async Task<long> CountAsync(Expression<Func<T, bool>> predicate = null)
+    {
+        try
+        {
+            if (predicate == null)
+                return await _dbSet.LongCountAsync();
+            return await _dbSet.LongCountAsync(predicate);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+
+    public virtual bool Delete(T obj)
+    {
+        try
+        {
+            _dbSet.Remove(obj);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+
+    public virtual bool Delete(Expression<Func<T, bool>> predicate)
+    {
+        try
+        {
+            var obj = GetSingleBy(predicate);
+            if (obj != null)
             {
                 _dbSet.Remove(obj);
                 return true;
             }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+
+            throw new Exception("object does not exist");
         }
-
-        public virtual bool Delete(Expression<Func<T, bool>> predicate)
+        catch (Exception ex)
         {
-            try
-            {
-                var obj = GetSingleBy(predicate);
-                if (obj != null)
-                {
-                    _dbSet.Remove(obj);
-                    return true;
-                }
-                else
-                    throw new Exception($"object does not exist");
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+            throw new Exception(ex.Message);
         }
+    }
 
-        public virtual async Task DeleteAsync(T obj)
-        {
-            Delete(obj);
-            await SaveAsync();
-        }
+    public virtual async Task DeleteAsync(T obj, bool tracking)
+    {
+        Delete(obj);
+        await SaveAsync();
+        if (!tracking)
+            _dbContext.Entry(obj).State = EntityState.Detached;
+    }
 
-        public virtual async Task DeleteAsync(Expression<Func<T, bool>> predicate)
-        {
-            Delete(predicate);
-            await SaveAsync();
-        }
+    public virtual async Task DeleteAsync(Expression<Func<T, bool>> predicate)
+    {
+        Delete(predicate);
+        await SaveAsync();
+    }
 
-        public virtual bool DeleteById(object id)
+    public virtual bool DeleteById(object id)
+    {
+        try
         {
-            try
+            var obj = _dbSet.Find(id);
+            if (obj != null)
             {
-                var obj = _dbSet.Find(id);
-                if (obj != null)
-                {
-                    _dbSet.Remove(obj);
-                    return true;
-                }
-                else
-                    throw new Exception($"object with id {id} does not exist");
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
-
-        public virtual async Task DeleteByIdAsync(object id)
-        {
-            DeleteById(id);
-            await SaveAsync();
-        }
-
-
-        public virtual bool DeleteRange(Expression<Func<T, bool>> predicate)
-        {
-            try
-            {
-                IEnumerable<T> records = from x in _dbSet.Where<T>(predicate) select x;
-                _dbSet.RemoveRange(records);
+                _dbSet.Remove(obj);
                 return true;
             }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
 
-        public virtual bool DeleteRange(IEnumerable<T> records)
+            throw new Exception($"object with id {id} does not exist");
+        }
+        catch (Exception ex)
         {
-            try
-            {
-                _dbSet.RemoveRange(records);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+            throw new Exception(ex.Message);
         }
+    }
 
-        public virtual async Task DeleteRangeAsync(IEnumerable<T> records)
+    public virtual async Task DeleteByIdAsync(object id)
+    {
+        DeleteById(id);
+        await SaveAsync();
+    }
+
+    public virtual bool DeleteRange(Expression<Func<T, bool>> predicate)
+    {
+        IEnumerable<T> records = from x in _dbSet.Where(predicate) select x;
+        _dbSet.RemoveRange(records);
+        return true;
+    }
+
+    public virtual bool DeleteRange(IEnumerable<T> records)
+    {
+        try
         {
-            DeleteRange(records);
-            await SaveAsync();
+            _dbSet.RemoveRange(records);
+            return true;
         }
-        public async Task DeleteRangeAsync(Expression<Func<T, bool>> predicate)
+        catch (Exception ex)
         {
-            DeleteRange(predicate);
-            await SaveAsync();
+            throw new Exception(ex.Message);
         }
+    }
 
-        public void Dispose()
+    public virtual async Task DeleteRangeAsync(IEnumerable<T> records)
+    {
+        DeleteRange(records);
+        await SaveAsync();
+    }
+
+    public virtual async Task DeleteRangeAsync(Expression<Func<T, bool>> predicate)
+    {
+        DeleteRange(predicate);
+        await SaveAsync();
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    public virtual IEnumerable<T> GetAll(Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
+        params string[] includeProperties)
+    {
+        try
         {
-            throw new NotImplementedException();
+            return _dbSet.ToList();
         }
-
-        public T FindOneInclude(Expression<Func<T, bool>> predicate, params Expression<Func<T, object>>[] includeProperties)
+        catch (Exception ex)
         {
-            var query = GetAllIncluding(includeProperties);
-            T obj = query.FirstOrDefault(predicate);
-
-            return obj;
+            throw new Exception(ex.Message);
         }
+    }
 
-        public IEnumerable<T> GetAll()
+    public virtual async Task<IEnumerable<T>> GetAllAsync(Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null)
+    {
+        try
         {
-            try
-            {
-                return _dbSet.ToList();
-            }
-            catch (Exception ex)
-            {
-                throw  ex;
-            }
+            IQueryable<T> query = ConstructQuery(orderBy, include);
+            return await query.ToListAsync();
         }
-
-        public async Task<IEnumerable<T>> GetAllAsync()
+        catch (Exception ex)
         {
-            return await _dbSet.ToListAsync();
+            throw new Exception(ex.Message);
         }
+    }
 
-        public async Task<IEnumerable<T>> GetAllAndInclude(params Expression<Func<T, object>>[] includeProperties)
+    public virtual IEnumerable<T> GetBy(Expression<Func<T, bool>> predicate = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null,
+        params string[] includeProperties)
+    {
+        try
         {
-            var query = GetAllIncluding(includeProperties);
-            IEnumerable<T> results = await query.ToListAsync();
+            IQueryable<T> query = ConstructQuery(predicate, orderBy, skip, take, includeProperties);
 
-            return results;
+            return query.ToList();
         }
-
-        public virtual async Task<IEnumerable<T>> GetByAsync(Expression<Func<T, bool>> predicate = null, Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null, params string[] includeProperties)
+        catch (Exception ex)
         {
-            try
-            {
-                IQueryable<T> query = constructQuery(predicate, orderBy, skip, take, includeProperties);
-
-                return await query.ToListAsync();
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            throw new Exception(ex.Message);
         }
+    }
 
-        public virtual async Task<IEnumerable<T>> GetByAsync(Expression<Func<T, bool>> predicate = null, Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null, Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null)
+    public virtual async Task<IEnumerable<T>> GetByAsync(Expression<Func<T, bool>> predicate = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null,
+        params string[] includeProperties)
+    {
+        IQueryable<T> query = ConstructQuery(predicate, orderBy, skip, take, includeProperties);
+
+        return await query.ToListAsync();
+    }
+
+    public virtual async Task<IEnumerable<T>> GetByAsync(Expression<Func<T, bool>> predicate = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null, bool tracking = false)
+    {
+        try
         {
-            try
-            {
-                IQueryable<T> query = constructQuery(predicate, orderBy, skip, take, include);
-
-                return await query.ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+            IQueryable<T> query = ConstructQuery(predicate, orderBy, skip, take, include);
+            if (!tracking) return await query.AsNoTracking().ToListAsync();
+            return await query.ToListAsync();
         }
-
-        public T GetById(object id)
+        catch (Exception ex)
         {
-            return _dbSet.Find(id);
+            throw new Exception(ex.Message);
         }
+    }
 
-        public async Task<T> GetByIdAsync(object id)
+    public virtual async Task<IEnumerable<T>> GetByAsSplitQueryAsync(Expression<Func<T, bool>> predicate = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null, bool tracking = false)
+    {
+        try
         {
-            return await _dbSet.FindAsync(id);
+            IQueryable<T> query = ConstructQuery(predicate, orderBy, skip, take, include);
+            if (!tracking) return await query.AsSplitQuery().AsNoTracking().ToListAsync();
+            return await query.AsSplitQuery().ToListAsync();
         }
-
-       
-        public int Save()
+        catch (Exception ex)
         {
-            try
-            {
-                return _dbContext.SaveChanges();
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            throw new Exception(ex.Message);
         }
+    }
 
-        public Task<int> SaveAsync()
+    public virtual async Task<T> GetSingleByAsync(Expression<Func<T, bool>> predicate = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null, bool tracking = false)
+    {
+        try
         {
-            try
-            {
-                return _dbContext.SaveChangesAsync();
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            IQueryable<T> query = ConstructQuery(predicate, orderBy, skip, take, include);
+            if (!tracking)
+                return await query.AsNoTracking().FirstOrDefaultAsync();
+            return await query.FirstOrDefaultAsync();
         }
-
-        public T Update(T obj)
+        catch (Exception ex)
         {
-            try
-            {
-                _dbSet.Attach(obj);
-                _dbContext.Entry<T>(obj).State = EntityState.Modified;
-                return obj;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+            throw new Exception(ex.Message);
         }
+    }
 
-        public  async Task<T> UpdateAsync(T obj)
+    public virtual async Task<T> GetSingleByAsSplitQueryAsync(Expression<Func<T, bool>> predicate = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null, bool tracking = false)
+    {
+        try
         {
-            Update(obj);
-            await SaveAsync();
-            return obj;
+            IQueryable<T> query = ConstructQuery(predicate, orderBy, skip, take, include);
+            if (!tracking)
+                return await query.AsNoTracking().AsSplitQuery().FirstOrDefaultAsync();
+            return await query.AsSplitQuery().FirstOrDefaultAsync();
         }
-
-        public virtual async Task<T> GetSingleByAsync(Expression<Func<T, bool>> predicate)
+        catch (Exception ex)
         {
-            return await _dbSet.AsNoTracking().FirstOrDefaultAsync(predicate);
+            throw new Exception(ex.Message);
         }
+    }
 
-        public virtual async Task<T> GetSingleByAsync(Expression<Func<T, bool>> predicate = null, Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null, Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null, bool tracking = false)
-        {
-            try
-            {
-                IQueryable<T> query = constructQuery(predicate, orderBy, skip, take, include);
-                if (!tracking)
-                    return await query.AsNoTracking().FirstOrDefaultAsync();
-                return await query.SingleAsync();
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
+    public virtual T GetById(object id)
+    {
+        return _dbSet.Find(id);
+    }
 
-        public T GetSingleBy(Expression<Func<T, bool>> predicate)
-        {
-            return _dbSet.FirstOrDefault(predicate);
-        }
+    public virtual async Task<T> GetByIdAsync(object id)
+    {
+        return await _dbSet.FindAsync(id);
+    }
 
-        public async Task<decimal> SumAsync(Expression<Func<T, decimal>> predicate)
-        {
-            return await _dbSet.SumAsync(predicate);
-        }
+    public async Task<PagedList<T>> GetPagedItems(RequestParameters parameters,
+        Expression<Func<T, bool>> predicate = null, Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null)
+    {
+        var skip = (parameters.PageNumber - 1) * parameters.PageSize;
+        var items = await ConstructQueryable(predicate, parameters.OrderBy.ToLower(), skip, parameters.PageSize,
+            include).ToListAsync();
+        var count = await CountAsync(predicate);
+        return new PagedList<T>(items, count, parameters.PageNumber, parameters.PageSize);
+    }
 
-        public async Task<int> SumAsync(Expression<Func<T, int>> predicate)
-        {
-            return await _dbSet.SumAsync(predicate);
-        }
-
-        public async Task<long> SumAsync(Expression<Func<T, long>> predicate)
-        {
-            return await _dbSet.SumAsync(predicate);
-        }
-
-        public virtual long Count(Expression<Func<T, bool>> predicate = null)
-        {
-            try
-            {
-                if (predicate == null)
-                    return _dbSet.LongCount();
-                return _dbSet.LongCount(predicate);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        public virtual async Task<long> CountAsync(Expression<Func<T, bool>> predicate = null)
-        {
-            try
-            {
-                if (predicate == null)
-                    return await _dbSet.LongCountAsync();
-                return await _dbSet.LongCountAsync(predicate);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        public async Task<PagedList<T>> GetPagedItems(RequestParameters parameters, Expression<Func<T, bool>> predicate = null, Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null)
-        {
-            var skip = (parameters.PageNumber - 1) * parameters.PageSize;
-            var items = await ConstructQueryable(predicate, parameters.OrderBy.ToLower(), skip, parameters.PageSize, include).ToListAsync();
-            var count = await CountAsync(predicate);
-            return new PagedList<T>(items, count, parameters.PageNumber, parameters.PageSize);
-        }
-
-        private IQueryable<T> ConstructQueryable(Expression<Func<T, bool>> predicate = null, string orderBy = null, int? skip = null, int? take = null, Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null)
-        {
-            try
-            {
-                IQueryable<T> query = _dbSet;
-                if (predicate != null)
-                    query = _dbSet.Where(predicate);
-
-                if (!string.IsNullOrWhiteSpace(orderBy))
-                    query = query.Sort(orderBy);
-
-                if (include != null)
-                    query = include(query);
-
-                if (take != null && skip != null)
-                    return query.Skip(skip.Value).Take(take.Value);
-                return query;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        private IQueryable<T> GetAllIncluding(Expression<Func<T, object>>[] includeProperties)
-        {
-            IQueryable<T> queryable = _dbContext.Set<T>();
-
-            return includeProperties.Aggregate(queryable,
-                (current, includeProperty) => current.Include(includeProperty));
-        }
-
-        private IQueryable<T> constructQuery(Expression<Func<T, bool>> predicate, Func<IQueryable<T>, IOrderedQueryable<T>> orderBy, int? skip, int? take, params string[] includeProperties)
+    public virtual IQueryable<T> GetQueryable(Expression<Func<T, bool>> predicate = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null)
+    {
+        try
         {
             IQueryable<T> query = _dbSet;
-
             if (predicate != null)
-            {
-                query = query.Where(predicate);
-            }
+                query = _dbSet.Where(predicate);
 
-            if (orderBy != null)
-            {
-                query = orderBy(query);
-            }
+            if (orderBy != null) query = orderBy(query);
 
-            for (int i = 0; i < includeProperties.Length; i++)
-            {
-                query = query.Include(includeProperties[i]);
-            }
+            if (include != null)
+                query = include(query);
 
-            if (skip != null)
-            {
-                query = query.Skip(skip.Value);
-            }
-
-            if (take != null)
-            {
-                query = query.Take(take.Value);
-            }
-
+            if (take != null && skip != null)
+                return query.Skip(skip.Value).Take(take.Value);
             return query;
         }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
 
-        private IQueryable<T> constructQuery(Expression<Func<T, bool>> predicate, Func<IQueryable<T>, IOrderedQueryable<T>> orderBy, int? skip, int? take, Func<IQueryable<T>, IIncludableQueryable<T, object>> include)
+    public virtual T GetSingleBy(Expression<Func<T, bool>> predicate)
+    {
+        return _dbSet.FirstOrDefault(predicate);
+    }
+
+    public virtual async Task<T> GetSingleByAsync(Expression<Func<T, bool>> predicate)
+    {
+        return await _dbSet.FirstOrDefaultAsync(predicate);
+    }
+
+    public async Task<T> LastAsync(Expression<Func<T, bool>> predicate = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null, bool disableTracking = true)
+    {
+        IQueryable<T> query = _dbSet;
+        if (disableTracking) query = query.AsNoTracking();
+
+        if (include != null) query = include(query);
+
+        if (predicate != null) query = query.Where(predicate);
+
+        if (orderBy != null)
+            return await orderBy(query).LastOrDefaultAsync();
+        return await query.LastOrDefaultAsync();
+    }
+
+    public virtual int Save()
+    {
+        return _dbContext.SaveChanges();
+    }
+
+    public virtual Task<int> SaveAsync()
+    {
+        return _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<decimal> SumAsync(Expression<Func<T, decimal>> predicate)
+    {
+        return await _dbSet.SumAsync(predicate);
+    }
+
+    public async Task<int> SumAsync(Expression<Func<T, int>> predicate)
+    {
+        return await _dbSet.SumAsync(predicate);
+    }
+
+    public async Task<long> SumAsync(Expression<Func<T, long>> predicate)
+    {
+        return await _dbSet.SumAsync(predicate);
+    }
+
+    public virtual T Update(T obj)
+    {
+        try
+        {
+            _dbSet.Attach(obj);
+            _dbContext.Entry(obj).State = EntityState.Modified;
+            return obj;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+
+    public virtual async Task<T> UpdateAsync(T obj, bool tracking = false)
+    {
+        Update(obj);
+        await SaveAsync();
+        if (!tracking)
+            _dbContext.Entry(obj).State = EntityState.Detached;
+        return obj;
+    }
+
+    public virtual void UpdateRange(IEnumerable<T> records)
+    {
+        try
+        {
+            _dbSet.UpdateRange(records);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+
+    public virtual async Task UpdateRangeAsync(IEnumerable<T> records)
+    {
+        UpdateRange(records);
+        await SaveAsync();
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing) _dbContext.Dispose();
+
+            disposedValue = true;
+        }
+    }
+
+    private IQueryable<T> ConstructQuery(Func<IQueryable<T>, IOrderedQueryable<T>> orderBy,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>> include)
+    {
+        IQueryable<T> query = _dbSet;
+
+        if (orderBy != null) query = orderBy(query);
+
+        if (include != null) query = include(query);
+
+        return query;
+    }
+
+    private IQueryable<T> ConstructQuery(Expression<Func<T, bool>> predicate,
+        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy, int? skip, int? take, params string[] includeProperties)
+    {
+        IQueryable<T> query = _dbSet;
+
+        if (predicate != null) query = query.Where(predicate);
+
+        if (orderBy != null) query = orderBy(query);
+
+        for (int i = 0; i < includeProperties.Length; i++) query = query.Include(includeProperties[i]);
+
+        if (skip != null) query = query.Skip(skip.Value);
+
+        if (take != null) query = query.Take(take.Value);
+
+        return query;
+    }
+
+    private IQueryable<T> ConstructQuery(Expression<Func<T, bool>> predicate,
+        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy, int? skip, int? take,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>> include)
+    {
+        IQueryable<T> query = _dbSet;
+
+        if (predicate != null) query = query.Where(predicate);
+
+        if (orderBy != null) query = orderBy(query);
+
+        if (include != null) query = include(query);
+
+        if (skip != null) query = query.Skip(skip.Value);
+
+        if (take != null) query = query.Take(take.Value);
+
+        return query;
+    }
+
+    private IQueryable<T> ConstructQueryable(Expression<Func<T, bool>> predicate = null, string orderBy = null,
+        int? skip = null, int? take = null, Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null)
+    {
+        try
         {
             IQueryable<T> query = _dbSet;
-
             if (predicate != null)
-            {
-                query = query.Where(predicate);
-            }
+                query = _dbSet.Where(predicate);
 
-            if (orderBy != null)
-            {
-                query = orderBy(query);
-            }
+            if (!string.IsNullOrWhiteSpace(orderBy))
+                query = query.Sort(orderBy);
 
-            if (include != null) query = include(query);
+            if (include != null)
+                query = include(query);
 
-            if (skip != null)
-            {
-                query = query.Skip(skip.Value);
-            }
-
-            if (take != null)
-            {
-                query = query.Take(take.Value);
-            }
-
+            if (take != null && skip != null)
+                return query.Skip(skip.Value).Take(take.Value);
             return query;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
         }
     }
 }

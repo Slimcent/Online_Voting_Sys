@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Request.Email;
@@ -10,6 +9,7 @@ namespace OnlineVoting.Api.Controllers
 {
     [Route("api/auth")]
     [ApiController]
+    [Authorize(Policy = "Authorization")]
     public class AuthController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -21,6 +21,7 @@ namespace OnlineVoting.Api.Controllers
             _emailService = emailService;
         }
 
+        [AllowAnonymous]
         [HttpPost("login", Name = "Login")]
         public async Task<ActionResult> Login([FromBody] LoginDto loginDto)
         {
@@ -56,6 +57,7 @@ namespace OnlineVoting.Api.Controllers
             return Ok(await _userService.ChangePassword(userId, request));
         }
 
+        [AllowAnonymous]
         [HttpPost("update-recovery-email", Name = "Update-Recovery-Email")]
         public async Task<IActionResult> UpdateRecoveryEmail(string userId, string email)
         {
@@ -63,6 +65,7 @@ namespace OnlineVoting.Api.Controllers
             return Ok();
         }
 
+        [AllowAnonymous]
         [HttpPost("send-change-email-mail", Name = "send-change-email-mail")]
         public async Task<IActionResult> SendResetEmail(ChangeEmailDto request)
         {
