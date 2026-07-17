@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+﻿using SchMgr_FUTO.Data.Interfaces;
 
 namespace VotingSystem.Data.Interfaces
 {
@@ -14,5 +14,4 @@ namespace VotingSystem.Data.Interfaces
     public interface IUnitofWork<TContext> : IUnitOfWork
     {
     }
-
 }
