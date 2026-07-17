@@ -24,8 +24,7 @@ namespace OnlineVoting.Api.Middlewares
     {
         public static void ConfigureCors(this IServiceCollection services) => services.AddCors(options =>
         {
-            options.AddPolicy("CorsPolicy", builder =>
-                builder.AllowAnyOrigin()
+            options.AddPolicy("CorsPolicy", builder => builder.AllowAnyOrigin()
                 .AllowAnyMethod()
                 .AllowAnyHeader());
         });
@@ -39,23 +38,26 @@ namespace OnlineVoting.Api.Middlewares
 
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            services.AddTransient<IUnitOfWork, UnitOfWork<VotingDbContext>>();
-            services.AddTransient<IJwtAuthenticator, JwtAuthenticator>();
-            services.AddTransient<IAuthorizationHandler, CustomAuthorizationHandler>();
-            services.AddTransient<IStudentService, StudentService>();
-            services.AddTransient<IUserService, UserService>();
-            services.AddTransient<IRolesService, RolesService>();
-            services.AddTransient<IPositionService, PositionService>();
-            services.AddTransient<IFacultyService, FacultyService>();
-            services.AddTransient<IDepartmentService, DepartmentService>();
-            services.AddTransient<IVoterService, VoterService>();
-            services.AddTransient<IEmailService, EmailService>();
-            services.AddTransient<IStaffService, StaffService>();
-            services.AddTransient<IFileDataExtractorService, FileDataExtractorService>();
+            services.AddScoped<IUnitOfWork, UnitOfWork<VotingDbContext>>();
+
+            services.AddScoped<IJwtAuthenticator, JwtAuthenticator>();
+
+            services.AddScoped<IStudentService, StudentService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IRolesService, RolesService>();
+            services.AddScoped<IPositionService, PositionService>();
+            services.AddScoped<IFacultyService, FacultyService>();
+            services.AddScoped<IDepartmentService, DepartmentService>();
+            services.AddScoped<IVoterService, VoterService>();
+            services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IStaffService, StaffService>();
+            services.AddScoped<IFileDataExtractorService, FileDataExtractorService>();
+
             services.AddScoped<DbContext, VotingDbContext>();
-            services.AddTransient<IServiceFactory, ServiceFactory>();
+            services.AddScoped<IServiceFactory, ServiceFactory>();
+
             services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
-            
+
             return services;
         }
 
@@ -151,6 +153,25 @@ namespace OnlineVoting.Api.Middlewares
                     }
                 });
             });
+        }
+
+       
+        public static IServiceCollection ConfigureAuthorization(this IServiceCollection services)
+        {
+            services.AddHttpContextAccessor();
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("Authorization",
+                    policy =>
+                    {
+                        policy.Requirements.Add(new AuthorizationRequirement());
+                    });
+            });
+
+            services.AddScoped<IAuthorizationHandler, CustomAuthorizationHandler>();
+
+            return services;
         }
     }
 }

@@ -217,3 +217,24 @@ This redesign introduces several improvements over the previous implementation:
 The successful completion of these tests confirms that the custom authorization infrastructure correctly authenticates users, 
 
 evaluates role and user permissions, and grants or denies access based on the configured permission model.
+
+
+### Dependency Registration Cleanup
+
+The dependency-injection configuration was reviewed after the authorization changes to remove duplicate registrations 
+
+and align service lifetimes with the database context.
+
+The following changes were made:
+
+- Removed the duplicate `CustomAuthorizationHandler` registration from `AddRepositories()`.
+- Kept the authorization handler registration inside `ConfigureAuthorization()`.
+- Removed the duplicate `DbContext` registration from `Program.cs`.
+- Kept the `DbContext` abstraction registration in `AddRepositories()`.
+- Changed services that depend on `VotingDbContext` from transient to scoped.
+- Kept `SynchronizedConverter` registered as a singleton.
+- Removed unused namespace imports from `Program.cs`.
+
+These changes ensure that each dependency is registered in one appropriate location and that database-dependent services share the same scoped `VotingDbContext` instance throughout an HTTP request.
+
+The application was rebuilt and the authentication and authorization flows were retested successfully after the cleanup.
