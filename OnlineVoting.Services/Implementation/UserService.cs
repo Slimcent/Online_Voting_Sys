@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Request.Email;
 using OnlineVoting.Models.Dtos.Response;
@@ -8,8 +9,8 @@ using OnlineVoting.Models.Entities;
 using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Extension;
 using OnlineVoting.Services.Infrastructures;
-using OnlineVoting.Services.Infrastructures.Jwt;
 using OnlineVoting.Services.Interfaces;
+using SchMgr_FUTO.Data.Interfaces;
 using System.Security.Claims;
 using VotingSystem.Data.Interfaces;
 
@@ -35,6 +36,7 @@ namespace OnlineVoting.Services.Implementation
             _roleManager = serviceFactory.GetService<RoleManager<Role>>();
             _studentRepo = _unitOfWork.GetRepository<Student>();
             _staffRepo = _unitOfWork.GetRepository<Staff>();
+            _userRepo = _unitOfWork.GetRepository<User>();
             _mapper = _serviceFactory.GetService<IMapper>();
         }
 
@@ -73,7 +75,7 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<LoggedInUserResponse> UserLogin(LoginDto request)
         {
-            User user = await _userManager.FindByNameAsync(request.Email.ToLower().Trim());
+            User user = await _userRepo.GetSingleByAsync(x => x.UserName == request.Email.ToLower().Trim(), include: x => x.Include(x => x.UserType));
 
             if (user == null)
                 throw new InvalidOperationException("Invalid email or password");
@@ -107,27 +109,27 @@ namespace OnlineVoting.Services.Implementation
             }
 
             List<string> claims = userClaims.Select(x => x.Value).ToList();
-            string? userType = userRoles.Contains("Student") ? "Student" : userRoles.Contains("Staff") ? "Staff" : userRoles.FirstOrDefault();
-            string fullName = string.Empty;
+            int userType = user.UserTypeId;
+            string fullName = $"{user.FirstName} {user.LastName}";
                         
-            switch (userType)
-            {
-                case "Staff":
-                {
-                    Staff staff = await _staffRepo.GetSingleByAsync(x => x.UserId == user.Id);
+            //switch (userType)
+            //{
+            //    case "Official":
+            //    {
+            //        Staff staff = await _staffRepo.GetSingleByAsync(x => x.UserId == user.Id);
 
-                    fullName = $"{staff.LastName} {staff.FirstName}";
-                    break;
-                }
-                case "Student":
-                {
-                    Student student = await _studentRepo.GetSingleByAsync(x => x.UserId == user.Id);
+            //        fullName = $"{staff?.LastName} {staff?.FirstName}";
+            //        break;
+            //    }
+            //    case "Student":
+            //    {
+            //        Student student = await _studentRepo.GetSingleByAsync(x => x.UserId == user.Id);
                                                 
-                    fullName = $"{student.LastName} {student.FirstName}";
-                    break;
-                }
-            }
-            return new LoggedInUserResponse { JwtToken = userToken, UserType = userType, FullName = fullName };
+            //        fullName = $"{student.LastName} {student.FirstName}";
+            //        break;
+            //    }
+            //}
+            return new LoggedInUserResponse { JwtToken = userToken, UserType = user.UserType?.Name, FullName = fullName };
         }
 
         public async Task<string> VerifyUser(VerifyAccountRequestDto request)

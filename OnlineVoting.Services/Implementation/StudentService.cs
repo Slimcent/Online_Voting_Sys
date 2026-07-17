@@ -7,12 +7,12 @@ using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Enums;
 using OnlineVoting.Models.GlobalMessage;
 using OnlineVoting.Services.Exceptions;
-using OnlineVoting.Services.Interfaces;
-using System.Security.Claims;
-using VotingSystem.Data.Interfaces;
 using OnlineVoting.Services.Extension;
 using OnlineVoting.Services.Infrastructures;
+using OnlineVoting.Services.Interfaces;
 using OnlineVoting.Services.Utilities;
+using SchMgr_FUTO.Data.Interfaces;
+using VotingSystem.Data.Interfaces;
 
 namespace OnlineVoting.Services.Implementation
 {

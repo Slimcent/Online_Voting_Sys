@@ -6,12 +6,7 @@ using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 using VotingSystem.Data.Interfaces;
 
 namespace OnlineVoting.Services.Implementation

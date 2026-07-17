@@ -59,7 +59,6 @@ public class Repository<T> : IRepository<T> where T : class
         await SaveAsync();
     }
 
-
     public bool Any(Expression<Func<T, bool>> predicate = null)
     {
         if (predicate == null) return _dbSet.Any();
@@ -327,7 +326,6 @@ public class Repository<T> : IRepository<T> where T : class
         }
     }
 
-
     public virtual T GetById(object id)
     {
         return _dbSet.Find(id);
@@ -347,7 +345,6 @@ public class Repository<T> : IRepository<T> where T : class
         var count = await CountAsync(predicate);
         return new PagedList<T>(items, count, parameters.PageNumber, parameters.PageSize);
     }
-
 
     public virtual IQueryable<T> GetQueryable(Expression<Func<T, bool>> predicate = null,
         Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null,

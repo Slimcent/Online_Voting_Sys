@@ -10,7 +10,7 @@ namespace OnlineVoting.Services.Interfaces
     {
         Task<string> CreateStaff(CreateStaffRequestDto request);
         Task<string> UpdateStaffAddress(Guid staffId, UpdateAddressDto request);
-        Task<IEnumerable<StaffResponseDto>> GetAllStaff();
+        //Task<IEnumerable<StaffResponseDto>> GetAllStaff();
         Task<StaffResponseDto> GetStaff(Guid id);
         IEnumerable<Staff> GetTotalNumberOfStaff();
         Task<string> DeleteStaffById(Guid id);

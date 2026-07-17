@@ -6,8 +6,9 @@ using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Pagination;
-using OnlineVoting.Services.Extension;
+using OnlineVoting.Services.Infrastructures.Extensions;
 using OnlineVoting.Services.Interfaces;
+using SchMgr_FUTO.Data.Interfaces;
 using VotingSystem.Data.Interfaces;
 
 namespace OnlineVoting.Services.Implementation
@@ -67,12 +68,12 @@ namespace OnlineVoting.Services.Implementation
             await _addressRepo.AddAsync(address);
         }
 
-        public async Task<IEnumerable<StaffResponseDto>> GetAllStaff()
-        {
-            IEnumerable<Staff> allStaff = await _staffRepo.GetAllAndInclude(x => x.Address, x => x.User);
+        //public async Task<IEnumerable<StaffResponseDto>> GetAllStaff()
+        //{
+        //    IEnumerable<Staff> allStaff = await _staffRepo.GetAllAndInclude(x => x.Address, x => x.User);
 
-            return _mapper.Map<IEnumerable<StaffResponseDto>>(allStaff);
-        }
+        //    return _mapper.Map<IEnumerable<StaffResponseDto>>(allStaff);
+        //}
 
         public async Task<string> UpdateStaffAddress(Guid staffId, UpdateAddressDto model)
         {

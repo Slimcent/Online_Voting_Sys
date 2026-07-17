@@ -15,14 +15,12 @@ namespace OnlineVoting.Services.Implementation
     {
         private readonly EmailSettings _emailSettings;
         private readonly UserManager<User> _userManager;
-        private readonly IUnitOfWork _unitOfWork;
         private readonly IServiceFactory _serviceFactory;
 
         public EmailService(IOptions<EmailSettings> emailSettings, IServiceFactory serviceFactory)
         {
             _emailSettings = emailSettings.Value;
             _serviceFactory = serviceFactory;
-            _unitOfWork = _serviceFactory.GetService<IUnitOfWork>();
             _userManager = _serviceFactory.GetService<UserManager<User>>();
         }
 
