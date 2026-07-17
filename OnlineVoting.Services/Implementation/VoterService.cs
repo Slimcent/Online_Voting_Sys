@@ -6,11 +6,7 @@ using OnlineVoting.Models.Entities;
 using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Extension;
 using OnlineVoting.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using SchMgr_FUTO.Data.Interfaces;
 using VotingSystem.Data.Interfaces;
 
 namespace OnlineVoting.Services.Implementation

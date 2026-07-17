@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Services.Interfaces;
@@ -7,6 +7,7 @@ namespace OnlineVoting.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "Authorization")]
     public class FacultyController : ControllerBase
     {
         private readonly IFacultyService _facultyService;

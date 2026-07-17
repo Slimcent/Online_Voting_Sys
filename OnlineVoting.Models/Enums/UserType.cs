@@ -3,7 +3,7 @@
     public enum UserType
     {
         Student = 1,
-        Staff
+        Official
     }
 
 
@@ -14,7 +14,7 @@
             return userType switch
             {
                 UserType.Student => "Student",
-                UserType.Staff => "Staff",
+                UserType.Official => "Official",
                 _ => null
             };
         }

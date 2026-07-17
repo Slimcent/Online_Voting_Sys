@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using OnlineVoting.Models.Dtos.Request;
@@ -12,6 +12,7 @@ namespace OnlineVoting.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "Authorization")]
     public class StaffController : ControllerBase
     {
         private readonly IStaffService _staffService;
@@ -21,16 +22,16 @@ namespace OnlineVoting.Api.Controllers
             _staffService = staffService;
         }
 
-        [HttpGet("all-staff", Name = "All-Staff")]
-        public async Task<IActionResult> GetAllStaff()
-        {
-            IEnumerable<StaffResponseDto> allStaff = await _staffService.GetAllStaff();
+        //[HttpGet("all-staff", Name = "All-Staff")]
+        //public async Task<IActionResult> GetAllStaff()
+        //{
+        //    IEnumerable<StaffResponseDto> allStaff = await _staffService.GetAllStaff();
 
-            if (allStaff.Any())
-                return Ok(allStaff);
+        //    if (allStaff.Any())
+        //        return Ok(allStaff);
 
-            return BadRequest(new ResponseError { Status = ResponseStatus.NOT_FOUND, Message = $"No User found" });
-        }
+        //    return BadRequest(new ResponseError { Status = ResponseStatus.NOT_FOUND, Message = $"No User found" });
+        //}
 
         [HttpGet("all-active-staff", Name = "All-Active-Staff")]
         public async Task<IActionResult> GetAllActiveStaff()

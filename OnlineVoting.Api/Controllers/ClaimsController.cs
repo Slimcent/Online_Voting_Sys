@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.GlobalMessage;
 using OnlineVoting.Services.Interfaces;
@@ -7,6 +8,7 @@ namespace OnlineVoting.Api.Controllers
 {
     [Route("api/claims")]
     [ApiController]
+    [Authorize(Policy = "Authorization")]
     public class ClaimsController : ControllerBase
     {
         private readonly IClaimsService _claimsService;
