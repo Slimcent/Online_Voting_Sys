@@ -5,6 +5,7 @@
         OK = 1,
         APP_ERROR = 2,
         FATAL_ERROR = 3,
-        NOT_FOUND = 4
+        NOT_FOUND = 4,
+        UNAUTHORIZED = 5
     }
 }

@@ -48,11 +48,11 @@ namespace OnlineVoting.Services.Implementation
 
             var contestantExists = await _contestantRepo.GetSingleByAsync(r => r.Student.RegNo == regNo, include: r => r.Include(s => s.Student));
             if (contestantExists != null)
-                throw new RegNoExistException(regNo);
+                throw new ConflictException(regNo);
 
             Student student = await _studentRepo.GetSingleByAsync(s => s.RegNo == regNo, include: s => s.Include(u => u.User));
             if (student == null)
-                throw new RegNoNotFoundException(regNo);
+                throw new NotFoundException(regNo);
 
             var contestant = new Contestant
             {
@@ -71,7 +71,7 @@ namespace OnlineVoting.Services.Implementation
                         
             var regNumberExists = await _studentRepo.GetSingleByAsync(r => r.RegNo == model.RegNo);
             if (regNumberExists != null)
-                throw new RegNoExistException(model.RegNo);
+                throw new ConflictException(model.RegNo);
 
             UserCreateRequestDto user = new()
             {
@@ -150,11 +150,11 @@ namespace OnlineVoting.Services.Implementation
 
             var voterExists = await _studentRepo.GetSingleByAsync(s => s.RegNo == request.VoterRegNo);
             if (voterExists == null)
-                throw new RegNoNotFoundException(request.VoterRegNo);
+                throw new NotFoundException(request.VoterRegNo);
 
             var contestantExists = _studentRepo.GetSingleByAsync(s => s.RegNo == request.ContestantRegNo);
             if (voterExists == null)
-                throw new RegNoNotFoundException(request.ContestantRegNo);
+                throw new NotFoundException(request.ContestantRegNo);
 
             throw new NotImplementedException();
         }

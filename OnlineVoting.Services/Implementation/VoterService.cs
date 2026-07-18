@@ -34,7 +34,7 @@ namespace OnlineVoting.Services.Implementation
                 include: x => x.Include(d => d.Department).ThenInclude(f => f.Faculty));
 
             if (checkIfStudentExists == null)
-                throw new StudentNotFoundException(request.RegNo);
+                throw new NotFoundException(request.RegNo);
 
             RegisteredVoter checkIfStudentAlreadyRegistered = await _registeredVoterRepo.GetSingleByAsync(x => x.StudentId == checkIfStudentExists.Id 
                 && x.DepartmentId == checkIfStudentExists.DepartmentId);

@@ -238,3 +238,29 @@ The following changes were made:
 These changes ensure that each dependency is registered in one appropriate location and that database-dependent services share the same scoped `VotingDbContext` instance throughout an HTTP request.
 
 The application was rebuilt and the authentication and authorization flows were retested successfully after the cleanup.
+
+
+## Exception Handling Cleanup
+
+The application's custom exception structure was simplified to make HTTP error responses more consistent and easier to maintain.
+
+Previously, the service layer contained several entity-specific exceptions, including:
+
+- `RegNoExistException`
+- `RegNoNotFoundException`
+- `StudentNotFoundException`
+- `UserExistException`
+- `UserNotFoundException`
+
+These exceptions duplicated behaviour and in some cases, represented the wrong HTTP meaning. For example, exceptions for records 
+
+that already existed inherited from `NotFoundException`, which caused conflict situations to be treated as `404 Not Found`.
+
+The exception structure was reduced to:
+
+```text
+Exceptions
+├── ConflictException.cs
+├── InvalidCredentialsException.cs
+└── NotFoundException.cs
+

@@ -47,7 +47,7 @@ namespace OnlineVoting.Services.Implementation
 
             User existingUser = await _userManager.FindByEmailAsync(request.Email.Trim().ToLower());
             if (existingUser != null)
-                throw new UserExistException(request.Email);
+                throw new ConflictException(request.Email);
 
             User user = _mapper.Map<User>(request);
            
@@ -78,14 +78,14 @@ namespace OnlineVoting.Services.Implementation
             User user = await _userRepo.GetSingleByAsync(x => x.UserName == request.Email.ToLower().Trim(), include: x => x.Include(x => x.UserType));
 
             if (user == null)
-                throw new InvalidOperationException("Invalid email or password");
+                throw new NotFoundException("User not found");
 
             if (user.IsActive == false)
                 throw new InvalidOperationException("Account is not active, contact the admin");
 
             bool result = await _userManager.CheckPasswordAsync(user, request.Password);
             if (!result)
-                throw new InvalidOperationException("Invalid email or password");
+                throw new InvalidCredentialsException("Invalid email or password");
 
             List<string> allUserRoles = (await _userManager.GetRolesAsync(user)).ToList();
             string uRole = allUserRoles.FirstOrDefault();

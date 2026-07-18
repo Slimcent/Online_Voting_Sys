@@ -85,7 +85,7 @@ namespace OnlineVoting.Services.Implementation
         {
             var user = await _userManager.FindByEmailAsync(email.ToString().ToLower());
             if (user == null)
-                throw new UserNotFoundException(email);
+                throw new NotFoundException(email);
 
             System.Security.Claims.Claim claim = new System.Security.Claims.Claim(claimType, claimValue, ClaimValueTypes.String);
 
@@ -108,7 +108,7 @@ namespace OnlineVoting.Services.Implementation
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
             if (user == null)
-                throw new UserNotFoundException(request.Email);
+                throw new NotFoundException(request.Email);
 
             var claim = new System.Security.Claims.Claim(request.ClaimType, request.ClaimValue);
 
@@ -131,7 +131,7 @@ namespace OnlineVoting.Services.Implementation
         {
             var user = await _userManager.FindByEmailAsync(userClaimsDto.Email.ToString().Trim());
             if (user == null)
-                throw new UserNotFoundException(userClaimsDto.Email);
+                throw new NotFoundException(userClaimsDto.Email);
 
             System.Security.Claims.Claim newClaim = new(userClaimsDto.ClaimType.Trim().ToLower(), userClaimsDto.ClaimValue.Trim().ToLower());
 
@@ -156,7 +156,7 @@ namespace OnlineVoting.Services.Implementation
             var user = await _userManager.FindByEmailAsync(email);
 
             if (user == null)
-                throw new UserNotFoundException(email);
+                throw new NotFoundException(email);
 
             var claim = await _userManager.GetClaimsAsync(user);
 

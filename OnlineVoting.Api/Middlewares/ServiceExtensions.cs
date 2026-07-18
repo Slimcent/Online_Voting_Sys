@@ -52,11 +52,10 @@ namespace OnlineVoting.Api.Middlewares
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IStaffService, StaffService>();
             services.AddScoped<IFileDataExtractorService, FileDataExtractorService>();
-
             services.AddScoped<DbContext, VotingDbContext>();
             services.AddScoped<IServiceFactory, ServiceFactory>();
-
             services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
+            services.AddSingleton<ILoggerMessage, VotingSystem.Logger.LoggerMessage>();
 
             return services;
         }
