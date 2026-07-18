@@ -264,3 +264,51 @@ Exceptions
 ├── InvalidCredentialsException.cs
 └── NotFoundException.cs
 
+
+## Unit of Work Transaction Support
+
+Transaction management was added to the Unit of Work so service methods can safely execute business operations that require multiple database saves.
+
+### Changes
+
+The `IUnitOfWork` interface now exposes methods for:
+
+- Beginning a database transaction
+- Committing the active transaction
+- Rolling back the active transaction
+
+The `UnitOfWork` implementation now stores the active `IDbContextTransaction` and disposes it after a successful commit or rollback.
+
+### Why this was added
+
+A single Entity Framework Core `SaveChanges` call is already transactional. However, some business operations may require 
+
+multiple `SaveChangesAsync` calls.
+
+For example, one entity may need to be saved first so that its generated identifier can be used when creating another related entity.
+
+Without an explicit transaction, the first save could remain in the database if a later operation fails. Transaction support ensures 
+that either the complete business operation succeeds or all its database changes are rolled back.
+
+### Service usage
+
+Services can now perform multi-step database operations using the following structure:
+
+```csharp
+await _unitOfWork.BeginTransactionAsync();
+
+try
+{
+    repository.Add(firstEntity);
+    await _unitOfWork.SaveChangesAsync();
+
+    repository.Add(secondEntity);
+    await _unitOfWork.SaveChangesAsync();
+
+    await _unitOfWork.CommitTransactionAsync();
+}
+catch
+{
+    await _unitOfWork.RollbackTransactionAsync();
+    throw;
+}
