@@ -68,7 +68,7 @@ namespace OnlineVoting.Api.Controllers
             return Ok(allDeletedPositions);
         }
 
-        [HttpGet("position-by-id", Name = "Position-By-Name")]
+        [HttpGet("position-by-id", Name = "Position-By-Id")]
         public async Task<IActionResult> GetStaffById(Guid id)
         {
             PositionResponseDto position = await _positionService.GetAPosition(id);
