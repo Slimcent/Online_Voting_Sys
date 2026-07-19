@@ -46,11 +46,11 @@ namespace OnlineVoting.Services.Implementation
             if (regNo == null)
                 throw new InvalidOperationException("Invalid data sent");
 
-            var contestantExists = await _contestantRepo.GetSingleByAsync(r => r.Student.RegNo == regNo, include: r => r.Include(s => s.Student));
+            var contestantExists = await _contestantRepo.GetSingleByAsync(r => r.Student.RegNumber == regNo, include: r => r.Include(s => s.Student));
             if (contestantExists != null)
                 throw new ConflictException(regNo);
 
-            Student student = await _studentRepo.GetSingleByAsync(s => s.RegNo == regNo, include: s => s.Include(u => u.User));
+            Student student = await _studentRepo.GetSingleByAsync(s => s.RegNumber == regNo, include: s => s.Include(u => u.User));
             if (student == null)
                 throw new NotFoundException(regNo);
 
@@ -61,7 +61,7 @@ namespace OnlineVoting.Services.Implementation
             };
             await _contestantRepo.AddAsync(contestant);
 
-            return new Response(true, $"Contestant with RegNo {regNo} created successfully");
+            return new Response(true, $"Contestant with RegNumber {regNo} created successfully");
         }
 
         public async Task<Response> CreateStudent(StudentCreateRequestDto model)
@@ -69,7 +69,7 @@ namespace OnlineVoting.Services.Implementation
             if (model == null)
                 throw new InvalidOperationException("Invalid data sent");
                         
-            var regNumberExists = await _studentRepo.GetSingleByAsync(r => r.RegNo == model.RegNo);
+            var regNumberExists = await _studentRepo.GetSingleByAsync(r => r.RegNumber == model.RegNo);
             if (regNumberExists != null)
                 throw new ConflictException(model.RegNo);
 
@@ -111,7 +111,7 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<string> UploadStudents(UploadStudentRequestDto model)
         {
-            //string[] requiredHeaders = new[] {"RegNo", "FirstName", "LastName", "Email", "PhoneNumber", "Sex"};
+            //string[] requiredHeaders = new[] {"RegNumber", "FirstName", "LastName", "Email", "PhoneNumber", "Sex"};
             //string[] nullableFields = new[] {"SN", "PhoneNumber", "Sex"};
                         
             List<Dictionary<string, string>> studentData = _fileDataExtractor.ExtractFromExcel(model.File, null, ignoreFields: model.IgnoreFields);
@@ -121,7 +121,7 @@ namespace OnlineVoting.Services.Implementation
 
             foreach (Student student in studentsToUpload)
             {
-                User exisitingUser = await _userManager.FindByEmailAsync(student.Email);
+                User exisitingUser = await _userManager.FindByEmailAsync(student.RegNumber);
 
                 if (exisitingUser != null)
                 {
@@ -130,8 +130,8 @@ namespace OnlineVoting.Services.Implementation
 
                 UserCreateRequestDto user = new()
                 {
-                    Email = student.Email,
-                    FirstName = student.FirstName,
+                    //Email = student.Email,
+                    //FirstName = student.FirstName,
                     Role = "Student"
                 };
 
@@ -148,11 +148,11 @@ namespace OnlineVoting.Services.Implementation
             if (request == null)
                 throw new InvalidOperationException("Invalid data sent");
 
-            var voterExists = await _studentRepo.GetSingleByAsync(s => s.RegNo == request.VoterRegNo);
+            var voterExists = await _studentRepo.GetSingleByAsync(s => s.RegNumber == request.VoterRegNo);
             if (voterExists == null)
                 throw new NotFoundException(request.VoterRegNo);
 
-            var contestantExists = _studentRepo.GetSingleByAsync(s => s.RegNo == request.ContestantRegNo);
+            var contestantExists = _studentRepo.GetSingleByAsync(s => s.RegNumber == request.ContestantRegNo);
             if (voterExists == null)
                 throw new NotFoundException(request.ContestantRegNo);
 

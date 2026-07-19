@@ -53,7 +53,7 @@ namespace OnlineVoting.Services.Implementation
                 PhoneNumber = request.PhoneNumber,
                 LastName = request.LastName,
                 FirstName = request.FirstName,
-                Gender = request.Gender
+                //Gender = request.Gender
             };
             await _staffRepo.AddAsync(staff);
 
@@ -202,7 +202,7 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<IEnumerable<StaffResponseDto>> GetAllDeletedStaff()
         {
-            IEnumerable<Staff> allDeletedStaff = await _staffRepo.GetByAsync(x => x.IsDeleted == true);
+            IEnumerable<Staff> allDeletedStaff = await _staffRepo.GetByAsync(x => x.Active == true);
 
             if (!allDeletedStaff.Any())
             {
@@ -214,7 +214,7 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<IEnumerable<StaffResponseDto>> GetAllActiveStaff()
         {
-            IEnumerable<Staff> allActiveStaff = await _staffRepo.GetByAsync(x => x.IsDeleted == false);
+            IEnumerable<Staff> allActiveStaff = await _staffRepo.GetByAsync(x => x.Active == false);
 
             if (!allActiveStaff.Any())
             {
@@ -237,7 +237,7 @@ namespace OnlineVoting.Services.Implementation
         public async Task<PagedResponse<StaffResponseDto>> AllActiveStaff(StaffRequestDto request)
         {
             PagedList<Staff> staff = string.IsNullOrWhiteSpace(request.SearchTerm)
-                ? await _staffRepo.GetPagedItems(request, x => x.IsDeleted == false)
+                ? await _staffRepo.GetPagedItems(request, x => x.Active == false)
                 : await _staffRepo.GetPagedItems(request, x => x.FirstName.Contains(request.SearchTerm.ToLower().Trim())
                             || x.LastName.Contains(request.SearchTerm.ToLower().Trim()));
 
@@ -247,7 +247,7 @@ namespace OnlineVoting.Services.Implementation
         public async Task<PagedResponse<StaffResponseDto>> AllDeletedStaff(StaffRequestDto request)
         {
             PagedList<Staff> staff = string.IsNullOrWhiteSpace(request.SearchTerm)
-                ? await _staffRepo.GetPagedItems(request, x => x.IsDeleted == true)
+                ? await _staffRepo.GetPagedItems(request, x => x.Active == true)
                 : await _staffRepo.GetPagedItems(request, x => x.FirstName.Contains(request.SearchTerm.ToLower().Trim())
                             || x.LastName.Contains(request.SearchTerm.ToLower().Trim()));
 
@@ -261,11 +261,11 @@ namespace OnlineVoting.Services.Implementation
             if (staff == null)
                 return $"Staff with id {id} does not exist";
 
-            staff.IsDeleted = !staff.IsDeleted;
+            staff.Active = !staff.Active;
 
             await _staffRepo.UpdateAsync(staff);
 
-            if (staff.IsDeleted == false)
+            if (staff.Active == false)
             {
                 return $"Staff activated successfully";
             }

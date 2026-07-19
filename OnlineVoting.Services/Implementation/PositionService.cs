@@ -47,7 +47,7 @@ namespace OnlineVoting.Services.Implementation
             if (positionExists == null)
                 throw new InvalidOperationException("Position does not exists");
 
-            positionExists.IsDeleted = !positionExists.IsDeleted;
+            positionExists.Active = !positionExists.Active;
 
             _positionRepo.Update(positionExists);
 
@@ -70,7 +70,7 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<IEnumerable<PositionResponseDto>> GetAllDeletedPositions()
         {
-            IEnumerable<Position> allDeletedPositions = await _positionRepo.GetByAsync(x => x.IsDeleted == true);
+            IEnumerable<Position> allDeletedPositions = await _positionRepo.GetByAsync(x => x.Active == true);
 
             if (!allDeletedPositions.Any())
             {
@@ -82,7 +82,7 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<IEnumerable<PositionResponseDto>> GetAllActivePositions()
         {
-            IEnumerable<Position> allActivePositions = await _positionRepo.GetByAsync(x => x.IsDeleted == false);
+            IEnumerable<Position> allActivePositions = await _positionRepo.GetByAsync(x => x.Active == false);
 
             if (!allActivePositions.Any())
             {
@@ -132,7 +132,7 @@ namespace OnlineVoting.Services.Implementation
         public async Task<PagedResponse<PositionResponseDto>> AllActivePositions(PositionRequestDto request)
         {
             PagedList<Position> position = string.IsNullOrWhiteSpace(request.SearchTerm)
-                ? await _positionRepo.GetPagedItems(request, x => x.IsDeleted == false)
+                ? await _positionRepo.GetPagedItems(request, x => x.Active == false)
                 : await _positionRepo.GetPagedItems(request, x => x.Name.Contains(request.SearchTerm.ToLower().Trim()));
 
             return _mapper.Map<PagedResponse<PositionResponseDto>>(position);
@@ -141,7 +141,7 @@ namespace OnlineVoting.Services.Implementation
         public async Task<PagedResponse<PositionResponseDto>> AllDeletedPositions(PositionRequestDto request)
         {
             PagedList<Position> position = string.IsNullOrWhiteSpace(request.SearchTerm)
-                ? await _positionRepo.GetPagedItems(request, x => x.IsDeleted == true)
+                ? await _positionRepo.GetPagedItems(request, x => x.Active == true)
                 : await _positionRepo.GetPagedItems(request, x => x.Name.Contains(request.SearchTerm.ToLower().Trim()));
 
             return _mapper.Map<PagedResponse<PositionResponseDto>>(position);

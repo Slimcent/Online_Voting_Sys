@@ -30,8 +30,8 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<string> CreateVoter(VoterCreateDto request)
         {
-            Student checkIfStudentExists = await _studentRepo.GetSingleByAsync(x => x.RegNo == request.RegNo,
-                include: x => x.Include(d => d.Department).ThenInclude(f => f.Faculty));
+            Student checkIfStudentExists = await _studentRepo.GetSingleByAsync(x => x.RegNumber == request.RegNo,
+                include: x => x.Include(d => d.Department).ThenInclude(f => f.Faculty).Include(x => x.User));
 
             if (checkIfStudentExists == null)
                 throw new NotFoundException(request.RegNo);
@@ -40,7 +40,7 @@ namespace OnlineVoting.Services.Implementation
                 && x.DepartmentId == checkIfStudentExists.DepartmentId);
 
             if (checkIfStudentAlreadyRegistered != null)
-                throw new InvalidOperationException($"Student with regNo {checkIfStudentExists.RegNo} has already registered to vote");
+                throw new InvalidOperationException($"Student with regNo {checkIfStudentExists.RegNumber} has already registered to vote");
 
             string votingCode = VotingCodeExtention.StudentVotingCode();
 
@@ -55,9 +55,9 @@ namespace OnlineVoting.Services.Implementation
 
             VoterEmailDto emailDto = new()
             {
-                Email = checkIfStudentExists.Email,
+                Email = checkIfStudentExists.User.Email,
                 VotingCode= votingCode,
-                FirstName = checkIfStudentExists.FirstName,
+                FirstName = checkIfStudentExists.User.FirstName,
             };
 
             await _serviceFactory.GetService<IEmailService>().SendVoterEmail(emailDto);
