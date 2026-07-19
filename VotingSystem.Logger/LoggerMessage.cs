@@ -30,5 +30,10 @@ namespace VotingSystem.Logger
         {
             logger.Warn(message);
         }
+
+        public void LogError(Exception exception, string message)
+        {
+            logger.Error(exception, message);
+        }
     }
 }
