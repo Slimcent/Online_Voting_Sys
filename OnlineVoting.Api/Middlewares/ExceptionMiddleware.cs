@@ -68,12 +68,29 @@ namespace OnlineVoting.Api.Middlewares
 
                                 break;
 
-                            default:
-                                context.Response.StatusCode =  StatusCodes.Status500InternalServerError;
+                            case ConflictException:
+                                context.Response.StatusCode =
+                                    StatusCodes.Status409Conflict;
 
-                                logger.LogError($"Unhandled exception on {context.Request.Method} " +
-                                    $"{context.Request.Path}: " +
-                                    $"{contextFeature.Error}");
+                                status = ResponseStatus.APP_ERROR;
+                                message = contextFeature.Error.Message;
+
+                                logger.LogWarn(
+                                    $"Conflict while processing " +
+                                    $"{context.Request.Method} {context.Request.Path}: " +
+                                    $"{contextFeature.Error.Message}");
+
+                                break;
+
+                            default:
+                                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+
+                                status = ResponseStatus.FATAL_ERROR;
+                                message = "An unexpected error occurred.";
+
+                                logger.LogError(contextFeature.Error,
+                                    $"An unexpected error occurred while processing " +
+                                    $"{context.Request.Method} {context.Request.Path}.");
 
                                 break;
                         }
