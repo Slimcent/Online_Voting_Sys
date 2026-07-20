@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using OnlineVoting.Models.Enums;
 using OnlineVoting.Models.Interfaces;
 
 namespace OnlineVoting.Models.Entities
@@ -9,7 +8,7 @@ namespace OnlineVoting.Models.Entities
         public string? LastName { get; set; }
         public string? FirstName { get; set; }
         public string? RecoveryEmail { get; set; }
-        public bool IsActive { get; set; }
+        public bool Active { get; set; }
         public int UserTypeId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

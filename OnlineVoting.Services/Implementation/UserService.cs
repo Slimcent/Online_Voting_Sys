@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Request.Email;
 using OnlineVoting.Models.Dtos.Response;
@@ -13,6 +14,7 @@ using OnlineVoting.Services.Interfaces;
 using SchMgr_FUTO.Data.Interfaces;
 using System.Security.Claims;
 using VotingSystem.Data.Interfaces;
+using VotingSystem.Logger;
 
 namespace OnlineVoting.Services.Implementation
 {
@@ -27,6 +29,7 @@ namespace OnlineVoting.Services.Implementation
         private readonly IMapper _mapper;
         private readonly IServiceFactory _serviceFactory;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ILoggerMessage _loggerMessage;
 
         public UserService(IServiceFactory serviceFactory)
         {
@@ -38,6 +41,7 @@ namespace OnlineVoting.Services.Implementation
             _staffRepo = _unitOfWork.GetRepository<Staff>();
             _userRepo = _unitOfWork.GetRepository<User>();
             _mapper = _serviceFactory.GetService<IMapper>();
+            _loggerMessage = _serviceFactory.GetService<ILoggerMessage>();
         }
 
         public async Task<string> CreateUser(UserCreateRequestDto request)
@@ -47,7 +51,7 @@ namespace OnlineVoting.Services.Implementation
 
             User existingUser = await _userManager.FindByEmailAsync(request.Email.Trim().ToLower());
             if (existingUser != null)
-                throw new UserExistException(request.Email);
+                throw new ConflictException(request.Email);
 
             User user = _mapper.Map<User>(request);
            
@@ -75,18 +79,26 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<LoggedInUserResponse> UserLogin(LoginDto request)
         {
+            _loggerMessage.LogInfo($"Login attempt received for email {request.Email}.");
+
             User user = await _userRepo.GetSingleByAsync(x => x.UserName == request.Email.ToLower().Trim(), include: x => x.Include(x => x.UserType));
 
             if (user == null)
-                throw new InvalidOperationException("Invalid email or password");
-
-            if (user.IsActive == false)
+            {
+                _loggerMessage.LogWarn($"Login failed because no user exists for email {request.Email}.");
+                throw new NotFoundException("User not found");
+            }
+            
+            if (user.Active == false)
                 throw new InvalidOperationException("Account is not active, contact the admin");
 
             bool result = await _userManager.CheckPasswordAsync(user, request.Password);
             if (!result)
-                throw new InvalidOperationException("Invalid email or password");
-
+            {
+                _loggerMessage.LogWarn($"Login failed because invalid credentials were provided for user {user.Id}.");
+                throw new InvalidCredentialsException("Invalid email or password");
+            }
+            
             List<string> allUserRoles = (await _userManager.GetRolesAsync(user)).ToList();
             string uRole = allUserRoles.FirstOrDefault();
 
@@ -154,7 +166,7 @@ namespace OnlineVoting.Services.Implementation
 
             if (emailResult.Succeeded && passwordResult.Succeeded)
             {
-                user.IsActive = true;
+                user.Active = true;
                 await _userManager.UpdateAsync(user);
 
                 return "Password reset was successful";

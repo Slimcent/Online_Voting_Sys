@@ -17,7 +17,7 @@ namespace OnlineVoting.Models.Dtos.Request
             ErrorMessage = "Only Alphabets allowed"), MaxLength(20), MinLength(2)]
         public string? LastName { get; set; }
 
-       [Required(ErrorMessage = "RegNo is required")]
+       [Required(ErrorMessage = "RegNumber is required")]
        public string? RegNo { get; set; }
 
         [Required(ErrorMessage = "Email is required"), EmailAddress]

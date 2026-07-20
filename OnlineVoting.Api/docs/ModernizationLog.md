@@ -217,3 +217,128 @@ This redesign introduces several improvements over the previous implementation:
 The successful completion of these tests confirms that the custom authorization infrastructure correctly authenticates users, 
 
 evaluates role and user permissions, and grants or denies access based on the configured permission model.
+
+
+### Dependency Registration Cleanup
+
+The dependency-injection configuration was reviewed after the authorization changes to remove duplicate registrations 
+
+and align service lifetimes with the database context.
+
+The following changes were made:
+
+- Removed the duplicate `CustomAuthorizationHandler` registration from `AddRepositories()`.
+- Kept the authorization handler registration inside `ConfigureAuthorization()`.
+- Removed the duplicate `DbContext` registration from `Program.cs`.
+- Kept the `DbContext` abstraction registration in `AddRepositories()`.
+- Changed services that depend on `VotingDbContext` from transient to scoped.
+- Kept `SynchronizedConverter` registered as a singleton.
+- Removed unused namespace imports from `Program.cs`.
+
+These changes ensure that each dependency is registered in one appropriate location and that database-dependent services share the same scoped `VotingDbContext` instance throughout an HTTP request.
+
+The application was rebuilt and the authentication and authorization flows were retested successfully after the cleanup.
+
+---
+
+## Exception Handling Cleanup
+
+The application's custom exception structure was simplified to make HTTP error responses more consistent and easier to maintain.
+
+Previously, the service layer contained several entity-specific exceptions, including:
+
+- `RegNoExistException`
+- `RegNoNotFoundException`
+- `StudentNotFoundException`
+- `UserExistException`
+- `UserNotFoundException`
+
+These exceptions duplicated behaviour and in some cases, represented the wrong HTTP meaning. For example, exceptions for records 
+
+that already existed inherited from `NotFoundException`, which caused conflict situations to be treated as `404 Not Found`.
+
+The exception structure was reduced to:
+
+```text
+Exceptions
+├── ConflictException.cs
+├── InvalidCredentialsException.cs
+└── NotFoundException.cs
+
+---
+
+## Unit of Work Transaction Support
+
+Transaction management was added to the Unit of Work so service methods can safely execute business operations that require multiple database saves.
+
+### Changes
+
+The `IUnitOfWork` interface now exposes methods for:
+
+- Beginning a database transaction
+- Committing the active transaction
+- Rolling back the active transaction
+
+The `UnitOfWork` implementation now stores the active `IDbContextTransaction` and disposes it after a successful commit or rollback.
+
+### Why this was added
+
+A single Entity Framework Core `SaveChanges` call is already transactional. However, some business operations may require 
+
+multiple `SaveChangesAsync` calls.
+
+For example, one entity may need to be saved first so that its generated identifier can be used when creating another related entity.
+
+Without an explicit transaction, the first save could remain in the database if a later operation fails. Transaction support ensures 
+that either the complete business operation succeeds or all its database changes are rolled back.
+
+### Service usage
+
+Services can now perform multi-step database operations using the following structure:
+
+```csharp
+await _unitOfWork.BeginTransactionAsync();
+
+try
+{
+    repository.Add(firstEntity);
+    await _unitOfWork.SaveChangesAsync();
+
+    repository.Add(secondEntity);
+    await _unitOfWork.SaveChangesAsync();
+
+    await _unitOfWork.CommitTransactionAsync();
+}
+catch
+{
+    await _unitOfWork.RollbackTransactionAsync();
+    throw;
+}
+
+---
+
+## Milestone: Application Data Seeding
+
+### Summary
+Implemented a comprehensive application data seeding process to automatically provision the application with the required reference 
+
+data and initial users during startup.
+
+### Changes
+- Added transactional application seeding using EF Core execution strategies.
+- Seeded reference data:
+  - User types
+  - Genders
+  - Roles
+  - Administrator role claims
+  - Student role claims
+  - Faculties
+  - Departments
+- Added creation of the initial administrator account.
+- Added creation of the initial student account.
+- Seeded related Staff and Student records.
+- Implemented dependency-aware seeding so entities are created in the correct order.
+- Used database-generated identity values for Gender, Faculty and Department instead of hard-coded IDs.
+- Prevented duplicate seed data by checking for existing records before insertion.
+- Added validation to ensure required dependencies exist before creating related entities.
+- Centralized identity operation validation through a reusable helper.

@@ -48,7 +48,7 @@ namespace OnlineVoting.Services.Extension
                 throw new InvalidOperationException($"The administrator role '{seed.AdminUser.Role}' " +
                     "is not included in the configured seed roles.");
 
-            if (seed.AdminUser.UserTypeId <= 0)
+            if (string.IsNullOrWhiteSpace(seed.AdminUser.UserType))
                 throw new InvalidOperationException("The seeded administrator user type was not found.");
 
             return seed;

@@ -12,7 +12,7 @@ namespace OnlineVoting.Models.Entities
         public Guid Id { get; set; }
         public Guid? StudentId { get; set; }
         public string? VotingCode { get; set; }
-        public int DepartmentId { get; set; }
+        public long DepartmentId { get; set; }
         public bool IsDeActivated { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

@@ -21,9 +21,10 @@ namespace OnlineVoting.Api.Controllers
             _emailService = emailService;
         }
 
+        
         [AllowAnonymous]
         [HttpPost("login", Name = "Login")]
-        public async Task<ActionResult> Login([FromBody] LoginDto loginDto)
+        public async Task<ActionResult<LoggedInUserResponse>> Login([FromBody] LoginDto loginDto)
         {
             LoggedInUserResponse user = await _userService.UserLogin(loginDto);
 
