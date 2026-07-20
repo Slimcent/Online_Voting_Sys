@@ -56,7 +56,7 @@ namespace OnlineVoting.Services.Infrastructures.Authorization
 
             IEnumerable<ApplicationUserClaim> userClaims = await _userClaimRepo.GetByAsync(userClaim => userClaim.UserId == userId);
 
-            bool userRoleHasClaim = userRoles.Any(userRole => userRole.Active && userRole.Role.IsActive 
+            bool userRoleHasClaim = userRoles.Any(userRole => userRole.Active && userRole.Role.Active 
                 && userRole.Role.RoleClaims.Any(roleClaim => roleClaim.Active 
                 && roleClaim.ClaimValue == routeClaim));
 

@@ -239,6 +239,7 @@ These changes ensure that each dependency is registered in one appropriate locat
 
 The application was rebuilt and the authentication and authorization flows were retested successfully after the cleanup.
 
+---
 
 ## Exception Handling Cleanup
 
@@ -264,6 +265,7 @@ Exceptions
 ├── InvalidCredentialsException.cs
 └── NotFoundException.cs
 
+---
 
 ## Unit of Work Transaction Support
 
@@ -312,3 +314,31 @@ catch
     await _unitOfWork.RollbackTransactionAsync();
     throw;
 }
+
+---
+
+## Milestone: Application Data Seeding
+
+### Summary
+Implemented a comprehensive application data seeding process to automatically provision the application with the required reference 
+
+data and initial users during startup.
+
+### Changes
+- Added transactional application seeding using EF Core execution strategies.
+- Seeded reference data:
+  - User types
+  - Genders
+  - Roles
+  - Administrator role claims
+  - Student role claims
+  - Faculties
+  - Departments
+- Added creation of the initial administrator account.
+- Added creation of the initial student account.
+- Seeded related Staff and Student records.
+- Implemented dependency-aware seeding so entities are created in the correct order.
+- Used database-generated identity values for Gender, Faculty and Department instead of hard-coded IDs.
+- Prevented duplicate seed data by checking for existing records before insertion.
+- Added validation to ensure required dependencies exist before creating related entities.
+- Centralized identity operation validation through a reusable helper.
