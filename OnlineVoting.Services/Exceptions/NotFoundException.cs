@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace OnlineVoting.Services.Exceptions
+﻿namespace OnlineVoting.Services.Exceptions
 {
-    public abstract class NotFoundException : Exception
+    public class NotFoundException : Exception
     {
-        protected NotFoundException(string message)
+        public NotFoundException(string message)
             : base(message) { }
     }
 }

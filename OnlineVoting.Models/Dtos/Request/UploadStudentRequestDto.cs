@@ -7,7 +7,7 @@ namespace OnlineVoting.Models.Dtos.Request
     {
         public UploadStudentRequestDto()
         {
-            RequiredFields = new[] { "RegNo", "FirstName", "LastName", "Email" };
+            RequiredFields = new[] { "RegNumber", "FirstName", "LastName", "Email" };
             IgnoreFields = new[] { "SN" };
         }
 

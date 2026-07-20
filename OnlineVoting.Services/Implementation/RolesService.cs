@@ -134,11 +134,11 @@ namespace OnlineVoting.Services.Implementation
             if (role == null)
                 throw new InvalidOperationException("Role does not exist");
 
-            role.IsActive = !role.IsActive;
+            role.Active = !role.Active;
 
             await _roleManager.UpdateAsync(role);
 
-            if (role.IsActive == true)
+            if (role.Active == true)
             {
                 return $"Role {role.Name} activated successfully";
             }
@@ -162,7 +162,7 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<IEnumerable<RoleResponseDto>> GetAllActiveRoles()
         {
-            IEnumerable<Role> allRoles = await _roleRepo.GetByAsync(x => x.IsActive == true);
+            IEnumerable<Role> allRoles = await _roleRepo.GetByAsync(x => x.Active == true);
 
             if (!allRoles.Any())
             {
@@ -174,7 +174,7 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<IEnumerable<RoleResponseDto>> GetAllDeactivatedRoles()
         {
-            IEnumerable<Role> allRoles = await _roleRepo.GetByAsync(x => x.IsActive == false);
+            IEnumerable<Role> allRoles = await _roleRepo.GetByAsync(x => x.Active == false);
 
             if (!allRoles.Any())
             {
@@ -196,7 +196,7 @@ namespace OnlineVoting.Services.Implementation
         public async Task<PagedResponse<RoleResponseDto>> AllActiveRoles(RoleRequestDto request)
         {
             PagedList<Role> roles = string.IsNullOrWhiteSpace(request.SearchTerm)
-                ? await _roleRepo.GetPagedItems(request, x => x.IsActive == true)
+                ? await _roleRepo.GetPagedItems(request, x => x.Active == true)
                 : await _roleRepo.GetPagedItems(request, x => x.Name.Contains(request.SearchTerm.ToLower().Trim()));
 
             return _mapper.Map<PagedResponse<RoleResponseDto>>(roles);
@@ -205,7 +205,7 @@ namespace OnlineVoting.Services.Implementation
         public async Task<PagedResponse<RoleResponseDto>> AllDeactivatedRoles(RoleRequestDto request)
         {
             PagedList<Role> roles = string.IsNullOrWhiteSpace(request.SearchTerm)
-                ? await _roleRepo.GetPagedItems(request, x => x.IsActive == false)
+                ? await _roleRepo.GetPagedItems(request, x => x.Active == false)
                 : await _roleRepo.GetPagedItems(request, x => x.Name.Contains(request.SearchTerm.ToLower().Trim()));
 
             return _mapper.Map<PagedResponse<RoleResponseDto>>(roles);

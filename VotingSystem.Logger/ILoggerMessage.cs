@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace VotingSystem.Logger
+﻿namespace VotingSystem.Logger
 {
     public interface ILoggerMessage
     {
@@ -12,5 +6,6 @@ namespace VotingSystem.Logger
         void LogWarn(string message);
         void LogDebug(string message);
         void LogError(string message);
+        void LogError(Exception exception, string message);
     }
 }

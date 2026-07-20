@@ -9,9 +9,9 @@ namespace OnlineVoting.Models.Entities
             Students = new HashSet<Student>();
         }
 
-        public int Id { get; set; }
+        public long Id { get; set; }
         public string Name { get; set; }
-        public int FacultyId { get; set; }
+        public long FacultyId { get; set; }
         public bool Activated { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

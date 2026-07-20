@@ -1,14 +1,11 @@
 using DotNetEnv;
-using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NLog;
 using OnlineVoting.Api.Mapper;
 using OnlineVoting.Api.Middlewares;
-using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities.Email;
 using OnlineVoting.Services.Infrastructures;
-using OnlineVoting.Services.Infrastructures.Authorization;
 using System.Text.Json.Serialization;
 using VotingSystem.Data.SeedData;
 
@@ -29,16 +26,9 @@ LogManager.LoadConfiguration(string.Concat(Directory.GetCurrentDirectory(),
 
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("SmtpSettings"));
 
-builder.Services.AddScoped<DbContext, VotingDbContext>();
-
-builder.Services.AddAuthorization(cfg =>
-{
-    cfg.AddPolicy("Authorization", policy => policy.Requirements.Add(new AuthorizationRequirement()));
-});
-
+builder.Services.ConfigureAuthorization();
 
 builder.Services.AddRepositories();
-builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddControllers(setupAction =>
 {

@@ -1,4 +1,5 @@
-﻿using SchMgr_FUTO.Data.Interfaces;
+﻿using Microsoft.EntityFrameworkCore.Storage;
+using SchMgr_FUTO.Data.Interfaces;
 
 namespace VotingSystem.Data.Interfaces
 {
@@ -9,6 +10,9 @@ namespace VotingSystem.Data.Interfaces
         int SaveChanges();
 
         Task<int> SaveChangesAsync();
+        Task<IDbContextTransaction> BeginTransactionAsync();
+        Task CommitTransactionAsync();
+        Task RollbackTransactionAsync();
     }
 
     public interface IUnitofWork<TContext> : IUnitOfWork
