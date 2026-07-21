@@ -84,6 +84,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.ConfigureExceptionHandler();
+app.ConfigureStatusCodePages();
 
 app.UseHttpsRedirection();
 
@@ -95,7 +96,5 @@ app.MapControllers();
 app.UseStaticFiles();
 
 await SeedApplicationData.EnsurePopulated(app);
-
-//SeedStudent.EnsurePopulated(app);
 
 app.Run();
