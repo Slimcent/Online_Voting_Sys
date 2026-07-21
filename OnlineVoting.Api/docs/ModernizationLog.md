@@ -641,4 +641,156 @@ Example:
 
 ---
 
+## Standardized API Error Responses with ProblemDetails
+
+The API error-handling pipeline was modernized to use ASP.NET Core's built-in `ProblemDetails` and `ValidationProblemDetails` response formats.
+
+This replaces the previous custom `ResponseError` model with the standardized error format recommended for ASP.NET Core APIs.
+
+The goal of this modernization is to provide a consistent response structure for all API errors, making the API easier to consume and 
+
+improving interoperability with client applications such as React, Angular, mobile applications and third-party integrations.
+
+### Exception Middleware
+
+The existing exception middleware was updated to return `ProblemDetails` for application exceptions instead of the custom `ResponseError` object.
+
+The following exception mappings were implemented:
+
+| Exception | HTTP Status |
+|-----------|------------:|
+| `InvalidDataException` | 400 Bad Request |
+| `ArgumentException` | 400 Bad Request |
+| `InvalidCredentialsException` | 401 Unauthorized |
+| `NotFoundException` | 404 Not Found |
+| `ConflictException` | 409 Conflict |
+| Any unhandled exception | 500 Internal Server Error |
+
+Each response now contains a standardized structure consisting of:
+
+- `type`
+- `title`
+- `status`
+- `detail`
+- `instance`
+- `traceId`
+
+The middleware continues to log all exceptions using the existing logging infrastructure while returning consistent JSON responses to clients.
+
+### Validation Responses
+
+The custom `ValidationFilter` was updated to return `ValidationProblemDetails`.
+
+Validation responses now include:
+
+- Field-level validation errors
+- RFC-compliant error metadata
+- Request path
+- Request trace identifier
+
+This provides a consistent experience between validation errors and runtime exceptions.
+
+### Status Code Pages
+
+A new status-code response handler was added using:
+
+```csharp
+app.ConfigureExceptionHandler();
+app.ConfigureStatusCodePages();
+```
+
+This ensures that framework-generated responses are also returned using the same standardized format.
+
+The following responses are now standardized even when no exception is thrown:
+
+- 401 Unauthorized
+- 403 Forbidden
+- 404 Not Found
+
+### Response Examples
+
+#### Validation Error (400)
+
+```json
+{
+  "errors": {
+    "email": [
+      "Email cannot be empty."
+    ]
+  },
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "Validation failed.",
+  "status": 400,
+  "detail": "One or more validation errors occurred.",
+  "instance": "/api/v1/Auth/login",
+  "traceId": "..."
+}
+```
+
+#### Unauthorized (401)
+
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+  "title": "Unauthorized",
+  "status": 401,
+  "detail": "Authentication is required to access this resource.",
+  "instance": "/api/v1/Position/all-paged-positions",
+  "traceId": "..."
+}
+```
+
+#### Resource Not Found (404)
+
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+  "title": "Resource not found",
+  "status": 404,
+  "detail": "User not found",
+  "instance": "/api/v1/Auth/login",
+  "traceId": "..."
+}
+```
+
+#### Conflict (409)
+
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "Conflict",
+  "status": 409,
+  "detail": "A resource with the same name already exists.",
+  "instance": "/api/v1/Position/create-position",
+  "traceId": "..."
+}
+```
+
+#### Internal Server Error (500)
+
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+  "title": "Internal server error",
+  "status": 500,
+  "detail": "An unexpected error occurred.",
+  "instance": "/api/v1/Position/all-paged-positions",
+  "traceId": "..."
+}
+```
+
+### Benefits
+
+This modernization provides several improvements:
+
+- Replaced the custom `ResponseError` model with the ASP.NET Core standard.
+- Standardized all error responses across the application.
+- Improved consistency between validation errors and runtime exceptions.
+- Added RFC-compliant `ProblemDetails` responses.
+- Included request path (`instance`) for easier debugging.
+- Included request trace identifiers (`traceId`) to simplify troubleshooting and log correlation.
+- Preserved the existing logging behavior while improving the API response format.
+- Improved compatibility with modern client applications and API tooling.
+
+---
 
