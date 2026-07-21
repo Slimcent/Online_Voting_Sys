@@ -1,12 +1,15 @@
-﻿using DinkToPdf;
+﻿using Asp.Versioning;
+using DinkToPdf;
 using DinkToPdf.Contracts;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using OnlineVoting.Api.Configurations;
 using OnlineVoting.Api.Filters;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
@@ -15,6 +18,7 @@ using OnlineVoting.Services.Implementation;
 using OnlineVoting.Services.Infrastructures.Authorization;
 using OnlineVoting.Services.Infrastructures.Authorization.Jwt;
 using OnlineVoting.Services.Interfaces;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Security.Claims;
 using System.Text;
 using VotingSystem.Data.Implementation;
@@ -134,19 +138,14 @@ namespace OnlineVoting.Api.Middlewares
 
         public static void ConfigureSwagger(this IServiceCollection services)
         {
-            services.AddSwaggerGen(c =>
+            services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
+
+            services.AddSwaggerGen(options =>
             {
-                c.EnableAnnotations();
+                options.EnableAnnotations();
 
-                c.SwaggerDoc(
-                    "v1",
-                    new OpenApiInfo
-                    {
-                        Title = "Online-Voting",
-                        Version = "v1"
-                    });
-
-                c.AddSecurityDefinition("Bearer",
+                options.AddSecurityDefinition(
+                    "Bearer",
                     new OpenApiSecurityScheme
                     {
                         Name = "Authorization",
@@ -154,23 +153,22 @@ namespace OnlineVoting.Api.Middlewares
                         Scheme = "bearer",
                         BearerFormat = "JWT",
                         In = ParameterLocation.Header,
-                        Description = "Enter the JWT token only. Swagger will add the " +
+                        Description =
+                            "Enter the JWT token only. Swagger will add the " +
                             "'Bearer' prefix automatically."
                     });
 
-                c.AddSecurityRequirement(document =>
-                    new OpenApiSecurityRequirement
+                options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+                {
                     {
-                        {
-                            new OpenApiSecuritySchemeReference(
-                                "Bearer",
-                                document),
-                            new List<string>()
-                        }
-                    });
+                        new OpenApiSecuritySchemeReference(
+                            "Bearer",
+                            document),
+                        new List<string>()
+                    }
+                });
             });
         }
-
 
         public static IServiceCollection ConfigureAuthorization(this IServiceCollection services)
         {
@@ -188,6 +186,34 @@ namespace OnlineVoting.Api.Middlewares
             services.AddScoped<IAuthorizationHandler, CustomAuthorizationHandler>();
 
             return services;
+        }
+
+        public static void ConfigureApiVersioning(this IServiceCollection services)
+        {
+            services.AddApiVersioning(options =>
+            {
+                // Uses version 1.0 when the client does not explicitly provide
+                // an API version, preserving the existing API routes.
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+                options.AssumeDefaultVersionWhenUnspecified = true;
+
+                // Adds the supported and deprecated API versions to the
+                // response headers.
+                options.ReportApiVersions = true;
+
+                // Reads the API version from the URL route.
+                options.ApiVersionReader = new UrlSegmentApiVersionReader();
+            })
+            .AddMvc()
+            .AddApiExplorer(options =>
+            {
+                // Produces version names such as "v1" and "v2".
+                options.GroupNameFormat = "'v'V";
+
+                // Replaces {version:apiVersion} in the route displayed
+                // by Swagger with the real API version number.
+                options.SubstituteApiVersionInUrl = true;
+            });
         }
     }
 }

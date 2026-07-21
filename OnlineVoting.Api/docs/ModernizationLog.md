@@ -625,4 +625,20 @@ This modernization provides:
 
 ---
 
+## API Versioning and Version-Aware Swagger
+
+API versioning was added using:
+
+- `Asp.Versioning.Mvc`
+- `Asp.Versioning.Mvc.ApiExplorer`
+
+The API uses URL-segment versioning.
+
+Example:
+
+```text
+/api/v1/auth/login
+
+---
+
 

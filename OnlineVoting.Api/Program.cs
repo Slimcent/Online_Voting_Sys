@@ -10,6 +10,7 @@ using OnlineVoting.Services.Infrastructures;
 using System.Reflection;
 using System.Text.Json.Serialization;
 using VotingSystem.Data.SeedData;
+using Asp.Versioning.ApiExplorer;
 
 
 string environmentFilePath = Path.Combine(Directory.GetCurrentDirectory(), "OnlineVoting.Api", ".env");
@@ -59,6 +60,7 @@ builder.Services.ConfigureJWT();
 builder.Services.ConfigureLoggerService();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.ConfigureApiVersioning();
 builder.Services.ConfigureSwagger();
 builder.Services.AddAutoMapper(config => { }, Assembly.Load("OnlineVoting.Api"));
 var app = builder.Build();
@@ -67,10 +69,17 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c =>
+    app.UseSwaggerUI(options =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Online_Voting_Api v1");
-        c.InjectStylesheet("/css/swagger-dark-theme.css");
+        IApiVersionDescriptionProvider provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+
+        foreach (ApiVersionDescription description in provider.ApiVersionDescriptions.Reverse())
+        {
+            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
+                $"Online_Voting_Api {description.GroupName}");
+        }
+
+        options.InjectStylesheet("/css/swagger-dark-theme.css");
     });
 }
 
