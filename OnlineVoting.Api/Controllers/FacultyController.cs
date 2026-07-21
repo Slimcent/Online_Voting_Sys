@@ -18,9 +18,9 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPost("create-faculty", Name = "Create-Faculty")]
-        public async Task<IActionResult> CreateFaculty([FromQuery] CreateFacultyDto model)
+        public async Task<IActionResult> CreateFaculty([FromQuery] CreateWithNameRequest request)
         {
-            string faculty = await _facultyService.CreateFaculty(model);
+            string faculty = await _facultyService.CreateFaculty(request);
 
             return Ok(faculty);
         }

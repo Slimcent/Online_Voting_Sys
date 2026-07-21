@@ -28,15 +28,15 @@ namespace OnlineVoting.Services.Implementation
             _registeredVoterRepo = _unitOfWork.GetRepository<RegisteredVoter>();
         }
 
-        public async Task<string> CreateVoter(VoterCreateDto request)
+        public async Task<string> CreateVoter(CreateVoterRequest request)
         {
-            Student checkIfStudentExists = await _studentRepo.GetSingleByAsync(x => x.RegNumber == request.RegNo,
+            Student checkIfStudentExists = await _studentRepo.GetSingleByAsync(x => x.RegNumber == request.RegNumber,
                 include: x => x.Include(d => d.Department).ThenInclude(f => f.Faculty).Include(x => x.User));
 
             if (checkIfStudentExists == null)
-                throw new NotFoundException(request.RegNo);
+                throw new NotFoundException(request.RegNumber);
 
-            RegisteredVoter checkIfStudentAlreadyRegistered = await _registeredVoterRepo.GetSingleByAsync(x => x.StudentId == checkIfStudentExists.Id 
+            RegisteredVoter checkIfStudentAlreadyRegistered = await _registeredVoterRepo.GetSingleByAsync(x => x.StudentId == checkIfStudentExists.Id
                 && x.DepartmentId == checkIfStudentExists.DepartmentId);
 
             if (checkIfStudentAlreadyRegistered != null)
@@ -56,7 +56,7 @@ namespace OnlineVoting.Services.Implementation
             VoterEmailDto emailDto = new()
             {
                 Email = checkIfStudentExists.User.Email,
-                VotingCode= votingCode,
+                VotingCode = votingCode,
                 FirstName = checkIfStudentExists.User.FirstName,
             };
 
@@ -76,7 +76,7 @@ namespace OnlineVoting.Services.Implementation
 
             registeredVoter.IsDeActivated = !registeredVoter.IsDeActivated;
 
-            if(registeredVoter.IsDeActivated == true)
+            if (registeredVoter.IsDeActivated == true)
             {
                 return "Voter Deactivated successfully";
             }

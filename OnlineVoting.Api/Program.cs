@@ -1,11 +1,13 @@
 using DotNetEnv;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NLog;
-using OnlineVoting.Api.Mapper;
+using OnlineVoting.Api.Filters;
 using OnlineVoting.Api.Middlewares;
 using OnlineVoting.Models.Entities.Email;
 using OnlineVoting.Services.Infrastructures;
+using System.Reflection;
 using System.Text.Json.Serialization;
 using VotingSystem.Data.SeedData;
 
@@ -30,9 +32,13 @@ builder.Services.ConfigureAuthorization();
 
 builder.Services.AddRepositories();
 
+builder.Services.ConfigureValidators();
+
 builder.Services.AddControllers(setupAction =>
 {
     setupAction.ReturnHttpNotAcceptable = true;
+    setupAction.Filters.Add<ValidationFilter>();
+    setupAction.Filters.Add(new ProducesAttribute("application/json"));
 }).AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
@@ -43,7 +49,6 @@ builder.Services.AddControllers(setupAction =>
 {
     options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
     options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
-
 });
 
 builder.Services.ConfigureCors();
@@ -55,8 +60,7 @@ builder.Services.ConfigureLoggerService();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.ConfigureSwagger();
-builder.Services.AddAutoMapper(typeof(MappingProfile));
-
+builder.Services.AddAutoMapper(config => { }, Assembly.Load("OnlineVoting.Api"));
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

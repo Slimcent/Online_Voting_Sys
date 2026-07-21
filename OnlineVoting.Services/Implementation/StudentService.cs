@@ -64,31 +64,34 @@ namespace OnlineVoting.Services.Implementation
             return new Response(true, $"Contestant with RegNumber {regNo} created successfully");
         }
 
-        public async Task<Response> CreateStudent(StudentCreateRequestDto model)
+        public async Task<Response> CreateStudent(CreateStudentRequest request)
         {
-            if (model == null)
+            if (request == null)
                 throw new InvalidOperationException("Invalid data sent");
-                        
-            var regNumberExists = await _studentRepo.GetSingleByAsync(r => r.RegNumber == model.RegNo);
-            if (regNumberExists != null)
-                throw new ConflictException(model.RegNo);
 
-            UserCreateRequestDto user = new()
-            {
-                Email = model.Email,
-                FirstName = model.FirstName,
-                Role = model.Role,
-            };
+            //var regNumberExists = await _studentRepo.GetSingleByAsync(r => r.RegNumber == request.RegNumber);
+            //if (regNumberExists != null)
+            //    throw new ConflictException(request.RegNumber);
+
+            //CreateUserRequest user = new()
+            //{
+            //    Email = request.Email,
+            //    FirstName = request.FirstName,
+            //    Role = request.Role,
+            //};
+
+            CreateUserRequest user = _mapper.Map<CreateUserRequest>(request);
+
             var userId = await _serviceFactory.GetService<IUserService>().CreateUser(user);
 
-            var student = _mapper.Map<Student>(model);
+            var student = _mapper.Map<Student>(request);
             student.UserId = userId;
-                        
+
             await _studentRepo.AddAsync(student);
 
             await _unitOfWork.SaveChangesAsync();
 
-            return new Response(true, $"Student with email {model.Email} created successfully");
+            return new Response(true, $"Student with email {request.Email} created successfully");
         }
 
         public async Task<FileStreamDto> DownloadStudentsList()
@@ -109,13 +112,13 @@ namespace OnlineVoting.Services.Implementation
             }.ConvertToExcel(new ExcelDownloadConfig { Name = "StudentList" });
         }
 
-        public async Task<string> UploadStudents(UploadStudentRequestDto model)
+        public async Task<string> UploadStudents(UploadStudentRequest request)
         {
             //string[] requiredHeaders = new[] {"RegNumber", "FirstName", "LastName", "Email", "PhoneNumber", "Sex"};
             //string[] nullableFields = new[] {"SN", "PhoneNumber", "Sex"};
-                        
-            List<Dictionary<string, string>> studentData = _fileDataExtractor.ExtractFromExcel(model.File, null, ignoreFields: model.IgnoreFields);
-            studentData.ValidateFields(model.RequiredFields);
+
+            List<Dictionary<string, string>> studentData = _fileDataExtractor.ExtractFromExcel(request.File, null, ignoreFields: request.IgnoreFields);
+            studentData.ValidateFields(request.RequiredFields);
 
             IEnumerable<Student> studentsToUpload = DictionaryToObjectConverter.DictionaryToObjects<Student>(studentData);
 
@@ -128,12 +131,14 @@ namespace OnlineVoting.Services.Implementation
                     continue;
                 }
 
-                UserCreateRequestDto user = new()
-                {
-                    //Email = student.Email,
-                    //FirstName = student.FirstName,
-                    Role = "Student"
-                };
+                //CreateUserRequest user = new()
+                //{
+                //    //Email = student.Email,
+                //    //FirstName = student.FirstName,
+                //    Role = "Student"
+                //};
+
+                CreateUserRequest user = _mapper.Map<CreateUserRequest>(student);
 
                 string userId = await _serviceFactory.GetService<IUserService>().CreateUser(user);
                 student.UserId = userId;
@@ -143,7 +148,7 @@ namespace OnlineVoting.Services.Implementation
             return "Students uploaded successfully";
         }
 
-        public async Task<Response> Vote(VoteRequestDto request)
+        public async Task<Response> Vote(VoteRequest request)
         {
             if (request == null)
                 throw new InvalidOperationException("Invalid data sent");

@@ -44,7 +44,7 @@ namespace OnlineVoting.Services.Implementation
             _loggerMessage = _serviceFactory.GetService<ILoggerMessage>();
         }
 
-        public async Task<string> CreateUser(UserCreateRequestDto request)
+        public async Task<string> CreateUser(CreateUserRequest request)
         {
             if (request == null)
                 throw new InvalidOperationException("Invalid data sent");
@@ -54,7 +54,7 @@ namespace OnlineVoting.Services.Implementation
                 throw new ConflictException(request.Email);
 
             User user = _mapper.Map<User>(request);
-           
+
             string password = AuthExtension.GenerateRandomPassword();
 
             IdentityResult result = await _userManager.CreateAsync(user, password);
@@ -62,7 +62,7 @@ namespace OnlineVoting.Services.Implementation
             if (!result.Succeeded)
                 throw new InvalidOperationException($"User creation failed");
 
-            AddUserToRoleDto userRole = new() { UserName = user.Email, Name = request.Role };
+            AddUserToRoleRequest userRole = new() { Email = user.Email, Name = request.Role };
 
             await _serviceFactory.GetService<IRolesService>().AddUserToRole(userRole);
 
@@ -77,7 +77,7 @@ namespace OnlineVoting.Services.Implementation
             return user.Id;
         }
 
-        public async Task<LoggedInUserResponse> UserLogin(LoginDto request)
+        public async Task<LoggedInUserResponse> UserLogin(LoginRequest request)
         {
             _loggerMessage.LogInfo($"Login attempt received for email {request.Email}.");
 
@@ -88,7 +88,7 @@ namespace OnlineVoting.Services.Implementation
                 _loggerMessage.LogWarn($"Login failed because no user exists for email {request.Email}.");
                 throw new NotFoundException("User not found");
             }
-            
+
             if (user.Active == false)
                 throw new InvalidOperationException("Account is not active, contact the admin");
 
@@ -98,7 +98,7 @@ namespace OnlineVoting.Services.Implementation
                 _loggerMessage.LogWarn($"Login failed because invalid credentials were provided for user {user.Id}.");
                 throw new InvalidCredentialsException("Invalid email or password");
             }
-            
+
             List<string> allUserRoles = (await _userManager.GetRolesAsync(user)).ToList();
             string uRole = allUserRoles.FirstOrDefault();
 
@@ -123,7 +123,7 @@ namespace OnlineVoting.Services.Implementation
             List<string> claims = userClaims.Select(x => x.Value).ToList();
             int userType = user.UserTypeId;
             string fullName = $"{user.FirstName} {user.LastName}";
-                        
+
             //switch (userType)
             //{
             //    case "Official":
@@ -136,7 +136,7 @@ namespace OnlineVoting.Services.Implementation
             //    case "Student":
             //    {
             //        Student student = await _studentRepo.GetSingleByAsync(x => x.UserId == user.Id);
-                                                
+
             //        fullName = $"{student.LastName} {student.FirstName}";
             //        break;
             //    }
@@ -144,9 +144,9 @@ namespace OnlineVoting.Services.Implementation
             return new LoggedInUserResponse { JwtToken = userToken, UserType = user.UserType?.Name, FullName = fullName };
         }
 
-        public async Task<string> VerifyUser(VerifyAccountRequestDto request)
+        public async Task<string> VerifyUser(VerifyAccountRequest request)
         {
-            string username = MessageEncoder.DecodeString(request.Username);
+            string username = MessageEncoder.DecodeString(request.Email);
             string emailConfirmationToken = MessageEncoder.DecodeString(request.EmailConfirmationToken);
             string resetPasswordToken = MessageEncoder.DecodeString(request.ResetPasswordToken);
 
@@ -201,7 +201,7 @@ namespace OnlineVoting.Services.Implementation
             throw new InvalidOperationException(errorMessage);
         }
 
-        public async Task<string> ChangePassword(string userId, ChangePasswordRequestDto request)
+        public async Task<string> ChangePassword(string userId, ChangePasswordRequest request)
         {
             User user = await _userManager.FindByIdAsync(userId);
 

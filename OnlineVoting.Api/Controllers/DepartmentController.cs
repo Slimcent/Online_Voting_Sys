@@ -19,7 +19,7 @@ namespace OnlineVoting.Api.Controllers
 
 
         [HttpPost("create-department", Name = "Create-Department")]
-        public async Task<IActionResult> CreateDepartment([FromQuery] DeptCreateDto model)
+        public async Task<IActionResult> CreateDepartment([FromQuery] CreateDepartmentRequest model)
         {
             string dept = await _deptServie.CreateDepartment(model);
 

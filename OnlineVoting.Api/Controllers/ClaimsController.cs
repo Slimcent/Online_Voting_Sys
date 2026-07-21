@@ -32,7 +32,7 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPost("editclaim")]
-        public async Task<IActionResult> EditClaim(EditUserClaimsDto editUserClaims)
+        public async Task<IActionResult> EditClaim(EditUserClaimsRequest editUserClaims)
         {
             var user = await _claimsService.EditUserClaims(editUserClaims);
 

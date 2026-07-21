@@ -22,7 +22,7 @@ namespace OnlineVoting.Services.Implementation
             _mapper = _serviceFactory.GetService<IMapper>();
         }
 
-        public async Task<string> CreateDepartment(DeptCreateDto request)
+        public async Task<string> CreateDepartment(CreateDepartmentRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Name))
                 throw new InvalidOperationException("Name cannot be empty");

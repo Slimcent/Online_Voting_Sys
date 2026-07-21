@@ -1,13 +1,16 @@
 ﻿using DinkToPdf;
 using DinkToPdf.Contracts;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
+using OnlineVoting.Api.Filters;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
+using OnlineVoting.Models.Validators.Request;
 using OnlineVoting.Services.Implementation;
 using OnlineVoting.Services.Infrastructures.Authorization;
 using OnlineVoting.Services.Infrastructures.Authorization.Jwt;
@@ -58,6 +61,15 @@ namespace OnlineVoting.Api.Middlewares
             services.AddSingleton<ILoggerMessage, VotingSystem.Logger.LoggerMessage>();
 
             return services;
+        }
+
+        public static void ConfigureValidators(this IServiceCollection services)
+        {
+            services.AddScoped<ValidationFilter>();
+
+            // Uses LoginRequestValidator as an assembly marker and automatically
+            // registers all FluentValidation validators found in the same assembly.
+            services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
         }
 
         public static IServiceCollection AddDBConnection(this IServiceCollection services, IConfiguration configuration)
@@ -125,36 +137,41 @@ namespace OnlineVoting.Api.Middlewares
             services.AddSwaggerGen(c =>
             {
                 c.EnableAnnotations();
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Online-Voting", Version = "v1" });
 
-                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
-                {
-                    Name = "Authorization",
-                    Type = SecuritySchemeType.ApiKey,
-                    Scheme = "Bearer",
-                    BearerFormat = "JWT",
-                    In = ParameterLocation.Header,
-                    Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Enter 'Bearer' [space] and then your token in the text input below.\r\n\r\nExample: \"Bearer 1safsfsdfdfd\""
-                });
-
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
+                c.SwaggerDoc(
+                    "v1",
+                    new OpenApiInfo
                     {
-                        new OpenApiSecurityScheme
+                        Title = "Online-Voting",
+                        Version = "v1"
+                    });
+
+                c.AddSecurityDefinition("Bearer",
+                    new OpenApiSecurityScheme
+                    {
+                        Name = "Authorization",
+                        Type = SecuritySchemeType.Http,
+                        Scheme = "bearer",
+                        BearerFormat = "JWT",
+                        In = ParameterLocation.Header,
+                        Description = "Enter the JWT token only. Swagger will add the " +
+                            "'Bearer' prefix automatically."
+                    });
+
+                c.AddSecurityRequirement(document =>
+                    new OpenApiSecurityRequirement
+                    {
                         {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "Bearer"
-                            }
-                        },
-                        Array.Empty<string>()
-                    }
-                });
+                            new OpenApiSecuritySchemeReference(
+                                "Bearer",
+                                document),
+                            new List<string>()
+                        }
+                    });
             });
         }
 
-       
+
         public static IServiceCollection ConfigureAuthorization(this IServiceCollection services)
         {
             services.AddHttpContextAccessor();

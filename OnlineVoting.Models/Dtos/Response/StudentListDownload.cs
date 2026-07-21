@@ -1,6 +1,6 @@
 ﻿using OfficeOpenXml.Attributes;
 
-namespace OnlineVoting.Models.Dtos.Request
+namespace OnlineVoting.Models.Dtos.Response
 {
     public class StudentListDownload
     {
@@ -20,9 +20,9 @@ namespace OnlineVoting.Models.Dtos.Request
         public string? Email { get; set; }
 
         [EpplusTableColumn(Order = 6)]
-        public string? PhoneNumber{ get; set; }
+        public string? PhoneNumber { get; set; }
 
         [EpplusTableColumn(Order = 7)]
-        public string? Gender{ get; set; }
+        public string? Gender { get; set; }
     }
 }

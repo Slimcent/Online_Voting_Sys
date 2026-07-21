@@ -25,13 +25,13 @@ namespace OnlineVoting.Services.Implementation
             _mapper = _serviceFactory.GetService<IMapper>();
         }
 
-        public async Task<string> CreatePosition(PositionDto request)
+        public async Task<string> CreatePosition(CreateWithNameRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Name))
                 throw new InvalidOperationException("Name cannot be empty");
 
             Position positionExists = await _positionRepo.GetSingleByAsync(x => x.Name == request.Name);
-            if(positionExists != null)
+            if (positionExists != null)
                 throw new InvalidOperationException("Position already exists");
 
             Position addPosition = _mapper.Map<Position>(request);
@@ -62,7 +62,7 @@ namespace OnlineVoting.Services.Implementation
 
             if (!allPositions.Any())
             {
-               return new List<PositionResponseDto>();
+                return new List<PositionResponseDto>();
             }
 
             return _mapper.Map<IEnumerable<PositionResponseDto>>(allPositions);
@@ -101,13 +101,13 @@ namespace OnlineVoting.Services.Implementation
             return _mapper.Map<PositionResponseDto>(positionExists);
         }
 
-        public async Task<string> PatchPosition(Guid positionId, JsonPatchDocument<PositionDto> request)
+        public async Task<string> PatchPosition(Guid positionId, JsonPatchDocument<CreateWithNameRequest> request)
         {
             Position positionExists = await _positionRepo.GetByIdAsync(positionId);
             if (positionExists == null)
                 throw new InvalidOperationException("Position does not exists");
 
-            PositionDto updatePosition = _mapper.Map<PositionDto>(positionExists);
+            CreateWithNameRequest updatePosition = _mapper.Map<CreateWithNameRequest>(positionExists);
 
             request.ApplyTo(updatePosition);
 
@@ -147,13 +147,13 @@ namespace OnlineVoting.Services.Implementation
             return _mapper.Map<PagedResponse<PositionResponseDto>>(position);
         }
 
-        public async Task<string> UpdatePosition(Guid positionId, PositionDto request)
+        public async Task<string> UpdatePosition(Guid positionId, CreateWithNameRequest request)
         {
             Position positionExists = await _positionRepo.GetSingleByAsync(x => x.Id == positionId);
             if (positionExists == null)
                 throw new InvalidOperationException("Position does not exists");
 
-           Position updatePosition = _mapper.Map(request, positionExists);
+            Position updatePosition = _mapper.Map(request, positionExists);
 
             _positionRepo.Update(updatePosition);
 

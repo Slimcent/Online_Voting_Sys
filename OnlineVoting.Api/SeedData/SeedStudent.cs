@@ -11,10 +11,10 @@ namespace OnlineVoting.Api.Data
 
         public static async void EnsurePopulated(IApplicationBuilder app)
         {
-            VotingDbContext  context = app.ApplicationServices
+            VotingDbContext context = app.ApplicationServices
                 .CreateScope().ServiceProvider
                 .GetRequiredService<VotingDbContext>();
-            if ((await context.Database.GetPendingMigrationsAsync()).Any()) 
+            if ((await context.Database.GetPendingMigrationsAsync()).Any())
                 await context.Database.MigrateAsync();
 
             UserManager<User> userManager = app.ApplicationServices

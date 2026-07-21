@@ -21,10 +21,13 @@ namespace OnlineVoting.Api.Controllers
             _emailService = emailService;
         }
 
-        
+
         [AllowAnonymous]
         [HttpPost("login", Name = "Login")]
-        public async Task<ActionResult<LoggedInUserResponse>> Login([FromBody] LoginDto loginDto)
+        [ProducesResponseType(typeof(LoggedInUserResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<LoggedInUserResponse>> Login([FromBody] LoginRequest loginDto)
         {
             LoggedInUserResponse user = await _userService.UserLogin(loginDto);
 
@@ -33,7 +36,7 @@ namespace OnlineVoting.Api.Controllers
 
         [AllowAnonymous]
         [HttpPost("verify-user", Name = "Verify-User")]
-        public async Task<IActionResult> VerifyUser(VerifyAccountRequestDto request)
+        public async Task<IActionResult> VerifyUser(VerifyAccountRequest request)
         {
             return Ok(await _userService.VerifyUser(request));
         }
@@ -53,7 +56,7 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPost("change-password", Name = "Change-Password")]
-        public async Task<IActionResult> ChangePassword(string userId, ChangePasswordRequestDto request)
+        public async Task<IActionResult> ChangePassword(string userId, ChangePasswordRequest request)
         {
             return Ok(await _userService.ChangePassword(userId, request));
         }

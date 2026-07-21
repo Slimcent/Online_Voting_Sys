@@ -7,7 +7,7 @@ using System;
 
 namespace OnlineVoting.Models.Context
 {
-    public class VotingDbContext : IdentityDbContext<User, Role, string, ApplicationUserClaim, ApplicationUserRole, 
+    public class VotingDbContext : IdentityDbContext<User, Role, string, ApplicationUserClaim, ApplicationUserRole,
         IdentityUserLogin<string>, ApplicationRoleClaim, IdentityUserToken<string>>
     {
         public VotingDbContext(DbContextOptions<VotingDbContext> options) : base(options)

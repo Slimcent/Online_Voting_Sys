@@ -1,6 +1,6 @@
 ﻿namespace OnlineVoting.Models.Dtos.Request
 {
-    public class EditUserClaimsDto
+    public class EditUserClaimsRequest
     {
         public string? Email { get; set; }
         public string? ClaimType { get; set; }

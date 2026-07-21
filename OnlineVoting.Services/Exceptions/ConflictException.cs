@@ -4,7 +4,7 @@
     {
         public ConflictException(string message)
             : base(message)
-        { 
+        {
         }
     }
 }

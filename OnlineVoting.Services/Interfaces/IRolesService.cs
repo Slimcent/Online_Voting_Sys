@@ -6,11 +6,11 @@ namespace OnlineVoting.Services.Interfaces
 {
     public interface IRolesService
     {
-        Task<string> CreateRole(RoleDto request);
-        Task<string> EditRole(string id, RoleDto request);
-        Task<string> DeleteRole(RoleDto request);
-        Task<string> AddUserToRole(AddUserToRoleDto request);
-        Task<string> RemoveUserFromRole(AddUserToRoleDto request);
+        Task<string> CreateRole(CreateRoleRequest request);
+        Task<string> EditRole(string id, CreateRoleRequest request);
+        Task<string> DeleteRole(CreateRoleRequest request);
+        Task<string> AddUserToRole(AddUserToRoleRequest request);
+        Task<string> RemoveUserFromRole(AddUserToRoleRequest request);
         Task<IList<string>> GetUserRoles(string userName);
         Task<string> ToggleRoleStatus(string roleId);
         Task<IEnumerable<RoleResponseDto>> GetAllRoles();
