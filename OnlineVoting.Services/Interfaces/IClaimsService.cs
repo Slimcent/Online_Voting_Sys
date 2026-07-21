@@ -8,7 +8,7 @@ namespace OnlineVoting.Services.Interfaces
         Task<List<string>> GetRouteNames(string baseUrl);
         Task<UserClaimsResponseDto> CreateUserClaims(string email, string claimType, string claimValue);
         Task<string> DeleteClaims(UserClaimsRequestDto request);
-        Task<EditUserClaimsDto> EditUserClaims(EditUserClaimsDto userClaimsDto);
+        Task<EditUserClaimsRequest> EditUserClaims(EditUserClaimsRequest userClaimsDto);
         Task<IEnumerable<UserClaimsResponseDto>> GetUserClaims(string email);
     }
 }

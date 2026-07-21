@@ -4,6 +4,6 @@ namespace OnlineVoting.Services.Interfaces
 {
     public interface IFacultyService
     {
-        Task<string> CreateFaculty(CreateFacultyDto request);
+        Task<string> CreateFaculty(CreateWithNameRequest request);
     }
 }

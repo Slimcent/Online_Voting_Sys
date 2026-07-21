@@ -2,7 +2,7 @@
 {
     public static class VotingCodeExtention
     {
-        public static string StudentVotingCode() 
+        public static string StudentVotingCode()
         {
             Random random = new Random();
 

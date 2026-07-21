@@ -37,14 +37,16 @@ namespace OnlineVoting.Services.Implementation
         }
 
 
-        public async Task<string> CreateStaff(CreateStaffRequestDto request)
+        public async Task<string> CreateStaff(CreateStaffRequest request)
         {
-            UserCreateRequestDto user = new()
-            {
-                Email = request.Email,
-                FirstName = request.FirstName,
-                Role = request.Role,
-            };
+            //CreateUserRequest user = new()
+            //{
+            //    Email = request.Email,
+            //    FirstName = request.FirstName,
+            //    Role = request.Role,
+            //};
+            CreateUserRequest user = _mapper.Map<CreateUserRequest>(request);
+
             string userId = await _serviceFactory.GetService<IUserService>().CreateUser(user);
 
             Staff staff = new()
@@ -53,7 +55,7 @@ namespace OnlineVoting.Services.Implementation
                 PhoneNumber = request.PhoneNumber,
                 LastName = request.LastName,
                 FirstName = request.FirstName,
-                //Gender = request.Gender
+                GenderId = request.GenderId
             };
             await _staffRepo.AddAsync(staff);
 
@@ -75,7 +77,7 @@ namespace OnlineVoting.Services.Implementation
         //    return _mapper.Map<IEnumerable<StaffResponseDto>>(allStaff);
         //}
 
-        public async Task<string> UpdateStaffAddress(Guid staffId, UpdateAddressDto model)
+        public async Task<string> UpdateStaffAddress(Guid staffId, UpdateAddressRequest model)
         {
             Address staffAddress = await _addressRepo.GetSingleByAsync(x => x.StaffId == staffId);
             if (staffAddress == null)
@@ -88,7 +90,7 @@ namespace OnlineVoting.Services.Implementation
             return "Address updated successfully";
         }
 
-        public async Task<string> UpdateStaff(Guid id, JsonPatchDocument<UpdateStaffDto> request)
+        public async Task<string> UpdateStaff(Guid id, JsonPatchDocument<UpdateStaffRequest> request)
         {
             Staff staff = await _staffRepo.GetSingleByAsync(s => s.Id == id,
                 include: s => s.Include(u => u.User));
@@ -96,7 +98,7 @@ namespace OnlineVoting.Services.Implementation
             if (staff == null)
                 return $"staff with id {id} does not exist";
 
-            UpdateStaffDto updateStaff = new()
+            UpdateStaffRequest updateStaff = new()
             {
                 LastName = staff.LastName,
                 FirstName = staff.FirstName,
@@ -158,16 +160,16 @@ namespace OnlineVoting.Services.Implementation
         }
 
 
-        public async Task<string> PatchStaffAddress(Guid staffId, JsonPatchDocument<UpdateAddressDto> request)
+        public async Task<string> PatchStaffAddress(Guid staffId, JsonPatchDocument<UpdateAddressRequest> request)
         {
             Address staffAddress = await _addressRepo.GetSingleByAsync(x => x.StaffId == staffId);
 
             if (staffAddress == null)
                 return $"staff with id {staffId} does not exist";
 
-            UpdateAddressDto updateAddress = new()
+            UpdateAddressRequest updateAddress = new()
             {
-                PlotNo = staffAddress.PlotNo,
+                PlotNo = staffAddress.PlotNo ?? 0,
                 StreetName = staffAddress.StreetName,
                 City = staffAddress.City,
                 State = staffAddress.State,
@@ -185,7 +187,7 @@ namespace OnlineVoting.Services.Implementation
             return $"staff updated successfully";
         }
 
-        public async Task<string> EditStaff(Guid staffId, UpdateStaffDto request)
+        public async Task<string> EditStaff(Guid staffId, UpdateStaffRequest request)
         {
             Staff staffExists = await _staffRepo.GetSingleByAsync(x => x.Id == staffId);
             if (staffExists == null)
@@ -228,7 +230,7 @@ namespace OnlineVoting.Services.Implementation
         {
             PagedList<Staff> staff = string.IsNullOrWhiteSpace(request.SearchTerm)
                 ? await _staffRepo.GetPagedItems(request)
-                : await _staffRepo.GetPagedItems(request, x => x.FirstName.Contains(request.SearchTerm.ToLower().Trim()) 
+                : await _staffRepo.GetPagedItems(request, x => x.FirstName.Contains(request.SearchTerm.ToLower().Trim())
                             || x.LastName.Contains(request.SearchTerm.ToLower().Trim()));
 
             return _mapper.Map<PagedResponse<StaffResponseDto>>(staff);
@@ -272,7 +274,7 @@ namespace OnlineVoting.Services.Implementation
             else
             {
                 return $"Staff deleted successfully";
-            }            
+            }
         }
     }
 }

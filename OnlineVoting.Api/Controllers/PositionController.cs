@@ -11,7 +11,7 @@ namespace OnlineVoting.Api.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(Policy = "Authorization")]
-    public class PositionController : ControllerBase
+    public class PositionController : BaseController
     {
         private readonly IPositionService _positionService;
 
@@ -76,26 +76,32 @@ namespace OnlineVoting.Api.Controllers
             return Ok(position);
         }
 
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [HttpPost("create-position", Name = "Create-Position")]
-        public async Task<IActionResult> CreatePosition([FromQuery] PositionDto model)
+        public async Task<IActionResult> CreatePosition(CreateWithNameRequest request)
         {
-            string position = await _positionService.CreatePosition(model);
+            string position = await _positionService.CreatePosition(request);
 
             return Ok(position);
         }
 
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [HttpPatch("patch-position", Name = "Patch-Position")]
-        public async Task<IActionResult> PatchPosition(Guid Id, JsonPatchDocument<PositionDto> model)
+        public async Task<IActionResult> PatchPosition(Guid Id, JsonPatchDocument<CreateWithNameRequest> request)
         {
-            string position = await _positionService.PatchPosition(Id, model);
+            string position = await _positionService.PatchPosition(Id, request);
 
             return Ok(position);
         }
 
         [HttpPut("update-position", Name = "Update-Position")]
-        public async Task<IActionResult> UpdatePosition(Guid Id, PositionDto model)
+        public async Task<IActionResult> UpdatePosition(Guid Id, CreateWithNameRequest request)
         {
-            string position = await _positionService.UpdatePosition(Id, model);
+            string position = await _positionService.UpdatePosition(Id, request);
 
             return Ok(position);
         }

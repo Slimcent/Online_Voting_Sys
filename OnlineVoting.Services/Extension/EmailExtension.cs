@@ -76,9 +76,9 @@ namespace OnlineVoting.Services.Extension
             string encodedUsername = MessageEncoder.EncodeString(request.ToEmail);
             string encodedEmailConfirmationToken = MessageEncoder.EncodeString(request.EmailConfirmationToken);
             string encodedResetPasswordToken = MessageEncoder.EncodeString(request.ResetPasswordToken);
-                        
+
             string url = $"{request.AppUrl}/user_create?q={encodedUsername}&w={encodedEmailConfirmationToken}&e={encodedResetPasswordToken}&i=cu";
-            
+
             MailText = MailText.Replace("[Header]", $"Hello {request.ToName}").
                 Replace("[Body]", $"Your registration was successful.\n" +
                    $"To verify your account, click on the button below to change your password.")
@@ -119,7 +119,7 @@ namespace OnlineVoting.Services.Extension
             string encodedEmail = MessageEncoder.EncodeString(request.ToEmail);
 
             string url = $"{request.AppUrl}/reset_password?q={encodedEmail}&w={encodedToken}&i=rp";
-                        
+
             MailText = MailText.Replace("[Header]", $"Hello {request.ToName}")
                 .Replace("[Body]", $"Please, click on the link below to reset your password.\n")
                 .Replace("[Button-Text]", "Reset password")
@@ -155,7 +155,7 @@ namespace OnlineVoting.Services.Extension
             string filePath = Directory.GetCurrentDirectory() + "\\Template\\EmailTemplate.html";
             string MailText = GetFilePath(filePath);
 
-            string encodedChangeEmailToken = MessageEncoder.EncodeString(request.ChangeEmailToken);            
+            string encodedChangeEmailToken = MessageEncoder.EncodeString(request.ChangeEmailToken);
             string encodedNewEmail = MessageEncoder.EncodeString(request.NewEmail);
 
             string url = $"{request.AppUrl}/change_email?q={encodedNewEmail}&w={encodedChangeEmailToken}&i=ce";

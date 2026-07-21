@@ -29,7 +29,7 @@ namespace OnlineVoting.Services.Implementation
             _mapper = _serviceFactory.GetService<IMapper>();
         }
 
-        public async Task<string> CreateRole(RoleDto request)
+        public async Task<string> CreateRole(CreateRoleRequest request)
         {
             var roleExists = await _roleManager.FindByNameAsync(request.Name.Trim().ToLower());
             if (roleExists != null)
@@ -44,7 +44,7 @@ namespace OnlineVoting.Services.Implementation
             return $"Role with name {request.Name} created successfully";
         }
 
-        public async Task<string> EditRole(string id, RoleDto request)
+        public async Task<string> EditRole(string id, CreateRoleRequest request)
         {
             Role role = await _roleManager.FindByIdAsync(id);
             if (role == null)
@@ -57,18 +57,18 @@ namespace OnlineVoting.Services.Implementation
             return $"Role updated successfully";
         }
 
-        public async Task<string> AddUserToRole(AddUserToRoleDto request)
+        public async Task<string> AddUserToRole(AddUserToRoleRequest request)
         {
-            var user = await _userManager.FindByNameAsync(request.UserName.Trim().ToLower());
+            var user = await _userManager.FindByNameAsync(request.Email.Trim().ToLower());
             if (user == null)
-                return $"User with email {request.UserName} does not Exist";
+                return $"User with email {request.Email} does not Exist";
 
             var result = await _userManager.AddToRoleAsync(user, request.Name);
 
             if (!result.Succeeded)
-                return $"Adding {request.UserName} to the Role {request.Name} failed!";
+                return $"Adding {request.Email} to the Role {request.Name} failed!";
 
-            return $"{request.UserName} has been added to the Role, {request.Name} Successful!";
+            return $"{request.Email} has been added to the Role, {request.Name} Successful!";
         }
 
         public async Task<IList<string>> GetUserRoles(string userName)
@@ -84,11 +84,11 @@ namespace OnlineVoting.Services.Implementation
             return userRoles;
         }
 
-        public async Task<string> RemoveUserFromRole(AddUserToRoleDto request)
+        public async Task<string> RemoveUserFromRole(AddUserToRoleRequest request)
         {
-            var user = await _userManager.FindByNameAsync(request.UserName.Trim().ToLower());
+            var user = await _userManager.FindByNameAsync(request.Email.Trim().ToLower());
             if (user == null)
-                return $"User with email {request.UserName} does not Exist";
+                return $"User with email {request.Email} does not Exist";
 
             List<string> userRoles = (List<string>)await _userManager.GetRolesAsync(user);
             var roleToRemove = userRoles.FirstOrDefault(role => role.Equals(request.Name, StringComparison.InvariantCultureIgnoreCase));
@@ -98,12 +98,12 @@ namespace OnlineVoting.Services.Implementation
 
             var result = await _userManager.RemoveFromRoleAsync(user, roleToRemove);
             if (!result.Succeeded)
-                return $"failed to remove {request.UserName} from Role {request.Name}";
+                return $"failed to remove {request.Email} from Role {request.Name}";
 
-            return $"{request.UserName} removed from Role {request.Name} successfully";
+            return $"{request.Email} removed from Role {request.Name} successfully";
         }
 
-        public async Task<string> DeleteRole(RoleDto request)
+        public async Task<string> DeleteRole(CreateRoleRequest request)
         {
             Role role = await _roleManager.FindByNameAsync(request.Name.Trim().ToLower());
 

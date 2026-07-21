@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore.Storage;
 using SchMgr_FUTO.Data.Implementation;
 using SchMgr_FUTO.Data.Interfaces;
-using System.Threading.Tasks;
 using VotingSystem.Data.Interfaces;
 
 namespace VotingSystem.Data.Implementation
@@ -31,7 +30,7 @@ namespace VotingSystem.Data.Implementation
         {
             return _context.SaveChanges();
         }
-                
+
         public async Task<int> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync();
@@ -102,5 +101,5 @@ namespace VotingSystem.Data.Implementation
             _transaction?.Dispose();
             _context.Dispose();
         }
-    }   
+    }
 }

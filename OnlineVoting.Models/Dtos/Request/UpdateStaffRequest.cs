@@ -2,7 +2,7 @@
 
 namespace OnlineVoting.Models.Dtos.Request
 {
-    public class UpdateStaffDto
+    public class UpdateStaffRequest
     {
         [Required(ErrorMessage = "First Name canot be empty"), RegularExpression(@"^[a-zA-Z]+$", ErrorMessage = "Only Alphabets allowed"), MaxLength(50), MinLength(2)]
         public string? FirstName { get; set; }

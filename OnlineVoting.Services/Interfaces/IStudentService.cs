@@ -7,10 +7,10 @@ namespace OnlineVoting.Services.Interfaces
 {
     public interface IStudentService
     {
-        Task<Response> CreateStudent(StudentCreateRequestDto model);
+        Task<Response> CreateStudent(CreateStudentRequest model);
         Task<Response> CreateContestant(string regNo, string position);
-        Task<Response> Vote(VoteRequestDto request);
-        Task<String> UploadStudents(UploadStudentRequestDto model);
+        Task<Response> Vote(VoteRequest request);
+        Task<String> UploadStudents(UploadStudentRequest model);
         Task<FileStreamDto> DownloadStudentsList();
     }
 }

@@ -342,3 +342,287 @@ data and initial users during startup.
 - Prevented duplicate seed data by checking for existing records before insertion.
 - Added validation to ensure required dependencies exist before creating related entities.
 - Centralized identity operation validation through a reusable helper.
+
+
+# Request Validation Modernization
+
+## Foundation Modernization
+
+Before beginning the validation refactoring, the project was first modernized to use the latest .NET platform.
+
+### .NET Upgrade
+
+- Upgraded the solution from the previous .NET version to **.NET 10**.
+- Updated all projects to target **.NET 10**.
+- Verified that the solution builds successfully after the upgrade.
+
+### Package Updates
+
+Updated project dependencies to their latest compatible versions.
+
+This included updating NuGet packages across the solution to versions compatible with .NET 10, ensuring support for the 
+
+new runtime and language features before beginning the validation refactoring.
+
+---
+
+## Overview
+
+This milestone replaces the project's Data Annotation-based request validation with a centralized FluentValidation implementation. 
+
+Validation is now executed automatically before controller actions, resulting in cleaner request models, reusable validation rules 
+
+and a more maintainable validation architecture.
+
+---
+
+## Changes
+
+### Added FluentValidation
+
+- Integrated FluentValidation into the application.
+- Configured automatic validator registration through assembly scanning.
+- Added a global validation filter to validate all incoming request models before controller actions execute.
+
+```csharp
+// Uses LoginRequestValidator as an assembly marker and automatically
+// registers all FluentValidation validators found in the same assembly.
+services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
+```
+
+---
+
+### Added Global Validation Filter
+
+Created a reusable `ValidationFilter` that:
+
+- Executes before controller actions.
+- Locates the correct validator for each request model.
+- Executes validation automatically.
+- Returns a standardized `ValidationProblemDetails` response with HTTP 400 when validation fails.
+- Prevents controller actions from executing when request validation fails.
+
+This removes the need for manual validation inside controllers.
+
+---
+
+### Removed Data Annotation Validation
+
+Removed validation attributes from request DTOs including:
+
+- `Required`
+- `EmailAddress`
+- `MaxLength`
+- `MinLength`
+- `RegularExpression`
+
+Validation responsibility has been moved entirely to FluentValidation.
+
+---
+
+## Shared Validators
+
+Created reusable validators to eliminate duplicated validation logic across request models.
+
+### EmailValidator
+
+Provides reusable email validation.
+
+Rules:
+
+- Required
+- Valid email format
+
+### NameValidator
+
+Provides reusable validation for name fields.
+
+Rules:
+
+- Required
+- Between 2 and 50 characters
+
+Used for:
+
+- FirstName
+- LastName
+- Faculty names
+- Department names
+- Position names
+- Role names
+- Generic name-based requests
+
+### PasswordValidator
+
+Provides reusable password validation.
+
+Rules:
+
+- Required
+- Minimum length of 8 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one number
+- At least one special character
+
+### PhoneNumberValidator
+
+Provides reusable phone number validation.
+
+Rules:
+
+- Required
+- Must match:
+
+```
+^0\d{10}$
+```
+
+---
+
+## Request Validators
+
+Added dedicated FluentValidation validators for request models including:
+
+- LoginRequest
+- ChangePasswordRequest
+- VerifyAccountRequest
+- UpdateAddressRequest
+- CreateUserRequest
+- CreateStaffRequest
+- CreateStudentRequest
+- CreateDepartmentRequest
+- CreateWithNameRequest
+- AddUserToRoleRequest
+- VoteRequest
+- UpdateStaffRequest
+- UploadStudentRequest
+- EditUserClaimsRequest
+
+Each validator now contains validation rules specific to its request model.
+
+---
+
+## Generic Request Models
+
+### CreateWithNameRequest
+
+Introduced a reusable request model for endpoints that only require a single name.
+
+Used by:
+
+- Faculty creation
+- Position creation
+- Role creation
+
+This removed several duplicated request DTOs.
+
+### CreateUserRequest
+
+Refactored common user creation properties into a single reusable request model.
+
+Common properties include:
+
+- FirstName
+- LastName
+- Email
+- PhoneNumber
+- Gender
+- UserType
+- Role
+
+Specialized requests now inherit from this base request where appropriate.
+
+---
+
+## Student Registration Number
+
+Removed `RegNumber` from the student creation request.
+
+The registration number is now generated internally by the application instead of being supplied by the client.
+
+---
+
+## Department Validation
+
+Improved department creation validation.
+
+Supports:
+
+- Creating a single department.
+- Creating multiple departments.
+
+Validation ensures:
+
+- FacultyId is valid.
+- At least one department name is supplied.
+- Every supplied department name passes validation.
+
+---
+
+## Password Validation Improvements
+
+Added validation preventing users from reusing their current password during password changes.
+
+---
+
+## Validation Behavior
+
+Configured validators to use `CascadeMode.Stop`.
+
+This prevents multiple validation errors from being returned after the first failure on a property, resulting in cleaner and more meaningful validation responses.
+
+---
+
+## Request Model Cleanup
+
+Renamed request DTOs to follow a consistent naming convention.
+
+Examples:
+
+- LoginDto → LoginRequest
+- ChangePasswordRequestDto → ChangePasswordRequest
+- VerifyAccountRequestDto → VerifyAccountRequest
+- CreateStaffRequestDto → CreateStaffRequest
+- CreateStudentRequestDto → CreateStudentRequest
+
+The `Request` suffix is now used consistently throughout the project.
+
+---
+
+## AutoMapper Updates
+
+Updated AutoMapper profiles to support the refactored request models and inheritance hierarchy.
+
+This reduced manual object mapping and simplified the transition to the new shared request models.
+
+---
+
+## Controllers
+
+Updated controllers to use the new request models.
+
+Controllers no longer perform manual validation.
+
+Validation is now handled automatically by the global validation filter before controller actions execute.
+
+---
+
+## Benefits
+
+This modernization provides:
+
+- Upgrade to .NET 10.
+- Updated project dependencies.
+- Centralized request validation.
+- Automatic validation before controller execution.
+- Reusable validation rules.
+- Reduced duplicated validation logic.
+- Cleaner request DTOs.
+- Consistent validation messages.
+- Improved separation of concerns.
+- Easier maintenance and future extensibility.
+
+---
+
+
