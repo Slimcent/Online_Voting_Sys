@@ -18,7 +18,7 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPost("create-voter", Name = "Create-Voter")]
-        public async Task<IActionResult> CreateVoter([FromQuery] VoterCreateDto model)
+        public async Task<IActionResult> CreateVoter([FromQuery] CreateVoterRequest model)
         {
             string voter = await _voterService.CreateVoter(model);
 
@@ -26,7 +26,7 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPut("toggle-voter-status", Name = "Toggle-Voter-Status")]
-        public async Task<IActionResult> ToggleVoterStatus([FromQuery] Guid id )
+        public async Task<IActionResult> ToggleVoterStatus([FromQuery] Guid id)
         {
             string voter = await _voterService.ToggleVoter(id);
 

@@ -29,7 +29,7 @@ namespace VotingSystem.Data.SeedData
 
             await executionStrategy.ExecuteAsync(async () =>
             {
-                await using IDbContextTransaction transaction =  await context.Database.BeginTransactionAsync();
+                await using IDbContextTransaction transaction = await context.Database.BeginTransactionAsync();
 
                 try
                 {
@@ -45,7 +45,7 @@ namespace VotingSystem.Data.SeedData
                     await SeedRoleClaims(context, roleManager, seed);
 
                     await SeedStudentRoleClaims(context, roleManager, seed);
-                                        
+
                     await context.SaveChangesAsync();
 
                     await SeedFaculty(context, seed);
@@ -143,12 +143,12 @@ namespace VotingSystem.Data.SeedData
 
             if (administratorRole == null)
             {
-                throw new InvalidOperationException($"The administrator role " 
+                throw new InvalidOperationException($"The administrator role "
                     + $"'{seed.AdminUser.Role}' was not found.");
             }
 
             List<string> existingClaimValues = await context.Set<ApplicationRoleClaim>()
-                .Where(roleClaim => roleClaim.RoleId == administratorRole.Id 
+                .Where(roleClaim => roleClaim.RoleId == administratorRole.Id
                     && roleClaim.ClaimType == ClaimTypes.Name)
                 .Select(roleClaim => roleClaim.ClaimValue!)
                 .ToListAsync();
@@ -183,7 +183,7 @@ namespace VotingSystem.Data.SeedData
 
             if (studentRole == null)
             {
-                throw new InvalidOperationException($"The student role " 
+                throw new InvalidOperationException($"The student role "
                     + $"'{seed.StudentUser.Role}' was not found.");
             }
 
@@ -245,12 +245,12 @@ namespace VotingSystem.Data.SeedData
 
             if (faculty == null)
             {
-                throw new InvalidOperationException($"The faculty '{seed.Department.Faculty}' " 
+                throw new InvalidOperationException($"The faculty '{seed.Department.Faculty}' "
                     + "is required by the seeded department was not found.");
             }
 
             bool departmentExists = await context.Set<Department>()
-                .AnyAsync(department => department.Name.ToLower() == departmentName.ToLower() 
+                .AnyAsync(department => department.Name.ToLower() == departmentName.ToLower()
                     && department.FacultyId == faculty.Id);
 
             if (departmentExists)
@@ -308,7 +308,7 @@ namespace VotingSystem.Data.SeedData
             {
                 IdentityResult addToRoleResult = await userManager.AddToRoleAsync(user, seed.AdminUser.Role);
 
-                EnsureIdentityOperationSucceeded(addToRoleResult, $"Unable to assign role " 
+                EnsureIdentityOperationSucceeded(addToRoleResult, $"Unable to assign role "
                     + $"'{seed.AdminUser.Role}' to the seeded administrator.");
             }
 
@@ -346,7 +346,7 @@ namespace VotingSystem.Data.SeedData
 
             if (studentDepartment == null)
             {
-                throw new InvalidOperationException($"The student department " 
+                throw new InvalidOperationException($"The student department "
                     + $"{studentSeed.Department} was not found.");
             }
 
@@ -354,7 +354,7 @@ namespace VotingSystem.Data.SeedData
 
             if (studentRole == null)
             {
-                throw new InvalidOperationException($"The student role " 
+                throw new InvalidOperationException($"The student role "
                     + $"'{studentSeed.Role}' was not found.");
             }
 
@@ -366,9 +366,9 @@ namespace VotingSystem.Data.SeedData
 
                 if (userWithEmail != null)
                 {
-                    throw new InvalidOperationException($"A user with the email " 
-                        + $"'{studentSeed.Email}' already exists, " 
-                        + $"but does not use the configured username " 
+                    throw new InvalidOperationException($"A user with the email "
+                        + $"'{studentSeed.Email}' already exists, "
+                        + $"but does not use the configured username "
                         + $"'{studentSeed.UserName}'.");
                 }
 

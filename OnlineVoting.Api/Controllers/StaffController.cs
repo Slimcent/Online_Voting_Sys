@@ -97,15 +97,15 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPost("create-staff", Name = "Create-Staff")]
-        public async Task<IActionResult> CreateStaff([FromQuery] CreateStaffRequestDto model)
+        public async Task<IActionResult> CreateStaff([FromQuery] CreateStaffRequest model)
         {
             string staff = await _staffService.CreateStaff(model);
 
             return Ok(staff);
         }
-                
+
         [HttpPatch("update-staff", Name = "Update-Staff")]
-        public async Task<IActionResult> UpdateStaff(Guid Id, JsonPatchDocument<UpdateStaffDto> model)
+        public async Task<IActionResult> UpdateStaff(Guid Id, JsonPatchDocument<UpdateStaffRequest> model)
         {
             string staff = await _staffService.UpdateStaff(Id, model);
 
@@ -113,7 +113,7 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPut("edit-staff", Name = "Edit-Staff")]
-        public async Task<IActionResult> EditStaff([FromQuery] Guid staffId, UpdateStaffDto model)
+        public async Task<IActionResult> EditStaff([FromQuery] Guid staffId, UpdateStaffRequest model)
         {
             string staff = await _staffService.EditStaff(staffId, model);
 
@@ -121,7 +121,7 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPatch("patch-staff-address", Name = "Patch-Staff-Address")]
-        public async Task<IActionResult> PatchStaffAddress(Guid Id, JsonPatchDocument<UpdateAddressDto> model)
+        public async Task<IActionResult> PatchStaffAddress(Guid Id, JsonPatchDocument<UpdateAddressRequest> model)
         {
             string staff = await _staffService.PatchStaffAddress(Id, model);
 
@@ -137,7 +137,7 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPut("update-staff-address", Name = "Update-Staff-Address")]
-        public async Task<IActionResult> UpdateStaffAddress([FromQuery] Guid staffId, UpdateAddressDto model)
+        public async Task<IActionResult> UpdateStaffAddress([FromQuery] Guid staffId, UpdateAddressRequest model)
         {
             string staff = await _staffService.UpdateStaffAddress(staffId, model);
 

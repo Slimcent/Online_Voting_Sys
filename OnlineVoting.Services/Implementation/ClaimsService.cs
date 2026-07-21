@@ -127,7 +127,7 @@ namespace OnlineVoting.Services.Implementation
             throw new InvalidOperationException(errorMessage);
         }
 
-        public async Task<EditUserClaimsDto> EditUserClaims(EditUserClaimsDto userClaimsDto)
+        public async Task<EditUserClaimsRequest> EditUserClaims(EditUserClaimsRequest userClaimsDto)
         {
             var user = await _userManager.FindByEmailAsync(userClaimsDto.Email.ToString().Trim());
             if (user == null)
@@ -140,7 +140,7 @@ namespace OnlineVoting.Services.Implementation
             var result = await _userManager.ReplaceClaimAsync(user, oldClaim, newClaim);
 
             if (result.Succeeded)
-                return new EditUserClaimsDto { Email = userClaimsDto.Email, ClaimType = userClaimsDto.ClaimType, ClaimValue = userClaimsDto.ClaimValue, OldValue = userClaimsDto.OldValue };
+                return new EditUserClaimsRequest { Email = userClaimsDto.Email, ClaimType = userClaimsDto.ClaimType, ClaimValue = userClaimsDto.ClaimValue, OldValue = userClaimsDto.OldValue };
 
 
             var errorMessage = string.Empty;

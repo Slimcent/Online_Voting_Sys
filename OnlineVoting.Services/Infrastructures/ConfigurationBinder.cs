@@ -15,7 +15,7 @@ namespace OnlineVoting.Services.Infrastructures
 
             configuration.GetSection("JwtSettings").Bind(jwt);
             services.AddSingleton(jwt.Validate());
-            
+
             configuration.GetSection("Seed").Bind(seed);
             services.AddSingleton(seed.Validate());
 

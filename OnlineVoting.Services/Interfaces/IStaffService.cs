@@ -8,16 +8,16 @@ namespace OnlineVoting.Services.Interfaces
 {
     public interface IStaffService
     {
-        Task<string> CreateStaff(CreateStaffRequestDto request);
-        Task<string> UpdateStaffAddress(Guid staffId, UpdateAddressDto request);
+        Task<string> CreateStaff(CreateStaffRequest request);
+        Task<string> UpdateStaffAddress(Guid staffId, UpdateAddressRequest request);
         //Task<IEnumerable<StaffResponseDto>> GetAllStaff();
         Task<StaffResponseDto> GetStaff(Guid id);
         IEnumerable<Staff> GetTotalNumberOfStaff();
         Task<string> DeleteStaffById(Guid id);
         Task<StaffResponseDto> GetStaffByEmail(string email);
-        Task<String> UpdateStaff(Guid id, JsonPatchDocument<UpdateStaffDto> model);
-        Task<String> PatchStaffAddress(Guid staffId, JsonPatchDocument<UpdateAddressDto> model);
-        Task<string> EditStaff(Guid staffId, UpdateStaffDto request);
+        Task<String> UpdateStaff(Guid id, JsonPatchDocument<UpdateStaffRequest> model);
+        Task<String> PatchStaffAddress(Guid staffId, JsonPatchDocument<UpdateAddressRequest> model);
+        Task<string> EditStaff(Guid staffId, UpdateStaffRequest request);
         Task<IEnumerable<StaffResponseDto>> GetAllDeletedStaff();
         Task<IEnumerable<StaffResponseDto>> GetAllActiveStaff();
         Task<PagedResponse<StaffResponseDto>> AllStaff(StaffRequestDto request);

@@ -3,9 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace OnlineVoting.Models.Dtos.Request
 {
-    public class UploadStudentRequestDto
+    public class UploadStudentRequest
     {
-        public UploadStudentRequestDto()
+        public UploadStudentRequest()
         {
             RequiredFields = new[] { "RegNumber", "FirstName", "LastName", "Email" };
             IgnoreFields = new[] { "SN" };

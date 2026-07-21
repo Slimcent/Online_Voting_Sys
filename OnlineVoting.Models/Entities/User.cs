@@ -15,6 +15,7 @@ namespace OnlineVoting.Models.Entities
         public string? CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }
         public virtual Staff? Staff { get; set; }
+        public virtual Student? Student { get; set; }
         public virtual UserType UserType { get; set; }
         public virtual ICollection<ApplicationUserClaim> Claims { get; set; }
         public virtual ICollection<IdentityUserLogin<string>> Logins { get; set; }

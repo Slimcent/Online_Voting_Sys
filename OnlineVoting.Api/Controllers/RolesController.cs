@@ -73,7 +73,7 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPost("create-role", Name = "Create-Role")]
-        public async Task<IActionResult> CreateRole([FromQuery] RoleDto request)
+        public async Task<IActionResult> CreateRole([FromQuery] CreateRoleRequest request)
         {
             var role = await _roleService.CreateRole(request);
 
@@ -81,7 +81,7 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPut("edit-role", Name = "Edit-Role")]
-        public async Task<IActionResult> EditRole(string id, RoleDto request)
+        public async Task<IActionResult> EditRole(string id, CreateRoleRequest request)
         {
             string role = await _roleService.EditRole(id, request);
 
@@ -89,7 +89,7 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPost("add-user-to-role", Name = "Add-User-To-Role")]
-        public async Task<IActionResult> AddUserToRole([FromQuery] AddUserToRoleDto request)
+        public async Task<IActionResult> AddUserToRole([FromQuery] AddUserToRoleRequest request)
         {
             var user = await _roleService.AddUserToRole(request);
 
@@ -98,7 +98,7 @@ namespace OnlineVoting.Api.Controllers
 
 
         [HttpPost("remove-user-from-role", Name = "Remove-User-From-Role")]
-        public async Task<IActionResult> RemoveUserFromRole([FromQuery] AddUserToRoleDto request)
+        public async Task<IActionResult> RemoveUserFromRole([FromQuery] AddUserToRoleRequest request)
         {
             var user = await _roleService.RemoveUserFromRole(request);
 
@@ -122,7 +122,7 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpDelete("delete-role-by-name", Name = "Delete-Role_by-Name")]
-        public async Task<IActionResult> DeleteRole(RoleDto request)
+        public async Task<IActionResult> DeleteRole(CreateRoleRequest request)
         {
             string role = await _roleService.DeleteRole(request);
 

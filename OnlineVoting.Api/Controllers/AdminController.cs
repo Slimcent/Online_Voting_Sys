@@ -20,7 +20,7 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPost("createuser")]
-        public async Task<IActionResult> CreateUser([FromBody] UserCreateRequestDto request)
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
         {
 
             var user = await _userService.CreateUser(request);

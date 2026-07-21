@@ -4,6 +4,6 @@ namespace OnlineVoting.Services.Interfaces
 {
     public interface IDepartmentService
     {
-        Task<string> CreateDepartment(DeptCreateDto request);
+        Task<string> CreateDepartment(CreateDepartmentRequest request);
     }
 }

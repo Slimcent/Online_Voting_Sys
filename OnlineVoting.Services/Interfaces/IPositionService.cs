@@ -7,11 +7,11 @@ namespace OnlineVoting.Services.Interfaces
 {
     public interface IPositionService
     {
-        Task<string> CreatePosition(PositionDto request);
-        Task<string> UpdatePosition(Guid positionId, PositionDto request);
+        Task<string> CreatePosition(CreateWithNameRequest request);
+        Task<string> UpdatePosition(Guid positionId, CreateWithNameRequest request);
         Task<string> DeletePosition(Guid id);
         Task<PositionResponseDto> GetAPosition(Guid positionId);
-        Task<string> PatchPosition(Guid positionId, JsonPatchDocument<PositionDto> request);
+        Task<string> PatchPosition(Guid positionId, JsonPatchDocument<CreateWithNameRequest> request);
         Task<IEnumerable<PositionResponseDto>> GetAllPositions();
         Task<IEnumerable<PositionResponseDto>> GetAllDeletedPositions();
         Task<IEnumerable<PositionResponseDto>> GetAllActivePositions();

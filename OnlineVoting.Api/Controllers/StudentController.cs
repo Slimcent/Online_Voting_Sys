@@ -19,7 +19,7 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPost("createstudent", Name = "Create-Students")]
-        public async Task<IActionResult> CreateStudent([FromBody] StudentCreateRequestDto request)
+        public async Task<IActionResult> CreateStudent([FromBody] CreateStudentRequest request)
         {
             var student = await _studentService.CreateStudent(request);
 
@@ -37,7 +37,7 @@ namespace OnlineVoting.Api.Controllers
 
 
         [HttpPost("UploadStudents", Name = "Upload-Students")]
-        public async Task<IActionResult> UploadLecturers([FromForm] UploadStudentRequestDto students)
+        public async Task<IActionResult> UploadLecturers([FromForm] UploadStudentRequest students)
         {
             string res = await _studentService.UploadStudents(students);
 

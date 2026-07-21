@@ -56,7 +56,7 @@ namespace OnlineVoting.Services.Implementation
                 EmailConfirmationToken = emailConfirmationToken,
                 ResetPasswordToken = resetPasswordToken
             };
-           
+
             EmailDataDto emailData = EmailExtension.CreateUserEmailData(emailRequest);
 
             await SendEmail(emailData);
