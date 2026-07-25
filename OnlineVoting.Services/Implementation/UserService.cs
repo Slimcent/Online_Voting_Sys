@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Request.Email;
 using OnlineVoting.Models.Dtos.Response;
@@ -178,7 +177,7 @@ namespace OnlineVoting.Services.Implementation
             throw new InvalidOperationException(errorMessage);
         }
 
-        public async Task<string> ResetPassword(ResetPasswordRequestDto request)
+        public async Task<string> ResetPassword(ResetPasswordRequest request)
         {
             string decodedEmail = MessageEncoder.DecodeString(request.Email);
             string decodedToken = MessageEncoder.DecodeString(request.ResetPasswordToken);

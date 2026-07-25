@@ -1,6 +1,8 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OnlineVoting.Api.Documentation.Attributes;
+using OnlineVoting.Api.Documentation.Definitions.Keys;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Services.Interfaces;
 
@@ -20,6 +22,7 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPost("create-faculty", Name = "Create-Faculty")]
+        [ApiDocumentation(FacultyDocumentationKeys.CreateFaculty)]
         public async Task<IActionResult> CreateFaculty([FromQuery] CreateWithNameRequest request)
         {
             string faculty = await _facultyService.CreateFaculty(request);

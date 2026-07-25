@@ -1,6 +1,6 @@
 ﻿namespace OnlineVoting.Models.Dtos.Response
 {
-    public class StaffResponseDto
+    public class StaffResponse
     {
         public Guid Id { get; set; }
         public string? FullName { get; set; }

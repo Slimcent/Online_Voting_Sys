@@ -3,12 +3,25 @@ using System.Text.Json.Serialization;
 
 namespace OnlineVoting.Models.Dtos.Request
 {
+    /// <summary>
+    /// Represents the Excel file used to upload student records.
+    /// </summary>
     public class UploadStudentRequest
     {
         public UploadStudentRequest()
         {
-            RequiredFields = new[] { "RegNumber", "FirstName", "LastName", "Email" };
-            IgnoreFields = new[] { "SN" };
+            RequiredFields = new[]
+            {
+                "RegNumber",
+                "FirstName",
+                "LastName",
+                "Email"
+            };
+
+            IgnoreFields = new[]
+            {
+                "SN"
+            };
         }
 
         [JsonIgnore]
@@ -16,6 +29,10 @@ namespace OnlineVoting.Models.Dtos.Request
 
         [JsonIgnore]
         public string[] IgnoreFields { get; set; }
-        public IFormFile File { get; set; }
+
+        /// <summary>
+        /// The Excel file containing the student records.
+        /// </summary>
+        public required IFormFile File { get; set; }
     }
 }

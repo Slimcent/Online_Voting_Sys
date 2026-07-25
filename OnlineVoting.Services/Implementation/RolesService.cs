@@ -148,67 +148,67 @@ namespace OnlineVoting.Services.Implementation
             }
         }
 
-        public async Task<IEnumerable<RoleResponseDto>> GetAllRoles()
+        public async Task<IEnumerable<RoleResponse>> GetAllRoles()
         {
             IEnumerable<Role> allRoles = await _roleRepo.GetAllAsync();
 
             if (!allRoles.Any())
             {
-                return new List<RoleResponseDto>();
+                return new List<RoleResponse>();
             }
 
-            return _mapper.Map<IEnumerable<RoleResponseDto>>(allRoles);
+            return _mapper.Map<IEnumerable<RoleResponse>>(allRoles);
         }
 
-        public async Task<IEnumerable<RoleResponseDto>> GetAllActiveRoles()
+        public async Task<IEnumerable<RoleResponse>> GetAllActiveRoles()
         {
             IEnumerable<Role> allRoles = await _roleRepo.GetByAsync(x => x.Active == true);
 
             if (!allRoles.Any())
             {
-                return new List<RoleResponseDto>();
+                return new List<RoleResponse>();
             }
 
-            return _mapper.Map<IEnumerable<RoleResponseDto>>(allRoles);
+            return _mapper.Map<IEnumerable<RoleResponse>>(allRoles);
         }
 
-        public async Task<IEnumerable<RoleResponseDto>> GetAllDeactivatedRoles()
+        public async Task<IEnumerable<RoleResponse>> GetAllDeactivatedRoles()
         {
             IEnumerable<Role> allRoles = await _roleRepo.GetByAsync(x => x.Active == false);
 
             if (!allRoles.Any())
             {
-                return new List<RoleResponseDto>();
+                return new List<RoleResponse>();
             }
 
-            return _mapper.Map<IEnumerable<RoleResponseDto>>(allRoles);
+            return _mapper.Map<IEnumerable<RoleResponse>>(allRoles);
         }
 
-        public async Task<PagedResponse<RoleResponseDto>> AllRoles(RoleRequestDto request)
+        public async Task<PagedResponse<RoleResponse>> AllRoles(RoleRequest request)
         {
             PagedList<Role> roles = string.IsNullOrWhiteSpace(request.SearchTerm)
                 ? await _roleRepo.GetPagedItems(request)
                 : await _roleRepo.GetPagedItems(request, x => x.Name.Contains(request.SearchTerm.ToLower().Trim()));
 
-            return _mapper.Map<PagedResponse<RoleResponseDto>>(roles);
+            return _mapper.Map<PagedResponse<RoleResponse>>(roles);
         }
 
-        public async Task<PagedResponse<RoleResponseDto>> AllActiveRoles(RoleRequestDto request)
+        public async Task<PagedResponse<RoleResponse>> AllActiveRoles(RoleRequest request)
         {
             PagedList<Role> roles = string.IsNullOrWhiteSpace(request.SearchTerm)
                 ? await _roleRepo.GetPagedItems(request, x => x.Active == true)
                 : await _roleRepo.GetPagedItems(request, x => x.Name.Contains(request.SearchTerm.ToLower().Trim()));
 
-            return _mapper.Map<PagedResponse<RoleResponseDto>>(roles);
+            return _mapper.Map<PagedResponse<RoleResponse>>(roles);
         }
 
-        public async Task<PagedResponse<RoleResponseDto>> AllDeactivatedRoles(RoleRequestDto request)
+        public async Task<PagedResponse<RoleResponse>> AllDeactivatedRoles(RoleRequest request)
         {
             PagedList<Role> roles = string.IsNullOrWhiteSpace(request.SearchTerm)
                 ? await _roleRepo.GetPagedItems(request, x => x.Active == false)
                 : await _roleRepo.GetPagedItems(request, x => x.Name.Contains(request.SearchTerm.ToLower().Trim()));
 
-            return _mapper.Map<PagedResponse<RoleResponseDto>>(roles);
+            return _mapper.Map<PagedResponse<RoleResponse>>(roles);
         }
     }
 }

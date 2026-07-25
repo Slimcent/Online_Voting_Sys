@@ -1,6 +1,8 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OnlineVoting.Api.Documentation.Attributes;
+using OnlineVoting.Api.Documentation.Definitions.Keys;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Services.Interfaces;
 
@@ -21,9 +23,10 @@ namespace OnlineVoting.Api.Controllers
 
 
         [HttpPost("create-department", Name = "Create-Department")]
-        public async Task<IActionResult> CreateDepartment([FromQuery] CreateDepartmentRequest model)
+        [ApiDocumentation(DepartmentDocumentationKeys.CreateDepartment)]
+        public async Task<IActionResult> CreateDepartment([FromQuery] CreateDepartmentRequest request)
         {
-            string dept = await _deptServie.CreateDepartment(model);
+            string dept = await _deptServie.CreateDepartment(request);
 
             return Ok(dept);
         }

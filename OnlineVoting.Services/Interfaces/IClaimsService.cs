@@ -6,9 +6,9 @@ namespace OnlineVoting.Services.Interfaces
     public interface IClaimsService
     {
         Task<List<string>> GetRouteNames(string baseUrl);
-        Task<UserClaimsResponseDto> CreateUserClaims(string email, string claimType, string claimValue);
-        Task<string> DeleteClaims(UserClaimsRequestDto request);
+        Task<UserClaimsResponse> CreateUserClaims(string email, string claimType, string claimValue);
+        Task<string> DeleteClaims(UserClaimsRequest request);
         Task<EditUserClaimsRequest> EditUserClaims(EditUserClaimsRequest userClaimsDto);
-        Task<IEnumerable<UserClaimsResponseDto>> GetUserClaims(string email);
+        Task<IEnumerable<UserClaimsResponse>> GetUserClaims(string email);
     }
 }

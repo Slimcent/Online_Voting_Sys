@@ -121,14 +121,14 @@ namespace OnlineVoting.Services.Implementation
             return $"staff with email {staff.User.Email} updated successfully";
         }
 
-        public async Task<StaffResponseDto> GetStaff(Guid id)
+        public async Task<StaffResponse> GetStaff(Guid id)
         {
             Staff staff = await _staffRepo.GetSingleByAsync(x => x.Id == id, include: x => x.Include(x => x.Address).Include(x => x.User));
 
             if (staff == null)
                 throw new InvalidOperationException("Staff not found");
 
-            return _mapper.Map<StaffResponseDto>(staff);
+            return _mapper.Map<StaffResponse>(staff);
         }
 
         public IEnumerable<Staff> GetTotalNumberOfStaff()
@@ -148,7 +148,7 @@ namespace OnlineVoting.Services.Implementation
             return $"Staff deleted successfully";
         }
 
-        public async Task<StaffResponseDto> GetStaffByEmail(string email)
+        public async Task<StaffResponse> GetStaffByEmail(string email)
         {
             User user = await _userRepo.GetSingleByAsync(u => u.Email == email,
                 include: u => u.Include(s => s.Staff).ThenInclude(a => a.Address));
@@ -156,7 +156,7 @@ namespace OnlineVoting.Services.Implementation
             if (user == null)
                 throw new InvalidOperationException("User not found");
 
-            return _mapper.Map<StaffResponseDto>(user);
+            return _mapper.Map<StaffResponse>(user);
         }
 
 
@@ -202,58 +202,58 @@ namespace OnlineVoting.Services.Implementation
             return "Update successful";
         }
 
-        public async Task<IEnumerable<StaffResponseDto>> GetAllDeletedStaff()
+        public async Task<IEnumerable<StaffResponse>> GetAllDeletedStaff()
         {
             IEnumerable<Staff> allDeletedStaff = await _staffRepo.GetByAsync(x => x.Active == true);
 
             if (!allDeletedStaff.Any())
             {
-                return new List<StaffResponseDto>();
+                return new List<StaffResponse>();
             }
 
-            return _mapper.Map<IEnumerable<StaffResponseDto>>(allDeletedStaff);
+            return _mapper.Map<IEnumerable<StaffResponse>>(allDeletedStaff);
         }
 
-        public async Task<IEnumerable<StaffResponseDto>> GetAllActiveStaff()
+        public async Task<IEnumerable<StaffResponse>> GetAllActiveStaff()
         {
             IEnumerable<Staff> allActiveStaff = await _staffRepo.GetByAsync(x => x.Active == false);
 
             if (!allActiveStaff.Any())
             {
-                return new List<StaffResponseDto>();
+                return new List<StaffResponse>();
             }
 
-            return _mapper.Map<IEnumerable<StaffResponseDto>>(allActiveStaff);
+            return _mapper.Map<IEnumerable<StaffResponse>>(allActiveStaff);
         }
 
-        public async Task<PagedResponse<StaffResponseDto>> AllStaff(StaffRequestDto request)
+        public async Task<PagedResponse<StaffResponse>> AllStaff(StaffRequest request)
         {
             PagedList<Staff> staff = string.IsNullOrWhiteSpace(request.SearchTerm)
                 ? await _staffRepo.GetPagedItems(request)
                 : await _staffRepo.GetPagedItems(request, x => x.FirstName.Contains(request.SearchTerm.ToLower().Trim())
                             || x.LastName.Contains(request.SearchTerm.ToLower().Trim()));
 
-            return _mapper.Map<PagedResponse<StaffResponseDto>>(staff);
+            return _mapper.Map<PagedResponse<StaffResponse>>(staff);
         }
 
-        public async Task<PagedResponse<StaffResponseDto>> AllActiveStaff(StaffRequestDto request)
+        public async Task<PagedResponse<StaffResponse>> AllActiveStaff(StaffRequest request)
         {
             PagedList<Staff> staff = string.IsNullOrWhiteSpace(request.SearchTerm)
                 ? await _staffRepo.GetPagedItems(request, x => x.Active == false)
                 : await _staffRepo.GetPagedItems(request, x => x.FirstName.Contains(request.SearchTerm.ToLower().Trim())
                             || x.LastName.Contains(request.SearchTerm.ToLower().Trim()));
 
-            return _mapper.Map<PagedResponse<StaffResponseDto>>(staff);
+            return _mapper.Map<PagedResponse<StaffResponse>>(staff);
         }
 
-        public async Task<PagedResponse<StaffResponseDto>> AllDeletedStaff(StaffRequestDto request)
+        public async Task<PagedResponse<StaffResponse>> AllDeletedStaff(StaffRequest request)
         {
             PagedList<Staff> staff = string.IsNullOrWhiteSpace(request.SearchTerm)
                 ? await _staffRepo.GetPagedItems(request, x => x.Active == true)
                 : await _staffRepo.GetPagedItems(request, x => x.FirstName.Contains(request.SearchTerm.ToLower().Trim())
                             || x.LastName.Contains(request.SearchTerm.ToLower().Trim()));
 
-            return _mapper.Map<PagedResponse<StaffResponseDto>>(staff);
+            return _mapper.Map<PagedResponse<StaffResponse>>(staff);
         }
 
         public async Task<string> ToggleStaffStatus(Guid id)

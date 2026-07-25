@@ -11,6 +11,6 @@ namespace OnlineVoting.Services.Interfaces
         Task<Response> CreateContestant(string regNo, string position);
         Task<Response> Vote(VoteRequest request);
         Task<String> UploadStudents(UploadStudentRequest model);
-        Task<FileStreamDto> DownloadStudentsList();
+        Task<Models.Dtos.Response.FileStreamResponse> DownloadStudentsList();
     }
 }

@@ -2,7 +2,16 @@
 {
     public class LoginRequest
     {
-        public required string Email { get; set; }
-        public required string Password { get; set; }
+        /// <summary>
+        /// Gets or sets the email address associated with the user account.
+        /// </summary>
+        /// <example>user@example.com</example>
+        public string Email { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user's password.
+        /// </summary>
+        /// <example>Password123!</example>
+        public string Password { get; set; }
     }
 }
