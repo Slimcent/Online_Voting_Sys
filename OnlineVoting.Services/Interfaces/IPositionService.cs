@@ -10,13 +10,13 @@ namespace OnlineVoting.Services.Interfaces
         Task<string> CreatePosition(CreateWithNameRequest request);
         Task<string> UpdatePosition(Guid positionId, CreateWithNameRequest request);
         Task<string> DeletePosition(Guid id);
-        Task<PositionResponseDto> GetAPosition(Guid positionId);
+        Task<PositionResponse> GetAPosition(Guid positionId);
         Task<string> PatchPosition(Guid positionId, JsonPatchDocument<CreateWithNameRequest> request);
-        Task<IEnumerable<PositionResponseDto>> GetAllPositions();
-        Task<IEnumerable<PositionResponseDto>> GetAllDeletedPositions();
-        Task<IEnumerable<PositionResponseDto>> GetAllActivePositions();
-        Task<PagedResponse<PositionResponseDto>> AllPositions(PositionRequestDto request);
-        Task<PagedResponse<PositionResponseDto>> AllActivePositions(PositionRequestDto request);
-        Task<PagedResponse<PositionResponseDto>> AllDeletedPositions(PositionRequestDto request);
+        Task<IEnumerable<PositionResponse>> GetAllPositions();
+        Task<IEnumerable<PositionResponse>> GetAllDeletedPositions();
+        Task<IEnumerable<PositionResponse>> GetAllActivePositions();
+        Task<PagedResponse<PositionResponse>> AllPositions(PositionRequest request);
+        Task<PagedResponse<PositionResponse>> AllActivePositions(PositionRequest request);
+        Task<PagedResponse<PositionResponse>> AllDeletedPositions(PositionRequest request);
     }
 }

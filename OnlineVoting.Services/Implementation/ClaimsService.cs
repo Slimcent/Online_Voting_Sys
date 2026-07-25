@@ -81,7 +81,7 @@ namespace OnlineVoting.Services.Implementation
             return operationIds;
         }
 
-        public async Task<UserClaimsResponseDto> CreateUserClaims(string email, string claimType, string claimValue)
+        public async Task<UserClaimsResponse> CreateUserClaims(string email, string claimType, string claimValue)
         {
             var user = await _userManager.FindByEmailAsync(email.ToString().ToLower());
             if (user == null)
@@ -92,7 +92,7 @@ namespace OnlineVoting.Services.Implementation
             IdentityResult result = await _userManager.AddClaimAsync(user, claim);
 
             if (result.Succeeded)
-                return new UserClaimsResponseDto { ClaimType = claimType, ClaimValue = claimValue };
+                return new UserClaimsResponse { ClaimType = claimType, ClaimValue = claimValue };
 
             var errorMessage = string.Empty;
 
@@ -104,7 +104,7 @@ namespace OnlineVoting.Services.Implementation
             throw new InvalidOperationException(errorMessage);
         }
 
-        public async Task<string> DeleteClaims(UserClaimsRequestDto request)
+        public async Task<string> DeleteClaims(UserClaimsRequest request)
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
             if (user == null)
@@ -151,7 +151,7 @@ namespace OnlineVoting.Services.Implementation
             throw new InvalidOperationException(errorMessage);
         }
 
-        public async Task<IEnumerable<UserClaimsResponseDto>> GetUserClaims(string email)
+        public async Task<IEnumerable<UserClaimsResponse>> GetUserClaims(string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
 
@@ -160,7 +160,7 @@ namespace OnlineVoting.Services.Implementation
 
             var claim = await _userManager.GetClaimsAsync(user);
 
-            var dto = claim.Select(x => new UserClaimsResponseDto
+            var dto = claim.Select(x => new UserClaimsResponse
             {
                 ClaimType = x.Type,
                 ClaimValue = x.Value

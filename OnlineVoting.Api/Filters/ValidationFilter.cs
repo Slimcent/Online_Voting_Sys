@@ -37,18 +37,28 @@ namespace OnlineVoting.Api.Filters
                 if (validationResult.IsValid)
                     continue;
 
-                Dictionary<string, string[]> errors = validationResult.Errors
-                    .GroupBy(error => error.PropertyName)
+                Dictionary<string, string[]> errors = validationResult.Errors.GroupBy(error => error.PropertyName)
                     .ToDictionary(group => group.Key, group => group
                     .Select(error => error.ErrorMessage)
                     .Distinct()
                     .ToArray());
 
-                context.Result = new BadRequestObjectResult(new ValidationProblemDetails(errors)
+                ValidationProblemDetails problemDetails = new(errors)
                 {
                     Status = StatusCodes.Status400BadRequest,
-                    Title = "Validation failed."
-                });
+                    Title = "Validation failed.",
+                    Detail = "One or more validation errors occurred.",
+                    Type = "https://tools.ietf.org/html/" + "rfc9110#section-15.5.1",
+                    Instance = context.HttpContext.Request.Path
+                };
+
+                problemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
+
+                BadRequestObjectResult result = new(problemDetails);
+
+                result.ContentTypes.Add("application/problem+json");
+
+                context.Result = result;
 
                 return;
             }

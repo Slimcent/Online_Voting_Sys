@@ -11,7 +11,7 @@ namespace OnlineVoting.Models.Dtos.Request.Email
         public string? Token { get; set; }
     }
 
-    public class ChangeEmailDto
+    public class ChangeEmailRequest
     {
         [Required]
         public string? Email { get; set; }

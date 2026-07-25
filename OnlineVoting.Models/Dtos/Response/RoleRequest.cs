@@ -2,11 +2,11 @@
 
 namespace OnlineVoting.Models.Dtos.Response
 {
-    public class StaffRequestDto : RequestParameters
+    public class RoleRequest : RequestParameters
     {
-        public StaffRequestDto()
+        public RoleRequest()
         {
-            OrderBy = "LastName";
+            OrderBy = "Name";
         }
     }
 }

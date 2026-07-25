@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using OnlineVoting.Api.Documentation.Attributes;
+using OnlineVoting.Api.Documentation.Definitions.Keys;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Pagination;
@@ -23,93 +25,98 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpGet("all-paged-positions", Name = "Get-All-Paged-Positions")]
-        public async Task<IActionResult> GetAll([FromQuery] PositionRequestDto request)
+        [ApiDocumentation(PositionDocumentationKeys.GetAllPagedPositions)]
+        public async Task<IActionResult> GetAll([FromQuery] PositionRequest request)
         {
-            PagedResponse<PositionResponseDto> all = await _positionService.AllPositions(request);
+            PagedResponse<PositionResponse> all = await _positionService.AllPositions(request);
 
             return Ok(all);
         }
 
         [HttpGet("all-paged-active-positions", Name = "Get-All-Paged-Active-Positions")]
-        public async Task<IActionResult> AllPagedActivePositions([FromQuery] PositionRequestDto request)
+        [ApiDocumentation(PositionDocumentationKeys.GetAllPagedActivePositions)]
+        public async Task<IActionResult> AllPagedActivePositions([FromQuery] PositionRequest request)
         {
-            PagedResponse<PositionResponseDto> all = await _positionService.AllActivePositions(request);
+            PagedResponse<PositionResponse> all = await _positionService.AllActivePositions(request);
 
             return Ok(all);
         }
 
         [HttpGet("all-paged-deleted-positions", Name = "Get-All-Paged-Deleted-Positions")]
-        public async Task<IActionResult> AllPagedDeletedPositions([FromQuery] PositionRequestDto request)
+        [ApiDocumentation(PositionDocumentationKeys.GetAllPagedDeletedPositions)]
+        public async Task<IActionResult> AllPagedDeletedPositions([FromQuery] PositionRequest request)
         {
-            PagedResponse<PositionResponseDto> all = await _positionService.AllDeletedPositions(request);
+            PagedResponse<PositionResponse> all = await _positionService.AllDeletedPositions(request);
 
             return Ok(all);
         }
 
         [HttpGet("all-positions", Name = "All-Positions")]
+        [ApiDocumentation(PositionDocumentationKeys.GetAllPositions)]
         public async Task<IActionResult> GetAllPosition()
         {
-            IEnumerable<PositionResponseDto> allPositions = await _positionService.GetAllPositions();
+            IEnumerable<PositionResponse> allPositions = await _positionService.GetAllPositions();
 
             return Ok(allPositions);
         }
 
         [HttpGet("all-active-positions", Name = "All-Active-Positions")]
+        [ApiDocumentation(PositionDocumentationKeys.GetAllActivePositions)]
         public async Task<IActionResult> GetAllActivePosition()
         {
-            IEnumerable<PositionResponseDto> allActivePositions = await _positionService.GetAllActivePositions();
+            IEnumerable<PositionResponse> allActivePositions = await _positionService.GetAllActivePositions();
 
             return Ok(allActivePositions);
         }
 
         [HttpGet("all-deleted-positions", Name = "All-Deleted-Positions")]
+        [ApiDocumentation(PositionDocumentationKeys.GetAllDeletedPositions)]
         public async Task<IActionResult> GetAllDeletedPosition()
         {
-            IEnumerable<PositionResponseDto> allDeletedPositions = await _positionService.GetAllDeletedPositions();
+            IEnumerable<PositionResponse> allDeletedPositions = await _positionService.GetAllDeletedPositions();
 
             return Ok(allDeletedPositions);
         }
 
         [HttpGet("position-by-id", Name = "Position-By-Id")]
-        public async Task<IActionResult> GetStaffById(Guid id)
+        [ApiDocumentation(PositionDocumentationKeys.GetPositionById)]
+        public async Task<IActionResult> GetPositionById([FromQuery] Guid id)
         {
-            PositionResponseDto position = await _positionService.GetAPosition(id);
+            PositionResponse position = await _positionService.GetAPosition(id);
 
             return Ok(position);
         }
 
-        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [HttpPost("create-position", Name = "Create-Position")]
-        public async Task<IActionResult> CreatePosition(CreateWithNameRequest request)
+        [ApiDocumentation(PositionDocumentationKeys.CreatePosition)]
+        public async Task<IActionResult> CreatePosition([FromBody] CreateWithNameRequest request)
         {
             string position = await _positionService.CreatePosition(request);
 
             return Ok(position);
         }
 
-        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [HttpPatch("patch-position", Name = "Patch-Position")]
-        public async Task<IActionResult> PatchPosition(Guid Id, JsonPatchDocument<CreateWithNameRequest> request)
+        [ApiDocumentation(PositionDocumentationKeys.PatchPosition)]
+        public async Task<IActionResult> PatchPosition([FromQuery] Guid id, [FromBody] JsonPatchDocument<CreateWithNameRequest> request)
         {
-            string position = await _positionService.PatchPosition(Id, request);
+            string position = await _positionService.PatchPosition(id, request);
 
             return Ok(position);
         }
 
         [HttpPut("update-position", Name = "Update-Position")]
-        public async Task<IActionResult> UpdatePosition(Guid Id, CreateWithNameRequest request)
+        [ApiDocumentation(PositionDocumentationKeys.UpdatePosition)]
+        public async Task<IActionResult> UpdatePosition([FromQuery] Guid id, [FromBody] CreateWithNameRequest request)
         {
-            string position = await _positionService.UpdatePosition(Id, request);
+            string position = await _positionService.UpdatePosition(id, request);
 
             return Ok(position);
         }
 
         [HttpDelete("delete-position-by-id", Name = "Delete-Position-By-Id")]
-        public async Task<IActionResult> DeleteStaff([FromQuery] Guid id)
+        [ApiDocumentation(PositionDocumentationKeys.DeletePosition)]
+        public async Task<IActionResult> DeletePosition([FromQuery] Guid id)
         {
             string toggle = await _positionService.DeletePosition(id);
 

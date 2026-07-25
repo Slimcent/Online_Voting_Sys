@@ -11,18 +11,18 @@ namespace OnlineVoting.Services.Interfaces
         Task<string> CreateStaff(CreateStaffRequest request);
         Task<string> UpdateStaffAddress(Guid staffId, UpdateAddressRequest request);
         //Task<IEnumerable<StaffResponseDto>> GetAllStaff();
-        Task<StaffResponseDto> GetStaff(Guid id);
+        Task<StaffResponse> GetStaff(Guid id);
         IEnumerable<Staff> GetTotalNumberOfStaff();
         Task<string> DeleteStaffById(Guid id);
-        Task<StaffResponseDto> GetStaffByEmail(string email);
+        Task<StaffResponse> GetStaffByEmail(string email);
         Task<String> UpdateStaff(Guid id, JsonPatchDocument<UpdateStaffRequest> model);
         Task<String> PatchStaffAddress(Guid staffId, JsonPatchDocument<UpdateAddressRequest> model);
         Task<string> EditStaff(Guid staffId, UpdateStaffRequest request);
-        Task<IEnumerable<StaffResponseDto>> GetAllDeletedStaff();
-        Task<IEnumerable<StaffResponseDto>> GetAllActiveStaff();
-        Task<PagedResponse<StaffResponseDto>> AllStaff(StaffRequestDto request);
-        Task<PagedResponse<StaffResponseDto>> AllActiveStaff(StaffRequestDto request);
-        Task<PagedResponse<StaffResponseDto>> AllDeletedStaff(StaffRequestDto request);
+        Task<IEnumerable<StaffResponse>> GetAllDeletedStaff();
+        Task<IEnumerable<StaffResponse>> GetAllActiveStaff();
+        Task<PagedResponse<StaffResponse>> AllStaff(StaffRequest request);
+        Task<PagedResponse<StaffResponse>> AllActiveStaff(StaffRequest request);
+        Task<PagedResponse<StaffResponse>> AllDeletedStaff(StaffRequest request);
         Task<string> ToggleStaffStatus(Guid id);
     }
 }

@@ -10,7 +10,7 @@ namespace OnlineVoting.Services.Extension
 {
     public static class ExcelDownloadExtensions
     {
-        public static FileStreamDto ConvertToExcel<T>(this IList<T> collection, ExcelDownloadConfig config)
+        public static Models.Dtos.Response.FileStreamResponse ConvertToExcel<T>(this IList<T> collection, ExcelDownloadConfig config)
         {
             var stream = new MemoryStream();
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
@@ -58,7 +58,7 @@ namespace OnlineVoting.Services.Extension
 
             var fileName = $"{config.Name}-{DateTime.Now:yyyyMMddHHmmssfff}.xlsx";
 
-            return new FileStreamDto { FileStream = stream, FileName = fileName };
+            return new Models.Dtos.Response.FileStreamResponse { FileStream = stream, FileName = fileName };
         }
 
         private static void ConfigureScoreSheet<T>(this ExcelWorksheet worksheet, IList<T> collection, ExcelDownloadConfig config)

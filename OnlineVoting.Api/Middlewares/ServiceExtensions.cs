@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using OnlineVoting.Api.Configurations;
 using OnlineVoting.Api.Filters;
+using OnlineVoting.Models.Configurations;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Validators.Request;
@@ -19,11 +20,14 @@ using OnlineVoting.Services.Infrastructures.Authorization;
 using OnlineVoting.Services.Infrastructures.Authorization.Jwt;
 using OnlineVoting.Services.Interfaces;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using VotingSystem.Data.Implementation;
 using VotingSystem.Data.Interfaces;
 using VotingSystem.Logger;
+using OnlineVoting.Api.Documentation.Filters;
+
 
 namespace OnlineVoting.Api.Middlewares
 {
@@ -142,7 +146,25 @@ namespace OnlineVoting.Api.Middlewares
 
             services.AddSwaggerGen(options =>
             {
+                // Api documentation, for reading the XML comments from the code.
+                Assembly[] assemblies =
+                {
+                    Assembly.GetExecutingAssembly(), typeof(ModelsAssemblyMarker).Assembly
+                };
+
+                foreach (Assembly assembly in assemblies)
+                {
+                    string xmlFile = $"{assembly.GetName().Name}.xml";
+
+                    string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+
+                    options.IncludeXmlComments(xmlPath);
+                }
+
                 options.EnableAnnotations();
+
+                options.OperationFilter<ApiDocumentationOperationFilter>();
+                options.SupportNonNullableReferenceTypes();
 
                 options.AddSecurityDefinition(
                     "Bearer",

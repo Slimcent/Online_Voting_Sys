@@ -641,4 +641,307 @@ Example:
 
 ---
 
+## Standardized API Error Responses with ProblemDetails
+
+The API error-handling pipeline was modernized to use ASP.NET Core's built-in `ProblemDetails` and `ValidationProblemDetails` response formats.
+
+This replaces the previous custom `ResponseError` model with the standardized error format recommended for ASP.NET Core APIs.
+
+The goal of this modernization is to provide a consistent response structure for all API errors, making the API easier to consume and 
+
+improving interoperability with client applications such as React, Angular, mobile applications and third-party integrations.
+
+### Exception Middleware
+
+The existing exception middleware was updated to return `ProblemDetails` for application exceptions instead of the custom `ResponseError` object.
+
+The following exception mappings were implemented:
+
+| Exception | HTTP Status |
+|-----------|------------:|
+| `InvalidDataException` | 400 Bad Request |
+| `ArgumentException` | 400 Bad Request |
+| `InvalidCredentialsException` | 401 Unauthorized |
+| `NotFoundException` | 404 Not Found |
+| `ConflictException` | 409 Conflict |
+| Any unhandled exception | 500 Internal Server Error |
+
+Each response now contains a standardized structure consisting of:
+
+- `type`
+- `title`
+- `status`
+- `detail`
+- `instance`
+- `traceId`
+
+The middleware continues to log all exceptions using the existing logging infrastructure while returning consistent JSON responses to clients.
+
+### Validation Responses
+
+The custom `ValidationFilter` was updated to return `ValidationProblemDetails`.
+
+Validation responses now include:
+
+- Field-level validation errors
+- RFC-compliant error metadata
+- Request path
+- Request trace identifier
+
+This provides a consistent experience between validation errors and runtime exceptions.
+
+### Status Code Pages
+
+A new status-code response handler was added using:
+
+```csharp
+app.ConfigureExceptionHandler();
+app.ConfigureStatusCodePages();
+```
+
+This ensures that framework-generated responses are also returned using the same standardized format.
+
+The following responses are now standardized even when no exception is thrown:
+
+- 401 Unauthorized
+- 403 Forbidden
+- 404 Not Found
+
+### Response Examples
+
+#### Validation Error (400)
+
+```json
+{
+  "errors": {
+    "email": [
+      "Email cannot be empty."
+    ]
+  },
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "Validation failed.",
+  "status": 400,
+  "detail": "One or more validation errors occurred.",
+  "instance": "/api/v1/Auth/login",
+  "traceId": "..."
+}
+```
+
+#### Unauthorized (401)
+
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+  "title": "Unauthorized",
+  "status": 401,
+  "detail": "Authentication is required to access this resource.",
+  "instance": "/api/v1/Position/all-paged-positions",
+  "traceId": "..."
+}
+```
+
+#### Resource Not Found (404)
+
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+  "title": "Resource not found",
+  "status": 404,
+  "detail": "User not found",
+  "instance": "/api/v1/Auth/login",
+  "traceId": "..."
+}
+```
+
+#### Conflict (409)
+
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "Conflict",
+  "status": 409,
+  "detail": "A resource with the same name already exists.",
+  "instance": "/api/v1/Position/create-position",
+  "traceId": "..."
+}
+```
+
+#### Internal Server Error (500)
+
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+  "title": "Internal server error",
+  "status": 500,
+  "detail": "An unexpected error occurred.",
+  "instance": "/api/v1/Position/all-paged-positions",
+  "traceId": "..."
+}
+```
+
+### Benefits
+
+This modernization provides several improvements:
+
+- Replaced the custom `ResponseError` model with the ASP.NET Core standard.
+- Standardized all error responses across the application.
+- Improved consistency between validation errors and runtime exceptions.
+- Added RFC-compliant `ProblemDetails` responses.
+- Included request path (`instance`) for easier debugging.
+- Included request trace identifiers (`traceId`) to simplify troubleshooting and log correlation.
+- Preserved the existing logging behavior while improving the API response format.
+- Improved compatibility with modern client applications and API tooling.
+
+---
+
+# API Documentation Modernization
+
+## Overview
+
+Modernized the API documentation by replacing scattered Swagger annotations with a centralized documentation system. The new approach 
+
+improves maintainability, reduces duplication and provides a more consistent OpenAPI specification.
+
+---
+
+## Centralized Documentation Architecture
+
+Introduced a reusable documentation framework consisting of:
+
+- `ApiDocumentationAttribute`
+- `ApiDocumentationRegistry`
+- `ApiDocumentationOperationFilter`
+- `ApiOperationDocumentation`
+- `ApiResponseDocumentation`
+- `CommonApiResponses`
+
+Endpoint documentation is now maintained separately from controllers, keeping controllers clean and focused on request handling.
+
+---
+
+## Endpoint Documentation
+
+Created dedicated documentation definitions and key classes for the following controllers:
+
+- Auth
+- Student
+- Staff
+- Role
+- Position
+- Faculty
+- Department
+- Claims
+
+Each endpoint now includes:
+
+- Summary
+- Description
+- Success response
+- Standardized error responses
+
+---
+
+## Standardized API Responses
+
+Standardized the documented HTTP responses across the API:
+
+- `200 OK`
+- `400 Bad Request`
+- `401 Unauthorized`
+- `403 Forbidden`
+- `404 Not Found`
+- `409 Conflict`
+- `500 Internal Server Error`
+
+All error responses are documented using the `ProblemDetails` format.
+
+---
+
+## XML Documentation
+
+Enabled XML documentation generation for:
+
+- `OnlineVoting.Api`
+- `OnlineVoting.Models`
+
+Configured Swagger to load XML comments from both assemblies.
+
+Added XML documentation to request models, including:
+
+- Class summaries
+- Property descriptions
+- Example values
+
+---
+
+## Swagger Improvements
+
+Configured Swagger to:
+
+- Support API versioning
+- Display XML documentation
+- Display request model descriptions and examples
+- Display standardized response documentation
+- Support nullable reference types
+- Improve schema and model rendering
+
+---
+
+## Controller Improvements
+
+Updated controllers to:
+
+- Use `ApiDocumentationAttribute` for endpoint documentation
+- Add explicit `[FromBody]` and `[FromQuery]` attributes where appropriate
+- Remove duplicated endpoint-specific Swagger response annotations where centralized documentation is used
+- Keep controllers focused on request handling
+
+---
+
+## Authentication Documentation
+
+Completed documentation for the remaining authentication endpoints:
+
+- Send password reset email
+- Reset password
+- Change password
+- Update recovery email
+- Send change email confirmation
+- Change email
+
+Documented successful authentication responses returning text with:
+
+- `ResponseType = typeof(string)`
+
+Endpoints returning no response body were documented without a response type.
+
+---
+
+## Verification
+
+Verified that:
+
+- All endpoints appear correctly in Swagger
+- API versioning works correctly
+- Endpoint summaries and descriptions are displayed
+- XML documentation appears for request models
+- Request examples are rendered correctly
+- Response schemas are generated correctly
+- `ProblemDetails` responses are documented consistently
+- Authorization requirements are displayed correctly
+- Anonymous authentication endpoints remain publicly accessible
+
+---
+
+## Result
+
+The API now uses a centralized documentation system that:
+
+- Eliminates duplicated Swagger annotations
+- Improves maintainability
+- Produces a cleaner OpenAPI specification
+- Provides consistent request and response documentation
+- Keeps controller implementations concise and focused
+
+---
 

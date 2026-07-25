@@ -19,7 +19,7 @@ namespace OnlineVoting.Api.Mapper
             //Positions
             CreateMap<CreateWithNameRequest, Position>();
             CreateMap<Position, CreateWithNameRequest>();
-            CreateMap<Position, PositionResponseDto>();
+            CreateMap<Position, PositionResponse>();
 
             //Faculty
             CreateMap<CreateWithNameRequest, Faculty>();
@@ -29,7 +29,7 @@ namespace OnlineVoting.Api.Mapper
 
             // Role
             CreateMap<CreateRoleRequest, Role>();
-            CreateMap<Role, RoleResponseDto>();
+            CreateMap<Role, RoleResponse>();
 
             // Create staff
             CreateMap<CreateStaffRequest, CreateUserRequest>();
@@ -42,7 +42,7 @@ namespace OnlineVoting.Api.Mapper
             CreateMap<UpdateAddressRequest, Address>();
 
             // Get all staff and Get staff by Id 
-            CreateMap<Staff, StaffResponseDto>()
+            CreateMap<Staff, StaffResponse>()
                 .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.LastName} {src.FirstName}"))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.User.Email))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
@@ -50,7 +50,7 @@ namespace OnlineVoting.Api.Mapper
                 $"{src.Address.PlotNo} {src.Address.StreetName} {src.Address.State} {src.Address.Nationality}"));
 
             // Get Staff by Email
-            CreateMap<User, StaffResponseDto>()
+            CreateMap<User, StaffResponse>()
                 .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.Staff.LastName} {src.Staff.FirstName}"))
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.Staff.PhoneNumber))
