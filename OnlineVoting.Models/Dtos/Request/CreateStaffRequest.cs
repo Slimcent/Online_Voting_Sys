@@ -1,9 +1,9 @@
-﻿using OnlineVoting.Models.Enums;
-using System.ComponentModel.DataAnnotations;
-namespace OnlineVoting.Models.Dtos.Request
+﻿namespace OnlineVoting.Models.Dtos.Request
 {
+    /// <summary>
+    /// Represents the information required to create a staff member.
+    /// </summary>
     public class CreateStaffRequest : CreateUserRequest
     {
-
     }
 }

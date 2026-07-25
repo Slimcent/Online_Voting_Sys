@@ -1,3 +1,4 @@
+using Asp.Versioning.ApiExplorer;
 using DotNetEnv;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -10,7 +11,6 @@ using OnlineVoting.Services.Infrastructures;
 using System.Reflection;
 using System.Text.Json.Serialization;
 using VotingSystem.Data.SeedData;
-using Asp.Versioning.ApiExplorer;
 
 
 string environmentFilePath = Path.Combine(Directory.GetCurrentDirectory(), "OnlineVoting.Api", ".env");
@@ -78,6 +78,10 @@ if (app.Environment.IsDevelopment())
             options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
                 $"Online_Voting_Api {description.GroupName}");
         }
+
+        options.DefaultModelsExpandDepth(2);
+        options.DefaultModelExpandDepth(3);
+        options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
 
         options.InjectStylesheet("/css/swagger-dark-theme.css");
     });

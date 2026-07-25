@@ -1,6 +1,6 @@
 ﻿namespace OnlineVoting.Models.Dtos.Response
 {
-    public class FileStreamDto
+    public class FileStreamResponse
     {
         public Stream? FileStream { get; set; }
         public string? FileName { get; set; }

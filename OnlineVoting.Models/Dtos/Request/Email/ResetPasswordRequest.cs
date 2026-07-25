@@ -2,7 +2,7 @@
 
 namespace OnlineVoting.Models.Dtos.Request.Email
 {
-    public class ResetPasswordRequestDto
+    public class ResetPasswordRequest
     {
         [Required]
         public string? Email { get; set; }

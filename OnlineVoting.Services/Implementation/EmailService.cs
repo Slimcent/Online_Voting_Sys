@@ -90,7 +90,7 @@ namespace OnlineVoting.Services.Implementation
             return "A link to reset your password will be sent to you if an account with this email exist";
         }
 
-        public async Task<string> SendChangeEmail(ChangeEmailDto request)
+        public async Task<string> SendChangeEmail(ChangeEmailRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.NewEmail.ToLower().Trim()) || string.IsNullOrWhiteSpace(request.RecoveryEmail.ToLower().Trim()))
                 throw new InvalidOperationException("Invalid data sent");

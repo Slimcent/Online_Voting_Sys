@@ -94,7 +94,7 @@ namespace OnlineVoting.Services.Implementation
             return new Response(true, $"Student with email {request.Email} created successfully");
         }
 
-        public async Task<FileStreamDto> DownloadStudentsList()
+        public async Task<Models.Dtos.Response.FileStreamResponse> DownloadStudentsList()
         {
             return new List<StudentListDownload>()
             {

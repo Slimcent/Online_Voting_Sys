@@ -56,49 +56,49 @@ namespace OnlineVoting.Services.Implementation
             return "Toggle successful";
         }
 
-        public async Task<IEnumerable<PositionResponseDto>> GetAllPositions()
+        public async Task<IEnumerable<PositionResponse>> GetAllPositions()
         {
             IEnumerable<Position> allPositions = await _positionRepo.GetAllAsync();
 
             if (!allPositions.Any())
             {
-                return new List<PositionResponseDto>();
+                return new List<PositionResponse>();
             }
 
-            return _mapper.Map<IEnumerable<PositionResponseDto>>(allPositions);
+            return _mapper.Map<IEnumerable<PositionResponse>>(allPositions);
         }
 
-        public async Task<IEnumerable<PositionResponseDto>> GetAllDeletedPositions()
+        public async Task<IEnumerable<PositionResponse>> GetAllDeletedPositions()
         {
             IEnumerable<Position> allDeletedPositions = await _positionRepo.GetByAsync(x => x.Active == true);
 
             if (!allDeletedPositions.Any())
             {
-                return new List<PositionResponseDto>();
+                return new List<PositionResponse>();
             }
 
-            return _mapper.Map<IEnumerable<PositionResponseDto>>(allDeletedPositions);
+            return _mapper.Map<IEnumerable<PositionResponse>>(allDeletedPositions);
         }
 
-        public async Task<IEnumerable<PositionResponseDto>> GetAllActivePositions()
+        public async Task<IEnumerable<PositionResponse>> GetAllActivePositions()
         {
             IEnumerable<Position> allActivePositions = await _positionRepo.GetByAsync(x => x.Active == false);
 
             if (!allActivePositions.Any())
             {
-                return new List<PositionResponseDto>();
+                return new List<PositionResponse>();
             }
 
-            return _mapper.Map<IEnumerable<PositionResponseDto>>(allActivePositions);
+            return _mapper.Map<IEnumerable<PositionResponse>>(allActivePositions);
         }
 
-        public async Task<PositionResponseDto> GetAPosition(Guid positionId)
+        public async Task<PositionResponse> GetAPosition(Guid positionId)
         {
             Position positionExists = await _positionRepo.GetByIdAsync(positionId);
             if (positionExists == null)
                 throw new InvalidOperationException("Position does not exists");
 
-            return _mapper.Map<PositionResponseDto>(positionExists);
+            return _mapper.Map<PositionResponse>(positionExists);
         }
 
         public async Task<string> PatchPosition(Guid positionId, JsonPatchDocument<CreateWithNameRequest> request)
@@ -120,31 +120,31 @@ namespace OnlineVoting.Services.Implementation
             return $"Position updated successfully";
         }
 
-        public async Task<PagedResponse<PositionResponseDto>> AllPositions(PositionRequestDto request)
+        public async Task<PagedResponse<PositionResponse>> AllPositions(PositionRequest request)
         {
             PagedList<Position> position = string.IsNullOrWhiteSpace(request.SearchTerm)
                 ? await _positionRepo.GetPagedItems(request)
                 : await _positionRepo.GetPagedItems(request, x => x.Name.Contains(request.SearchTerm.ToLower().Trim()));
 
-            return _mapper.Map<PagedResponse<PositionResponseDto>>(position);
+            return _mapper.Map<PagedResponse<PositionResponse>>(position);
         }
 
-        public async Task<PagedResponse<PositionResponseDto>> AllActivePositions(PositionRequestDto request)
+        public async Task<PagedResponse<PositionResponse>> AllActivePositions(PositionRequest request)
         {
             PagedList<Position> position = string.IsNullOrWhiteSpace(request.SearchTerm)
                 ? await _positionRepo.GetPagedItems(request, x => x.Active == false)
                 : await _positionRepo.GetPagedItems(request, x => x.Name.Contains(request.SearchTerm.ToLower().Trim()));
 
-            return _mapper.Map<PagedResponse<PositionResponseDto>>(position);
+            return _mapper.Map<PagedResponse<PositionResponse>>(position);
         }
 
-        public async Task<PagedResponse<PositionResponseDto>> AllDeletedPositions(PositionRequestDto request)
+        public async Task<PagedResponse<PositionResponse>> AllDeletedPositions(PositionRequest request)
         {
             PagedList<Position> position = string.IsNullOrWhiteSpace(request.SearchTerm)
                 ? await _positionRepo.GetPagedItems(request, x => x.Active == true)
                 : await _positionRepo.GetPagedItems(request, x => x.Name.Contains(request.SearchTerm.ToLower().Trim()));
 
-            return _mapper.Map<PagedResponse<PositionResponseDto>>(position);
+            return _mapper.Map<PagedResponse<PositionResponse>>(position);
         }
 
         public async Task<string> UpdatePosition(Guid positionId, CreateWithNameRequest request)

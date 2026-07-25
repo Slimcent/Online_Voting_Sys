@@ -794,3 +794,154 @@ This modernization provides several improvements:
 
 ---
 
+# API Documentation Modernization
+
+## Overview
+
+Modernized the API documentation by replacing scattered Swagger annotations with a centralized documentation system. The new approach 
+
+improves maintainability, reduces duplication and provides a more consistent OpenAPI specification.
+
+---
+
+## Centralized Documentation Architecture
+
+Introduced a reusable documentation framework consisting of:
+
+- `ApiDocumentationAttribute`
+- `ApiDocumentationRegistry`
+- `ApiDocumentationOperationFilter`
+- `ApiOperationDocumentation`
+- `ApiResponseDocumentation`
+- `CommonApiResponses`
+
+Endpoint documentation is now maintained separately from controllers, keeping controllers clean and focused on request handling.
+
+---
+
+## Endpoint Documentation
+
+Created dedicated documentation definitions and key classes for the following controllers:
+
+- Auth
+- Student
+- Staff
+- Role
+- Position
+- Faculty
+- Department
+- Claims
+
+Each endpoint now includes:
+
+- Summary
+- Description
+- Success response
+- Standardized error responses
+
+---
+
+## Standardized API Responses
+
+Standardized the documented HTTP responses across the API:
+
+- `200 OK`
+- `400 Bad Request`
+- `401 Unauthorized`
+- `403 Forbidden`
+- `404 Not Found`
+- `409 Conflict`
+- `500 Internal Server Error`
+
+All error responses are documented using the `ProblemDetails` format.
+
+---
+
+## XML Documentation
+
+Enabled XML documentation generation for:
+
+- `OnlineVoting.Api`
+- `OnlineVoting.Models`
+
+Configured Swagger to load XML comments from both assemblies.
+
+Added XML documentation to request models, including:
+
+- Class summaries
+- Property descriptions
+- Example values
+
+---
+
+## Swagger Improvements
+
+Configured Swagger to:
+
+- Support API versioning
+- Display XML documentation
+- Display request model descriptions and examples
+- Display standardized response documentation
+- Support nullable reference types
+- Improve schema and model rendering
+
+---
+
+## Controller Improvements
+
+Updated controllers to:
+
+- Use `ApiDocumentationAttribute` for endpoint documentation
+- Add explicit `[FromBody]` and `[FromQuery]` attributes where appropriate
+- Remove duplicated endpoint-specific Swagger response annotations where centralized documentation is used
+- Keep controllers focused on request handling
+
+---
+
+## Authentication Documentation
+
+Completed documentation for the remaining authentication endpoints:
+
+- Send password reset email
+- Reset password
+- Change password
+- Update recovery email
+- Send change email confirmation
+- Change email
+
+Documented successful authentication responses returning text with:
+
+- `ResponseType = typeof(string)`
+
+Endpoints returning no response body were documented without a response type.
+
+---
+
+## Verification
+
+Verified that:
+
+- All endpoints appear correctly in Swagger
+- API versioning works correctly
+- Endpoint summaries and descriptions are displayed
+- XML documentation appears for request models
+- Request examples are rendered correctly
+- Response schemas are generated correctly
+- `ProblemDetails` responses are documented consistently
+- Authorization requirements are displayed correctly
+- Anonymous authentication endpoints remain publicly accessible
+
+---
+
+## Result
+
+The API now uses a centralized documentation system that:
+
+- Eliminates duplicated Swagger annotations
+- Improves maintainability
+- Produces a cleaner OpenAPI specification
+- Provides consistent request and response documentation
+- Keeps controller implementations concise and focused
+
+---
+

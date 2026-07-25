@@ -13,12 +13,12 @@ namespace OnlineVoting.Services.Interfaces
         Task<string> RemoveUserFromRole(AddUserToRoleRequest request);
         Task<IList<string>> GetUserRoles(string userName);
         Task<string> ToggleRoleStatus(string roleId);
-        Task<IEnumerable<RoleResponseDto>> GetAllRoles();
-        Task<IEnumerable<RoleResponseDto>> GetAllActiveRoles();
-        Task<IEnumerable<RoleResponseDto>> GetAllDeactivatedRoles();
-        Task<PagedResponse<RoleResponseDto>> AllRoles(RoleRequestDto request);
-        Task<PagedResponse<RoleResponseDto>> AllActiveRoles(RoleRequestDto request);
-        Task<PagedResponse<RoleResponseDto>> AllDeactivatedRoles(RoleRequestDto request);
+        Task<IEnumerable<RoleResponse>> GetAllRoles();
+        Task<IEnumerable<RoleResponse>> GetAllActiveRoles();
+        Task<IEnumerable<RoleResponse>> GetAllDeactivatedRoles();
+        Task<PagedResponse<RoleResponse>> AllRoles(RoleRequest request);
+        Task<PagedResponse<RoleResponse>> AllActiveRoles(RoleRequest request);
+        Task<PagedResponse<RoleResponse>> AllDeactivatedRoles(RoleRequest request);
         Task<string> DeleteUserRole(string Id);
     }
 }

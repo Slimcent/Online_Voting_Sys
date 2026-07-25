@@ -1,6 +1,8 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OnlineVoting.Api.Documentation.Attributes;
+using OnlineVoting.Api.Documentation.Definitions.Keys;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.GlobalMessage;
 using OnlineVoting.Services.Interfaces;
@@ -18,7 +20,8 @@ namespace OnlineVoting.Api.Controllers
         public ClaimsController(IClaimsService claimsService) => _claimsService = claimsService;
 
         [HttpPost("addusertoclaims")]
-        public async Task<IActionResult> AddUserToClaims(string email, string claimType, string claimValue)
+        [ApiDocumentation(ClaimsDocumentationKeys.AddUserToClaims)]
+        public async Task<IActionResult> AddUserToClaims([FromQuery] string email, [FromQuery] string claimType, [FromQuery] string claimValue)
         {
             var user = await _claimsService.CreateUserClaims(email, claimType, claimValue);
 
@@ -26,7 +29,8 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPost("deleteclaim")]
-        public async Task<IActionResult> DeleteClaim(UserClaimsRequestDto request)
+        [ApiDocumentation(ClaimsDocumentationKeys.DeleteClaim)]
+        public async Task<IActionResult> DeleteClaim([FromBody] UserClaimsRequest request)
         {
             var user = await _claimsService.DeleteClaims(request);
 
@@ -34,23 +38,24 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPost("editclaim")]
-        public async Task<IActionResult> EditClaim(EditUserClaimsRequest editUserClaims)
+        [ApiDocumentation(ClaimsDocumentationKeys.EditClaim)]
+        public async Task<IActionResult> EditClaim([FromBody] EditUserClaimsRequest request)
         {
-            var user = await _claimsService.EditUserClaims(editUserClaims);
+            var user = await _claimsService.EditUserClaims(request);
 
             return Ok(user);
         }
 
         [HttpGet("userclaims")]
-        public async Task<IActionResult> GetUserClaims(string email)
+        [ApiDocumentation(ClaimsDocumentationKeys.GetUserClaims)]
+        public async Task<IActionResult> GetUserClaims([FromQuery] string email)
         {
             var userClaims = await _claimsService.GetUserClaims(email);
 
             if (userClaims.Any())
                 return Ok(userClaims);
 
-            return BadRequest(new ResponseError { Message = $"No Claims found for user {email}" });
+            return BadRequest(new ResponseError {Message = $"No Claims found for user {email}"});
         }
-
     }
 }

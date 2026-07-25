@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using OnlineVoting.Api.Documentation.Attributes;
+using OnlineVoting.Api.Documentation.Definitions.Keys;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Enums;
@@ -36,9 +38,10 @@ namespace OnlineVoting.Api.Controllers
         //}
 
         [HttpGet("all-active-staff", Name = "All-Active-Staff")]
+        [ApiDocumentation(StaffDocumentationKeys.GetAllActiveStaff)]
         public async Task<IActionResult> GetAllActiveStaff()
         {
-            IEnumerable<StaffResponseDto> allStaff = await _staffService.GetAllActiveStaff();
+            IEnumerable<StaffResponse> allStaff = await _staffService.GetAllActiveStaff();
 
             if (allStaff.Any())
                 return Ok(allStaff);
@@ -47,9 +50,10 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpGet("all-deleted-staff", Name = "All-Deleted-Staff")]
+        [ApiDocumentation(StaffDocumentationKeys.GetAllDeletedStaff)]
         public async Task<IActionResult> GetAllDeletedStaff()
         {
-            IEnumerable<StaffResponseDto> allStaff = await _staffService.GetAllDeletedStaff();
+            IEnumerable<StaffResponse> allStaff = await _staffService.GetAllDeletedStaff();
 
             if (allStaff.Any())
                 return Ok(allStaff);
@@ -58,47 +62,53 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpGet("all-paged-staff", Name = "All-Paged-Staff")]
-        public async Task<IActionResult> AllPagedStaff(StaffRequestDto request)
+        [ApiDocumentation(StaffDocumentationKeys.GetAllPagedStaff)]
+        public async Task<IActionResult> AllPagedStaff(StaffRequest request)
         {
-            PagedResponse<StaffResponseDto> allStaff = await _staffService.AllStaff(request);
+            PagedResponse<StaffResponse> allStaff = await _staffService.AllStaff(request);
 
             return Ok(allStaff);
         }
 
         [HttpGet("all-paged-active-staff", Name = "All-Paged-Active-Staff")]
-        public async Task<IActionResult> AllPagedActiveStaff(StaffRequestDto request)
+        [ApiDocumentation(StaffDocumentationKeys.GetAllPagedActiveStaff)]
+        public async Task<IActionResult> AllPagedActiveStaff(StaffRequest request)
         {
-            PagedResponse<StaffResponseDto> allStaff = await _staffService.AllActiveStaff(request);
+            PagedResponse<StaffResponse> allStaff = await _staffService.AllActiveStaff(request);
 
             return Ok(allStaff);
         }
 
         [HttpGet("all-paged-deleted-staff", Name = "All-Paged-Deleted-Staff")]
-        public async Task<IActionResult> AllPagedDeletedStaff(StaffRequestDto request)
+        [ApiDocumentation(StaffDocumentationKeys.GetAllPagedDeletedStaff)]
+        public async Task<IActionResult> AllPagedDeletedStaff(StaffRequest request)
         {
-            PagedResponse<StaffResponseDto> allStaff = await _staffService.AllDeletedStaff(request);
+            PagedResponse<StaffResponse> allStaff = await _staffService.AllDeletedStaff(request);
 
             return Ok(allStaff);
         }
 
 
         [HttpGet("staff-by-id", Name = "Staff-By-Id")]
+        [ApiDocumentation(StaffDocumentationKeys.GetStaffById)]
         public async Task<IActionResult> GetStaffById(Guid id)
         {
-            StaffResponseDto staff = await _staffService.GetStaff(id);
+            StaffResponse staff = await _staffService.GetStaff(id);
 
             return Ok(staff);
         }
 
         [HttpGet("staff-by-email", Name = "Staff-By-Email")]
+        [ApiDocumentation(StaffDocumentationKeys.GetStaffByEmail)]
         public async Task<IActionResult> GetStaffByEmail(string email)
         {
-            StaffResponseDto staff = await _staffService.GetStaffByEmail(email);
+            StaffResponse staff = await _staffService.GetStaffByEmail(email);
 
             return Ok(staff);
         }
 
         [HttpPost("create-staff", Name = "Create-Staff")]
+        [ApiDocumentation(StaffDocumentationKeys.CreateStaff)]
         public async Task<IActionResult> CreateStaff([FromQuery] CreateStaffRequest model)
         {
             string staff = await _staffService.CreateStaff(model);
@@ -107,30 +117,34 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPatch("update-staff", Name = "Update-Staff")]
-        public async Task<IActionResult> UpdateStaff(Guid Id, JsonPatchDocument<UpdateStaffRequest> model)
+        [ApiDocumentation(StaffDocumentationKeys.UpdateStaff)]
+        public async Task<IActionResult> UpdateStaff([FromQuery] Guid id, [FromBody] JsonPatchDocument<UpdateStaffRequest> model)
         {
-            string staff = await _staffService.UpdateStaff(Id, model);
+            string staff = await _staffService.UpdateStaff(id, model);
 
             return Ok(staff);
         }
 
         [HttpPut("edit-staff", Name = "Edit-Staff")]
-        public async Task<IActionResult> EditStaff([FromQuery] Guid staffId, UpdateStaffRequest model)
+        [ApiDocumentation(StaffDocumentationKeys.EditStaff)]
+        public async Task<IActionResult> EditStaff([FromQuery] Guid staffId, [FromBody] UpdateStaffRequest model)
         {
-            string staff = await _staffService.EditStaff(staffId, model);
+            string staff =  await _staffService.EditStaff(staffId, model);
 
             return Ok(staff);
         }
 
         [HttpPatch("patch-staff-address", Name = "Patch-Staff-Address")]
-        public async Task<IActionResult> PatchStaffAddress(Guid Id, JsonPatchDocument<UpdateAddressRequest> model)
+        [ApiDocumentation(StaffDocumentationKeys.PatchStaffAddress)]
+        public async Task<IActionResult> PatchStaffAddress([FromQuery] Guid id, [FromBody] JsonPatchDocument<UpdateAddressRequest> model)
         {
-            string staff = await _staffService.PatchStaffAddress(Id, model);
+            string staff =  await _staffService.PatchStaffAddress(id, model);
 
             return Ok(staff);
         }
 
         [HttpPut("toggle-staff-status", Name = "Toggle-Staff-Status")]
+        [ApiDocumentation(StaffDocumentationKeys.ToggleStaffStatus)]
         public async Task<IActionResult> ToggleStaffStatus([FromQuery] Guid staffId)
         {
             string staff = await _staffService.ToggleStaffStatus(staffId);
@@ -139,7 +153,8 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpPut("update-staff-address", Name = "Update-Staff-Address")]
-        public async Task<IActionResult> UpdateStaffAddress([FromQuery] Guid staffId, UpdateAddressRequest model)
+        [ApiDocumentation(StaffDocumentationKeys.UpdateStaffAddress)]
+        public async Task<IActionResult> UpdateStaffAddress([FromQuery] Guid staffId, [FromBody] UpdateAddressRequest model)
         {
             string staff = await _staffService.UpdateStaffAddress(staffId, model);
 
@@ -147,6 +162,7 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpGet("total-number-of-staff", Name = "Total-Number-Of-Staff")]
+        [ApiDocumentation(StaffDocumentationKeys.GetTotalNumberOfStaff)]
         public IActionResult GetTotalNumberOfStaff()
         {
             int staff = _staffService.GetTotalNumberOfStaff().Count();
@@ -158,6 +174,7 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [HttpDelete("delete-staff-by-id", Name = "Delete-Staff-By-Id")]
+        [ApiDocumentation(StaffDocumentationKeys.DeleteStaff)]
         public async Task<IActionResult> DeleteStaff([FromQuery] Guid id)
         {
             string staff = await _staffService.DeleteStaffById(id);
