@@ -1,5 +1,6 @@
 using Asp.Versioning.ApiExplorer;
 using DotNetEnv;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -55,6 +56,8 @@ builder.Services.AddControllers(setupAction =>
 builder.Services.ConfigureCors();
 builder.Services.ConfigureIISIntegration();
 builder.Services.AddDBConnection(builder.Configuration);
+builder.Services.ConfigureHealthChecks();
+builder.Services.ConfigureRateLimiting();
 builder.Services.BindConfigurations(builder.Configuration);
 builder.Services.ConfigureJWT();
 builder.Services.ConfigureLoggerService();
@@ -93,9 +96,20 @@ app.ConfigureStatusCodePages();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    Predicate = _ => false
+}).AllowAnonymous();
+
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = healthCheck => healthCheck.Tags.Contains("ready")
+}).AllowAnonymous();
 
 app.UseStaticFiles();
 

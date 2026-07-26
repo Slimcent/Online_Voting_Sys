@@ -1,14 +1,16 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OnlineVoting.Models.Dtos.Request;
-using OnlineVoting.Models.Dtos.Request.Email;
-using OnlineVoting.Models.Dtos.Response;
-using OnlineVoting.Services.Interfaces;
+using Microsoft.AspNetCore.RateLimiting;
 using OnlineVoting.Api.Documentation.Attributes;
 using OnlineVoting.Api.Documentation.Definitions.Keys;
 using OnlineVoting.Api.Extensions;
+using OnlineVoting.Models.Dtos.Request;
+using OnlineVoting.Models.Dtos.Request.Email;
+using OnlineVoting.Models.Dtos.Response;
+using OnlineVoting.Models.Entities.Configurations;
 using OnlineVoting.Models.Results;
+using OnlineVoting.Services.Interfaces;
 
 namespace OnlineVoting.Api.Controllers
 {
@@ -31,6 +33,7 @@ namespace OnlineVoting.Api.Controllers
 
         [AllowAnonymous]
         [HttpPost("login", Name = "Login")]
+        [EnableRateLimiting(RateLimitPolicyNames.Authentication)]
         [ApiDocumentation(AuthDocumentationKeys.Auth.Login)]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {

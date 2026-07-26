@@ -5,15 +5,20 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using OnlineVoting.Api.Configurations;
+using OnlineVoting.Api.Documentation.Filters;
 using OnlineVoting.Api.Filters;
 using OnlineVoting.Models.Configurations;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
+using OnlineVoting.Models.Entities.Configurations;
 using OnlineVoting.Models.Validators.Request;
 using OnlineVoting.Services.Implementation;
 using OnlineVoting.Services.Infrastructures.Authorization;
@@ -23,10 +28,10 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text;
+using System.Threading.RateLimiting;
 using VotingSystem.Data.Implementation;
 using VotingSystem.Data.Interfaces;
 using VotingSystem.Logger;
-using OnlineVoting.Api.Documentation.Filters;
 
 
 namespace OnlineVoting.Api.Middlewares
@@ -175,9 +180,7 @@ namespace OnlineVoting.Api.Middlewares
                         Scheme = "bearer",
                         BearerFormat = "JWT",
                         In = ParameterLocation.Header,
-                        Description =
-                            "Enter the JWT token only. Swagger will add the " +
-                            "'Bearer' prefix automatically."
+                        Description = "Enter the JWT token only. Swagger will add the 'Bearer' prefix automatically."
                     });
 
                 options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
@@ -236,6 +239,67 @@ namespace OnlineVoting.Api.Middlewares
                 // by Swagger with the real API version number.
                 options.SubstituteApiVersionInUrl = true;
             });
+        }
+
+        public static IServiceCollection ConfigureHealthChecks(this IServiceCollection services)
+        {
+            services.AddHealthChecks().AddDbContextCheck<VotingDbContext>(name: "database", failureStatus: HealthStatus.Unhealthy,
+                tags: new[] { "ready" });
+
+            return services;
+        }
+
+        public static IServiceCollection ConfigureRateLimiting(this IServiceCollection services)
+        {
+            services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+                options.OnRejected = async (context, cancellationToken) =>
+                {
+                    if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out TimeSpan retryAfter))
+                        context.HttpContext.Response.Headers.RetryAfter = ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString();
+
+                    ProblemDetails problemDetails = new()
+                    {
+                        Status = StatusCodes.Status429TooManyRequests,
+                        Title = "Too many requests",
+                        Detail = "The request limit has been exceeded. Try again later.",
+                        Instance = context.HttpContext.Request.Path
+                    };
+
+                    await context.HttpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+                };
+
+                options.AddFixedWindowLimiter(RateLimitPolicyNames.Authentication,
+                    limiterOptions =>
+                    {
+                        limiterOptions.PermitLimit = 5;
+                        limiterOptions.Window = TimeSpan.FromMinutes(1);
+                        limiterOptions.QueueLimit = 0;
+                        limiterOptions.AutoReplenishment = true;
+                    });
+
+                options.AddFixedWindowLimiter(RateLimitPolicyNames.Voting,
+                    limiterOptions =>
+                    {
+                        limiterOptions.PermitLimit = 3;
+                        limiterOptions.Window = TimeSpan.FromMinutes(1);
+                        limiterOptions.QueueLimit = 0;
+                        limiterOptions.AutoReplenishment = true;
+                    });
+
+                options.AddFixedWindowLimiter(RateLimitPolicyNames.AdministrativeWrite,
+                    limiterOptions =>
+                    {
+                        limiterOptions.PermitLimit = 20;
+                        limiterOptions.Window = TimeSpan.FromMinutes(1);
+                        limiterOptions.QueueLimit = 0;
+                        limiterOptions.AutoReplenishment = true;
+                    });
+            });
+
+            return services;
         }
     }
 }
