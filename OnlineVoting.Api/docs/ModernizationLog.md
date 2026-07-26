@@ -1355,3 +1355,52 @@ The Result pattern modernization provides the following improvements:
 
 ---
 
+# Health Checks
+
+## Overview
+
+Health check endpoints were added to allow monitoring systems and hosting platforms to determine the application's operational state.
+
+Two endpoints were introduced:
+
+- `/health`
+- `/health/ready`
+
+## Liveness Endpoint
+
+The `/health` endpoint verifies that the application process is running.
+
+This endpoint does not check external dependencies such as the database and is intended for liveness monitoring.
+
+## Readiness Endpoint
+
+The `/health/ready` endpoint verifies that the application is ready to serve requests.
+
+In addition to confirming that the application is running, it checks database connectivity using `VotingDbContext`.
+
+If the database is unavailable, the endpoint returns an unhealthy status.
+
+## Service Registration
+
+Health check registration was centralized in the service extension layer through `ConfigureHealthChecks()` to keep `Program.cs` clean 
+
+and consistent with the existing application architecture.
+
+## Affected Areas
+
+- Service extension
+- Program configuration
+- Health check middleware
+- Database readiness monitoring
+
+## Verification
+
+The implementation was verified by:
+
+- accessing `/health`
+- accessing `/health/ready`
+- confirming successful database connectivity
+- confirming anonymous access to both endpoints
+
+---
+
