@@ -1,9 +1,10 @@
 ﻿using OnlineVoting.Models.Dtos.Request;
+using OnlineVoting.Models.Results;
 
 namespace OnlineVoting.Services.Interfaces
 {
     public interface IDepartmentService
     {
-        Task<string> CreateDepartment(CreateDepartmentRequest request);
+        Task<Result<string>> CreateDepartment(CreateDepartmentRequest request);
     }
 }

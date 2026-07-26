@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OnlineVoting.Api.Documentation.Attributes;
 using OnlineVoting.Api.Documentation.Definitions.Keys;
+using OnlineVoting.Api.Extensions;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Pagination;
+using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Interfaces;
 
 namespace OnlineVoting.Api.Controllers
@@ -25,127 +27,126 @@ namespace OnlineVoting.Api.Controllers
         [ApiDocumentation(RoleDocumentationKeys.GetAllRoles)]
         public async Task<IActionResult> GetAllRoles()
         {
-            IEnumerable<RoleResponse> roles = await _roleService.GetAllRoles();
+            Result<IEnumerable<RoleResponse>> result = await _roleService.GetAllRoles();
 
-            return Ok(roles);
+            return result.ToActionResult(this);
         }
 
         [HttpGet("all-active-roles", Name = "All-Active-Roles")]
         [ApiDocumentation(RoleDocumentationKeys.GetAllActiveRoles)]
         public async Task<IActionResult> GetAllActiveRoles()
         {
-            IEnumerable<RoleResponse> roles = await _roleService.GetAllActiveRoles();
+            Result<IEnumerable<RoleResponse>> result = await _roleService.GetAllActiveRoles();
 
-            return Ok(roles);
+            return result.ToActionResult(this);
         }
 
-        [HttpGet("all-deactivated-roles",  Name = "All-Deactivated-Roles")]
+        [HttpGet("all-deactivated-roles", Name = "All-Deactivated-Roles")]
         [ApiDocumentation(RoleDocumentationKeys.GetAllDeactivatedRoles)]
         public async Task<IActionResult> GetAllDeactivatedRoles()
         {
-            IEnumerable<RoleResponse> roles = await _roleService.GetAllDeactivatedRoles();
+            Result<IEnumerable<RoleResponse>> result = await _roleService.GetAllDeactivatedRoles();
 
-            return Ok(roles);
+            return result.ToActionResult(this);
         }
 
         [HttpGet("all-paged-roles", Name = "All-Paged-Roles")]
         [ApiDocumentation(RoleDocumentationKeys.GetAllPagedRoles)]
         public async Task<IActionResult> AllPagedRoles([FromQuery] RoleRequest request)
         {
-            PagedResponse<RoleResponse> roles = await _roleService.AllRoles(request);
+            Result<PagedResponse<RoleResponse>> result = await _roleService.AllRoles(request);
 
-            return Ok(roles);
+            return result.ToActionResult(this);
         }
 
         [HttpGet("all-paged-active-roles", Name = "All-Paged-Active-Roles")]
         [ApiDocumentation(RoleDocumentationKeys.GetAllPagedActiveRoles)]
         public async Task<IActionResult> AllPagedActiveRoles([FromQuery] RoleRequest request)
         {
-            PagedResponse<RoleResponse> roles = await _roleService.AllActiveRoles(request);
+            Result<PagedResponse<RoleResponse>> result = await _roleService.AllActiveRoles(request);
 
-            return Ok(roles);
+            return result.ToActionResult(this);
         }
 
         [HttpGet("all-paged-deactivated-roles", Name = "All-Paged-Deactivated-Roles")]
         [ApiDocumentation(RoleDocumentationKeys.GetAllPagedDeactivatedRoles)]
         public async Task<IActionResult> AllPagedDeactivatedRoles([FromQuery] RoleRequest request)
         {
-            PagedResponse<RoleResponse> roles = await _roleService.AllDeactivatedRoles(request);
+            Result<PagedResponse<RoleResponse>> result = await _roleService.AllDeactivatedRoles(request);
 
-            return Ok(roles);
+            return result.ToActionResult(this);
         }
 
         [HttpGet("user-roles", Name = "User-Roles")]
         [ApiDocumentation(RoleDocumentationKeys.GetUserRoles)]
         public async Task<IActionResult> GetUserRoles([FromQuery] string userName)
         {
-            var roles = await _roleService.GetUserRoles(userName);
+            Result<IList<string>> result = await _roleService.GetUserRoles(userName);
 
-            return Ok(roles);
+            return result.ToActionResult(this);
         }
 
         [HttpPost("create-role", Name = "Create-Role")]
         [ApiDocumentation(RoleDocumentationKeys.CreateRole)]
         public async Task<IActionResult> CreateRole([FromQuery] CreateRoleRequest request)
         {
-            var role = await _roleService.CreateRole(request);
+            Result<string> result = await _roleService.CreateRole(request);
 
-            return Ok(role);
+            return result.ToActionResult(this);
         }
 
         [HttpPut("edit-role", Name = "Edit-Role")]
         [ApiDocumentation(RoleDocumentationKeys.EditRole)]
         public async Task<IActionResult> EditRole([FromQuery] string id, [FromBody] CreateRoleRequest request)
         {
-            string role = await _roleService.EditRole(id, request);
+            Result<string> result = await _roleService.EditRole(id, request);
 
-            return Ok(role);
+            return result.ToActionResult(this);
         }
 
         [HttpPost("add-user-to-role", Name = "Add-User-To-Role")]
         [ApiDocumentation(RoleDocumentationKeys.AddUserToRole)]
         public async Task<IActionResult> AddUserToRole([FromQuery] AddUserToRoleRequest request)
         {
-            var user = await _roleService.AddUserToRole(request);
+            Result<string> result = await _roleService.AddUserToRole(request);
 
-            return Ok(user);
+            return result.ToActionResult(this);
         }
 
         [HttpPost("remove-user-from-role", Name = "Remove-User-From-Role")]
         [ApiDocumentation(RoleDocumentationKeys.RemoveUserFromRole)]
         public async Task<IActionResult> RemoveUserFromRole([FromQuery] AddUserToRoleRequest request)
         {
-            var user =
-                await _roleService.RemoveUserFromRole(request);
+            Result<string> result = await _roleService.RemoveUserFromRole(request);
 
-            return Ok(user);
+            return result.ToActionResult(this);
         }
 
         [HttpPut("toggle-role-status", Name = "Toggle-Role-Status")]
         [ApiDocumentation(RoleDocumentationKeys.ToggleRoleStatus)]
         public async Task<IActionResult> ToggleRoleStatus([FromQuery] string id)
         {
-            string role = await _roleService.ToggleRoleStatus(id);
+            Result<string> result = await _roleService.ToggleRoleStatus(id);
 
-            return Ok(role);
+            return result.ToActionResult(this);
         }
 
         [HttpDelete("delete-role-by-id", Name = "Delete-Role_by-Id")]
         [ApiDocumentation(RoleDocumentationKeys.DeleteRoleById)]
         public async Task<IActionResult> DeleteUserRole([FromQuery] string id)
         {
-            string role = await _roleService.DeleteUserRole(id);
+            Result<string> result = await _roleService.DeleteUserRole(id);
 
-            return Ok(role);
+            return result.ToActionResult(this);
         }
 
         [HttpDelete("delete-role-by-name", Name = "Delete-Role_by-Name")]
         [ApiDocumentation(RoleDocumentationKeys.DeleteRoleByName)]
         public async Task<IActionResult> DeleteRole([FromBody] CreateRoleRequest request)
         {
-            string role = await _roleService.DeleteRole(request);
+            Result<string> result = await _roleService.DeleteRole(request);
 
-            return Ok(role);
+            return result.ToActionResult(this);
         }
     }
 }

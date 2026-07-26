@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
-using OnlineVoting.Services.Exceptions;
+using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Interfaces;
 using System.Security.Claims;
 using VotingSystem.Data.Interfaces;
@@ -81,92 +81,130 @@ namespace OnlineVoting.Services.Implementation
             return operationIds;
         }
 
-        public async Task<UserClaimsResponse> CreateUserClaims(string email, string claimType, string claimValue)
+        public async Task<Result<UserClaimsResponse>> CreateUserClaims(string email, string claimType, string claimValue)
         {
-            var user = await _userManager.FindByEmailAsync(email.ToString().ToLower());
-            if (user == null)
-                throw new NotFoundException(email);
+            if (string.IsNullOrWhiteSpace(email))
+                return Result<UserClaimsResponse>.ValidationError("Email cannot be empty");
 
-            System.Security.Claims.Claim claim = new System.Security.Claims.Claim(claimType, claimValue, ClaimValueTypes.String);
+            if (string.IsNullOrWhiteSpace(claimType))
+                return Result<UserClaimsResponse>.ValidationError("Claim type cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(claimValue))
+                return Result<UserClaimsResponse>.ValidationError("Claim value cannot be empty");
+
+            User user = await _userManager.FindByEmailAsync(email.Trim().ToLower());
+            if (user == null)
+                return Result<UserClaimsResponse>.NotFound($"User with email {email} was not found");
+
+            Claim claim = new Claim(claimType, claimValue, ClaimValueTypes.String);
+
+            IList<Claim> existingClaims = await _userManager.GetClaimsAsync(user);
+            bool claimExists = existingClaims.Any(x => x.Type == claimType && x.Value == claimValue);
+
+            if (claimExists)
+                return Result<UserClaimsResponse>.Conflict("The user already has this claim");
 
             IdentityResult result = await _userManager.AddClaimAsync(user, claim);
 
-            if (result.Succeeded)
-                return new UserClaimsResponse { ClaimType = claimType, ClaimValue = claimValue };
-
-            var errorMessage = string.Empty;
-
-            if (result.Errors.Any())
+            if (!result.Succeeded)
             {
-                errorMessage = string.Join('\n', result.Errors);
+                string errorMessage = string.Join("\n", result.Errors.Select(x => x.Description));
+
+                return Result<UserClaimsResponse>.ValidationError(errorMessage);
             }
 
-            throw new InvalidOperationException(errorMessage);
+            UserClaimsResponse response = new UserClaimsResponse
+            {
+                ClaimType = claimType,
+                ClaimValue = claimValue
+            };
+
+            return Result<UserClaimsResponse>.Created(response);
         }
 
-        public async Task<string> DeleteClaims(UserClaimsRequest request)
+        public async Task<Result<string>> DeleteClaims(UserClaimsRequest request)
         {
-            var user = await _userManager.FindByEmailAsync(request.Email);
+            User user = await _userManager.FindByEmailAsync(request.Email);
             if (user == null)
-                throw new NotFoundException(request.Email);
+                return Result<string>.NotFound($"User with email {request.Email} was not found");
 
-            var claim = new System.Security.Claims.Claim(request.ClaimType, request.ClaimValue);
+            Claim claim = new Claim(request.ClaimType, request.ClaimValue);
+
+            IList<Claim> existingClaims = await _userManager.GetClaimsAsync(user);
+            bool claimExists = existingClaims.Any(x => x.Type == request.ClaimType && x.Value == request.ClaimValue);
+
+            if (!claimExists)
+                return Result<string>.NotFound("The claim was not found for this user");
 
             IdentityResult result = await _userManager.RemoveClaimAsync(user, claim);
 
-            if (result.Succeeded)
-                return "User removed from claim successfully";
-
-            var errorMessage = string.Empty;
-
-            if (result.Errors.Any())
+            if (!result.Succeeded)
             {
-                errorMessage = string.Join('\n', result.Errors);
+                string errorMessage = string.Join("\n", result.Errors.Select(x => x.Description));
+
+                return Result<string>.ValidationError(errorMessage);
             }
 
-            throw new InvalidOperationException(errorMessage);
+            return Result<string>.Success("User removed from claim successfully");
         }
 
-        public async Task<EditUserClaimsRequest> EditUserClaims(EditUserClaimsRequest userClaimsDto)
+        public async Task<Result<EditUserClaimsRequest>> EditUserClaims(EditUserClaimsRequest userClaimsDto)
         {
-            var user = await _userManager.FindByEmailAsync(userClaimsDto.Email.ToString().Trim());
+            User user = await _userManager.FindByEmailAsync(userClaimsDto.Email.Trim());
             if (user == null)
-                throw new NotFoundException(userClaimsDto.Email);
+                return Result<EditUserClaimsRequest>.NotFound($"User with email {userClaimsDto.Email} was not found");
 
-            System.Security.Claims.Claim newClaim = new(userClaimsDto.ClaimType.Trim().ToLower(), userClaimsDto.ClaimValue.Trim().ToLower());
+            Claim newClaim = new Claim(userClaimsDto.ClaimType.Trim().ToLower(), userClaimsDto.ClaimValue.Trim().ToLower());
 
-            var oldClaim = new System.Security.Claims.Claim(userClaimsDto.ClaimType.Trim().ToLower(), userClaimsDto.OldValue.Trim().ToLower());
+            Claim oldClaim = new Claim(userClaimsDto.ClaimType.Trim().ToLower(), userClaimsDto.OldValue.Trim().ToLower());
 
-            var result = await _userManager.ReplaceClaimAsync(user, oldClaim, newClaim);
+            IList<Claim> existingClaims = await _userManager.GetClaimsAsync(user);
+            bool oldClaimExists = existingClaims.Any(x => x.Type == oldClaim.Type && x.Value == oldClaim.Value);
 
-            if (result.Succeeded)
-                return new EditUserClaimsRequest { Email = userClaimsDto.Email, ClaimType = userClaimsDto.ClaimType, ClaimValue = userClaimsDto.ClaimValue, OldValue = userClaimsDto.OldValue };
+            if (!oldClaimExists)
+                return Result<EditUserClaimsRequest>.NotFound("The claim to edit was not found for this user");
 
+            bool newClaimExists = existingClaims.Any(x => x.Type == newClaim.Type && x.Value == newClaim.Value);
 
-            var errorMessage = string.Empty;
+            if (newClaimExists)
+                return Result<EditUserClaimsRequest>.Conflict("The user already has the new claim");
 
-            if (result.Errors.Any())
-                errorMessage = string.Join('\n', result.Errors);
+            IdentityResult result = await _userManager.ReplaceClaimAsync(user, oldClaim, newClaim);
 
-            throw new InvalidOperationException(errorMessage);
+            if (!result.Succeeded)
+            {
+                string errorMessage = string.Join("\n", result.Errors.Select(x => x.Description));
+
+                return Result<EditUserClaimsRequest>.ValidationError(errorMessage);
+            }
+
+            EditUserClaimsRequest response = new EditUserClaimsRequest
+            {
+                Email = userClaimsDto.Email,
+                ClaimType = userClaimsDto.ClaimType,
+                ClaimValue = userClaimsDto.ClaimValue,
+                OldValue = userClaimsDto.OldValue
+            };
+
+            return Result<EditUserClaimsRequest>.Success(response);
         }
 
-        public async Task<IEnumerable<UserClaimsResponse>> GetUserClaims(string email)
+        public async Task<Result<IEnumerable<UserClaimsResponse>>> GetUserClaims(string email)
         {
-            var user = await _userManager.FindByEmailAsync(email);
+            User user = await _userManager.FindByEmailAsync(email);
 
             if (user == null)
-                throw new NotFoundException(email);
+                return Result<IEnumerable<UserClaimsResponse>>.NotFound($"User with email {email} was not found");
 
-            var claim = await _userManager.GetClaimsAsync(user);
+            IList<Claim> claims = await _userManager.GetClaimsAsync(user);
 
-            var dto = claim.Select(x => new UserClaimsResponse
+            IEnumerable<UserClaimsResponse> response = claims.Select(x => new UserClaimsResponse
             {
                 ClaimType = x.Type,
                 ClaimValue = x.Value
             });
 
-            return dto;
+            return Result<IEnumerable<UserClaimsResponse>>.Success(response);
         }
     }
 }

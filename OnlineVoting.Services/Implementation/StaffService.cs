@@ -6,6 +6,7 @@ using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Pagination;
+using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Infrastructures.Extensions;
 using OnlineVoting.Services.Interfaces;
 using SchMgr_FUTO.Data.Interfaces;
@@ -36,8 +37,7 @@ namespace OnlineVoting.Services.Implementation
             userId = _contextAccessor.HttpContext.User.GetUserId();
         }
 
-
-        public async Task<string> CreateStaff(CreateStaffRequest request)
+        public async Task<Result<string>> CreateStaff(CreateStaffRequest request)
         {
             //CreateUserRequest user = new()
             //{
@@ -47,21 +47,24 @@ namespace OnlineVoting.Services.Implementation
             //};
             CreateUserRequest user = _mapper.Map<CreateUserRequest>(request);
 
-            string userId = await _serviceFactory.GetService<IUserService>().CreateUser(user);
+            Result<string> userIdResult = await _serviceFactory.GetService<IUserService>().CreateUser(user);
+            if (!userIdResult.IsSuccess)
+                return Result<string>.FromFailure(userIdResult);
 
             Staff staff = new()
             {
-                UserId = userId,
+                UserId = userIdResult.Value!,
                 PhoneNumber = request.PhoneNumber,
                 LastName = request.LastName,
                 FirstName = request.FirstName,
                 GenderId = request.GenderId
             };
+
             await _staffRepo.AddAsync(staff);
 
             await CreateStaffAddress(staff);
 
-            return $"Staff with email {request.Email} was created successfully";
+            return Result<string>.Created($"Staff with email {request.Email} was created successfully");
         }
 
         private async Task CreateStaffAddress(Staff staff)
@@ -77,26 +80,26 @@ namespace OnlineVoting.Services.Implementation
         //    return _mapper.Map<IEnumerable<StaffResponseDto>>(allStaff);
         //}
 
-        public async Task<string> UpdateStaffAddress(Guid staffId, UpdateAddressRequest model)
+        public async Task<Result<string>> UpdateStaffAddress(Guid staffId, UpdateAddressRequest model)
         {
             Address staffAddress = await _addressRepo.GetSingleByAsync(x => x.StaffId == staffId);
             if (staffAddress == null)
-                return $"staff with id {staffId} does not exist";
+                return Result<string>.NotFound($"Staff with id {staffId} does not exist");
 
             Address update = _mapper.Map(model, staffAddress);
             await _addressRepo.UpdateAsync(update);
             await _unitOfWork.SaveChangesAsync();
 
-            return "Address updated successfully";
+            return Result<string>.Success("Address updated successfully");
         }
 
-        public async Task<string> UpdateStaff(Guid id, JsonPatchDocument<UpdateStaffRequest> request)
+        public async Task<Result<string>> UpdateStaff(Guid id, JsonPatchDocument<UpdateStaffRequest> request)
         {
             Staff staff = await _staffRepo.GetSingleByAsync(s => s.Id == id,
                 include: s => s.Include(u => u.User));
 
             if (staff == null)
-                return $"staff with id {id} does not exist";
+                return Result<string>.NotFound($"Staff with id {id} does not exist");
 
             UpdateStaffRequest updateStaff = new()
             {
@@ -118,54 +121,59 @@ namespace OnlineVoting.Services.Implementation
 
             await _unitOfWork.SaveChangesAsync();
 
-            return $"staff with email {staff.User.Email} updated successfully";
+            return Result<string>.Success($"Staff with email {staff.User.Email} updated successfully");
         }
 
-        public async Task<StaffResponse> GetStaff(Guid id)
+        public async Task<Result<StaffResponse>> GetStaff(Guid id)
         {
             Staff staff = await _staffRepo.GetSingleByAsync(x => x.Id == id, include: x => x.Include(x => x.Address).Include(x => x.User));
 
             if (staff == null)
-                throw new InvalidOperationException("Staff not found");
+                return Result<StaffResponse>.NotFound("Staff not found");
 
-            return _mapper.Map<StaffResponse>(staff);
+            StaffResponse response = _mapper.Map<StaffResponse>(staff);
+
+            return Result<StaffResponse>.Success(response);
         }
 
-        public IEnumerable<Staff> GetTotalNumberOfStaff()
+        public Result<int> GetTotalNumberOfStaff()
         {
-            return _staffRepo.GetAll();
+            int staffCount = _staffRepo.GetAll().Count();
+
+            return Result<int>.Success(staffCount);
         }
 
-        public async Task<string> DeleteStaffById(Guid id)
+        public async Task<Result<string>> DeleteStaffById(Guid id)
         {
             Staff staff = await _staffRepo.GetByIdAsync(id);
 
             if (staff == null)
-                return $"Staff with id {id} does not exist";
+                return Result<string>.NotFound($"Staff with id {id} does not exist");
 
             await _staffRepo.DeleteAsync(staff);
 
-            return $"Staff deleted successfully";
+            return Result<string>.Success("Staff deleted successfully");
         }
 
-        public async Task<StaffResponse> GetStaffByEmail(string email)
+        public async Task<Result<StaffResponse>> GetStaffByEmail(string email)
         {
             User user = await _userRepo.GetSingleByAsync(u => u.Email == email,
                 include: u => u.Include(s => s.Staff).ThenInclude(a => a.Address));
 
             if (user == null)
-                throw new InvalidOperationException("User not found");
+                return Result<StaffResponse>.NotFound("User not found");
 
-            return _mapper.Map<StaffResponse>(user);
+            StaffResponse response = _mapper.Map<StaffResponse>(user);
+
+            return Result<StaffResponse>.Success(response);
         }
 
-
-        public async Task<string> PatchStaffAddress(Guid staffId, JsonPatchDocument<UpdateAddressRequest> request)
+        public async Task<Result<string>> PatchStaffAddress(Guid staffId, JsonPatchDocument<UpdateAddressRequest> request)
         {
             Address staffAddress = await _addressRepo.GetSingleByAsync(x => x.StaffId == staffId);
 
             if (staffAddress == null)
-                return $"staff with id {staffId} does not exist";
+                return Result<string>.NotFound($"Staff with id {staffId} does not exist");
 
             UpdateAddressRequest updateAddress = new()
             {
@@ -184,14 +192,14 @@ namespace OnlineVoting.Services.Implementation
 
             await _unitOfWork.SaveChangesAsync();
 
-            return $"staff updated successfully";
+            return Result<string>.Success("Staff updated successfully");
         }
 
-        public async Task<string> EditStaff(Guid staffId, UpdateStaffRequest request)
+        public async Task<Result<string>> EditStaff(Guid staffId, UpdateStaffRequest request)
         {
             Staff staffExists = await _staffRepo.GetSingleByAsync(x => x.Id == staffId);
             if (staffExists == null)
-                throw new InvalidOperationException("Staff does not exists");
+                return Result<string>.NotFound("Staff does not exist");
 
             Staff updateStaff = _mapper.Map(request, staffExists);
 
@@ -199,69 +207,79 @@ namespace OnlineVoting.Services.Implementation
 
             await _unitOfWork.SaveChangesAsync();
 
-            return "Update successful";
+            return Result<string>.Success("Update successful");
         }
 
-        public async Task<IEnumerable<StaffResponse>> GetAllDeletedStaff()
+        public async Task<Result<IEnumerable<StaffResponse>>> GetAllDeletedStaff()
         {
             IEnumerable<Staff> allDeletedStaff = await _staffRepo.GetByAsync(x => x.Active == true);
 
             if (!allDeletedStaff.Any())
             {
-                return new List<StaffResponse>();
+                return Result<IEnumerable<StaffResponse>>.Success(new List<StaffResponse>());
             }
 
-            return _mapper.Map<IEnumerable<StaffResponse>>(allDeletedStaff);
+            IEnumerable<StaffResponse> response = _mapper.Map<IEnumerable<StaffResponse>>(allDeletedStaff);
+
+            return Result<IEnumerable<StaffResponse>>.Success(response);
         }
 
-        public async Task<IEnumerable<StaffResponse>> GetAllActiveStaff()
+        public async Task<Result<IEnumerable<StaffResponse>>> GetAllActiveStaff()
         {
             IEnumerable<Staff> allActiveStaff = await _staffRepo.GetByAsync(x => x.Active == false);
 
             if (!allActiveStaff.Any())
             {
-                return new List<StaffResponse>();
+                return Result<IEnumerable<StaffResponse>>.Success(new List<StaffResponse>());
             }
 
-            return _mapper.Map<IEnumerable<StaffResponse>>(allActiveStaff);
+            IEnumerable<StaffResponse> response = _mapper.Map<IEnumerable<StaffResponse>>(allActiveStaff);
+
+            return Result<IEnumerable<StaffResponse>>.Success(response);
         }
 
-        public async Task<PagedResponse<StaffResponse>> AllStaff(StaffRequest request)
+        public async Task<Result<PagedResponse<StaffResponse>>> AllStaff(StaffRequest request)
         {
             PagedList<Staff> staff = string.IsNullOrWhiteSpace(request.SearchTerm)
                 ? await _staffRepo.GetPagedItems(request)
                 : await _staffRepo.GetPagedItems(request, x => x.FirstName.Contains(request.SearchTerm.ToLower().Trim())
                             || x.LastName.Contains(request.SearchTerm.ToLower().Trim()));
 
-            return _mapper.Map<PagedResponse<StaffResponse>>(staff);
+            PagedResponse<StaffResponse> response = _mapper.Map<PagedResponse<StaffResponse>>(staff);
+
+            return Result<PagedResponse<StaffResponse>>.Success(response);
         }
 
-        public async Task<PagedResponse<StaffResponse>> AllActiveStaff(StaffRequest request)
+        public async Task<Result<PagedResponse<StaffResponse>>> AllActiveStaff(StaffRequest request)
         {
             PagedList<Staff> staff = string.IsNullOrWhiteSpace(request.SearchTerm)
                 ? await _staffRepo.GetPagedItems(request, x => x.Active == false)
-                : await _staffRepo.GetPagedItems(request, x => x.FirstName.Contains(request.SearchTerm.ToLower().Trim())
-                            || x.LastName.Contains(request.SearchTerm.ToLower().Trim()));
+                : await _staffRepo.GetPagedItems(request, x => (x.FirstName.Contains(request.SearchTerm.ToLower().Trim())
+                            || x.LastName.Contains(request.SearchTerm.ToLower().Trim())) && x.Active == false);
 
-            return _mapper.Map<PagedResponse<StaffResponse>>(staff);
+            PagedResponse<StaffResponse> response = _mapper.Map<PagedResponse<StaffResponse>>(staff);
+
+            return Result<PagedResponse<StaffResponse>>.Success(response);
         }
 
-        public async Task<PagedResponse<StaffResponse>> AllDeletedStaff(StaffRequest request)
+        public async Task<Result<PagedResponse<StaffResponse>>> AllDeletedStaff(StaffRequest request)
         {
             PagedList<Staff> staff = string.IsNullOrWhiteSpace(request.SearchTerm)
                 ? await _staffRepo.GetPagedItems(request, x => x.Active == true)
-                : await _staffRepo.GetPagedItems(request, x => x.FirstName.Contains(request.SearchTerm.ToLower().Trim())
-                            || x.LastName.Contains(request.SearchTerm.ToLower().Trim()));
+                : await _staffRepo.GetPagedItems(request, x => (x.FirstName.Contains(request.SearchTerm.ToLower().Trim())
+                            || x.LastName.Contains(request.SearchTerm.ToLower().Trim())) && x.Active == true);
 
-            return _mapper.Map<PagedResponse<StaffResponse>>(staff);
+            PagedResponse<StaffResponse> response = _mapper.Map<PagedResponse<StaffResponse>>(staff);
+
+            return Result<PagedResponse<StaffResponse>>.Success(response);
         }
 
-        public async Task<string> ToggleStaffStatus(Guid id)
+        public async Task<Result<string>> ToggleStaffStatus(Guid id)
         {
             Staff staff = await _staffRepo.GetByIdAsync(id);
 
             if (staff == null)
-                return $"Staff with id {id} does not exist";
+                return Result<string>.NotFound($"Staff with id {id} does not exist");
 
             staff.Active = !staff.Active;
 
@@ -269,11 +287,11 @@ namespace OnlineVoting.Services.Implementation
 
             if (staff.Active == false)
             {
-                return $"Staff activated successfully";
+                return Result<string>.Success("Staff activated successfully");
             }
             else
             {
-                return $"Staff deleted successfully";
+                return Result<string>.Success("Staff deleted successfully");
             }
         }
     }
