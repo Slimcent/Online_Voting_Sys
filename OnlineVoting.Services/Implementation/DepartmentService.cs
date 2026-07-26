@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Entities;
+using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Interfaces;
 using SchMgr_FUTO.Data.Interfaces;
 using VotingSystem.Data.Interfaces;
@@ -22,21 +23,25 @@ namespace OnlineVoting.Services.Implementation
             _mapper = _serviceFactory.GetService<IMapper>();
         }
 
-        public async Task<string> CreateDepartment(CreateDepartmentRequest request)
+        public async Task<Result<string>> CreateDepartment(CreateDepartmentRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Name))
-                throw new InvalidOperationException("Name cannot be empty");
+                return Result<string>.ValidationError("Department name cannot be empty.");
 
-            Department deptExists = await _deptRepo.GetSingleByAsync(x => x.Name == request.Name);
-            if (deptExists != null)
-                throw new InvalidOperationException("Faculty already exists");
+            Department? deptExists = await _deptRepo.GetSingleByAsync(department => department.Name == request.Name);
+
+            if (deptExists is not null)
+                return Result<string>.Conflict("Department already exists.");
 
             Department addDepartment = _mapper.Map<Department>(request);
+
             addDepartment.Activated = true;
 
             await _deptRepo.AddAsync(addDepartment);
 
-            return $"Faculty with name {addDepartment.Name} created successfully";
+            string message = $"Department with name {addDepartment.Name} created successfully";
+
+            return Result<string>.Created(message);
         }
     }
 }

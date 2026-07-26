@@ -7,6 +7,7 @@ using OnlineVoting.Models.Entities.Email;
 using OnlineVoting.Services.Extension;
 using OnlineVoting.Services.Interfaces;
 using System.Net;
+using OnlineVoting.Models.Results;
 using VotingSystem.Data.Interfaces;
 
 namespace OnlineVoting.Services.Implementation
@@ -62,14 +63,14 @@ namespace OnlineVoting.Services.Implementation
             await SendEmail(emailData);
         }
 
-        public async Task<string> SendResetPasswordEmail(string email)
+        public async Task<Result<string>> SendResetPasswordEmail(string email)
         {
             if (string.IsNullOrEmpty(email))
-                throw new InvalidOperationException("Enter an email");
+                return Result<string>.ValidationError("Enter an email");
 
             User user = await _userManager.FindByEmailAsync(email);
             if (user == null)
-                return "A link to reset your password will be sent to you if an account with this email exist";
+                return Result<string>.NotFound("A link to reset your password will be sent to you if an account with this email exist");
 
             string resetPasswordToken = await _userManager.GeneratePasswordResetTokenAsync(user);
 
@@ -87,17 +88,17 @@ namespace OnlineVoting.Services.Implementation
 
             await SendEmail(emailData);
 
-            return "A link to reset your password will be sent to you if an account with this email exist";
+            return Result<string>.Success("A link to reset your password will be sent to you if an account with this email exist");
         }
 
-        public async Task<string> SendChangeEmail(ChangeEmailRequest request)
+        public async Task<Result<string>> SendChangeEmail(ChangeEmailRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.NewEmail.ToLower().Trim()) || string.IsNullOrWhiteSpace(request.RecoveryEmail.ToLower().Trim()))
-                throw new InvalidOperationException("Invalid data sent");
+                return Result<string>.ValidationError("Invalid data sent");
 
             User user = await _userManager.FindByEmailAsync(request.Email);
             if (user == null)
-                return "User not found";
+                return Result<string>.NotFound("User not found");
 
             string changeEmailToken = await _userManager.GenerateChangeEmailTokenAsync(user, request.NewEmail);
 
@@ -117,7 +118,7 @@ namespace OnlineVoting.Services.Implementation
 
             await SendEmail(emailData);
 
-            return "A link to change your email will be sent to you if an account with this email exist";
+            return Result<string>.Success("A link to change your email will be sent to you if an account with this email exist");
         }
 
         private async Task<bool> SendEmail(EmailDataDto request)

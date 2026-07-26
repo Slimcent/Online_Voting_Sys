@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
-using OnlineVoting.Models.Enums;
 using OnlineVoting.Models.GlobalMessage;
 using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Extension;
@@ -13,6 +12,7 @@ using OnlineVoting.Services.Interfaces;
 using OnlineVoting.Services.Utilities;
 using SchMgr_FUTO.Data.Interfaces;
 using VotingSystem.Data.Interfaces;
+using OnlineVoting.Models.Results;
 
 namespace OnlineVoting.Services.Implementation
 {
@@ -41,33 +41,39 @@ namespace OnlineVoting.Services.Implementation
             _mapper = _serviceFactory.GetService<IMapper>();
         }
 
-        public async Task<Response> CreateContestant(string regNo, string position)
+        public async Task<Result<Response>> CreateContestant(string regNo, string position)
         {
-            if (regNo == null)
-                throw new InvalidOperationException("Invalid data sent");
+            if (string.IsNullOrWhiteSpace(regNo))
+                return Result<Response>.ValidationError("Registration number cannot be empty");
 
-            var contestantExists = await _contestantRepo.GetSingleByAsync(r => r.Student.RegNumber == regNo, include: r => r.Include(s => s.Student));
+            if (string.IsNullOrWhiteSpace(position))
+                return Result<Response>.ValidationError("Position cannot be empty");
+
+            Contestant contestantExists = await _contestantRepo.GetSingleByAsync(r => r.Student.RegNumber == regNo, include: r => r.Include(s => s.Student));
             if (contestantExists != null)
-                throw new ConflictException(regNo);
+                return Result<Response>.Conflict($"Contestant with registration number {regNo} already exists");
 
             Student student = await _studentRepo.GetSingleByAsync(s => s.RegNumber == regNo, include: s => s.Include(u => u.User));
             if (student == null)
-                throw new NotFoundException(regNo);
+                return Result<Response>.NotFound($"Student with registration number {regNo} was not found");
 
-            var contestant = new Contestant
+            Contestant contestant = new()
             {
                 StudentId = student.Id,
                 //UserId = student.UserId
             };
+
             await _contestantRepo.AddAsync(contestant);
 
-            return new Response(true, $"Contestant with RegNumber {regNo} created successfully");
+            Response response = new Response(true, $"Contestant with RegNumber {regNo} created successfully");
+
+            return Result<Response>.Created(response);
         }
 
-        public async Task<Response> CreateStudent(CreateStudentRequest request)
+        public async Task<Result<Response>> CreateStudent(CreateStudentRequest request)
         {
             if (request == null)
-                throw new InvalidOperationException("Invalid data sent");
+                return Result<Response>.ValidationError("Invalid data sent");
 
             //var regNumberExists = await _studentRepo.GetSingleByAsync(r => r.RegNumber == request.RegNumber);
             //if (regNumberExists != null)
@@ -82,16 +88,24 @@ namespace OnlineVoting.Services.Implementation
 
             CreateUserRequest user = _mapper.Map<CreateUserRequest>(request);
 
-            var userId = await _serviceFactory.GetService<IUserService>().CreateUser(user);
+            Result<string> userResult = await _serviceFactory.GetService<IUserService>().CreateUser(user);
 
-            var student = _mapper.Map<Student>(request);
-            student.UserId = userId;
+            if (!userResult.IsSuccess)
+            {
+                return Result<Response>.FromFailure(userResult);
+            }
+
+            Student student = _mapper.Map<Student>(request);
+
+            student.UserId = userResult.Value!;
 
             await _studentRepo.AddAsync(student);
 
             await _unitOfWork.SaveChangesAsync();
 
-            return new Response(true, $"Student with email {request.Email} created successfully");
+            Response response = new Response(true, $"Student with email {request.Email} created successfully");
+
+            return Result<Response>.Created(response);
         }
 
         public async Task<Models.Dtos.Response.FileStreamResponse> DownloadStudentsList()
@@ -112,7 +126,7 @@ namespace OnlineVoting.Services.Implementation
             }.ConvertToExcel(new ExcelDownloadConfig { Name = "StudentList" });
         }
 
-        public async Task<string> UploadStudents(UploadStudentRequest request)
+        public async Task<Result<string>> UploadStudents(UploadStudentRequest request)
         {
             //string[] requiredHeaders = new[] {"RegNumber", "FirstName", "LastName", "Email", "PhoneNumber", "Sex"};
             //string[] nullableFields = new[] {"SN", "PhoneNumber", "Sex"};
@@ -140,12 +154,19 @@ namespace OnlineVoting.Services.Implementation
 
                 CreateUserRequest user = _mapper.Map<CreateUserRequest>(student);
 
-                string userId = await _serviceFactory.GetService<IUserService>().CreateUser(user);
-                student.UserId = userId;
+                Result<string> userResult = await _serviceFactory.GetService<IUserService>().CreateUser(user);
+
+                if (!userResult.IsSuccess)
+                {
+                    return Result<string>.FromFailure(userResult);
+                }
+
+                student.UserId = userResult.Value!;
             }
+
             await _studentRepo.AddRangeAsync(studentsToUpload);
 
-            return "Students uploaded successfully";
+            return Result<string>.Success("Students uploaded successfully");
         }
 
         public async Task<Response> Vote(VoteRequest request)

@@ -1,4 +1,5 @@
 ﻿using OnlineVoting.Models.Dtos.Request.Email;
+using OnlineVoting.Models.Results;
 
 namespace OnlineVoting.Services.Interfaces
 {
@@ -6,7 +7,7 @@ namespace OnlineVoting.Services.Interfaces
     {
         Task SendVoterEmail(VoterEmailDto request);
         Task SendCreateUserEmail(UserMailDto request);
-        Task<string> SendResetPasswordEmail(string email);
-        Task<string> SendChangeEmail(ChangeEmailRequest request);
+        Task<Result<string>> SendResetPasswordEmail(string email);
+        Task<Result<string>> SendChangeEmail(ChangeEmailRequest request);
     }
 }
