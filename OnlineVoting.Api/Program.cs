@@ -57,6 +57,7 @@ builder.Services.ConfigureCors();
 builder.Services.ConfigureIISIntegration();
 builder.Services.AddDBConnection(builder.Configuration);
 builder.Services.ConfigureHealthChecks();
+builder.Services.ConfigureRateLimiting();
 builder.Services.BindConfigurations(builder.Configuration);
 builder.Services.ConfigureJWT();
 builder.Services.ConfigureLoggerService();
@@ -95,6 +96,7 @@ app.ConfigureStatusCodePages();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 app.MapControllers();

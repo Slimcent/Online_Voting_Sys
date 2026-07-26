@@ -1404,3 +1404,180 @@ The implementation was verified by:
 
 ---
 
+# Rate Limiting
+
+## Overview
+
+Rate limiting was added to protect sensitive API operations from excessive requests, repeated authentication attempts, accidental request loops 
+
+and basic abuse.
+
+The implementation uses ASP.NET Core's built-in rate-limiting middleware and applies named policies only to selected controllers or endpoints. 
+
+Normal read operations, health checks and development Swagger endpoints are not restricted by default.
+
+## Objectives
+
+The rate-limiting implementation was introduced to:
+
+- protect authentication endpoints from repeated login attempts
+- reduce abuse of voting and administrative operations
+- provide consistent `429 Too Many Requests` responses
+- centralize policy configuration
+- allow different limits for different types of operations
+- avoid applying one restrictive policy to the entire API
+
+## Rate-Limit Policies
+
+The following named policies were introduced:
+
+| Policy | Purpose |
+|---|---|
+| Authentication | Login and other sensitive authentication operations |
+| Voting | Vote submission operations |
+| Administrative Write | Administrative creation, update and bulk-upload operations |
+
+The initial limits are intended for development and testing. They should be reviewed and adjusted based on expected production traffic and load-test results.
+
+## Policy Definitions
+
+The rate-limit policy values are defined in an enum inside the Models project.
+
+A separate policy-name class exposes the corresponding constant string values required by ASP.NET Core attributes and policy registration.
+
+This avoids repeating policy-name strings throughout the application and keeps the names consistent between service registration and controller usage.
+
+## Service Configuration
+
+Rate-limiting registration was added to the service extension layer.
+
+The configuration includes:
+
+- named fixed-window policies
+- request limits and time windows
+- disabled request queuing
+- automatic permit replenishment
+- `429 Too Many Requests` as the rejection status
+- a standardized `ProblemDetails` response
+- a `Retry-After` response header when retry metadata is available
+
+Keeping this configuration in the service extension layer maintains a clean `Program.cs` and follows the existing application configuration structure.
+
+## Middleware Configuration
+
+The rate-limiting middleware was added to the request pipeline.
+
+It runs after authentication and before authorization. This ordering allows future policies to use authenticated user information when partitioning or evaluating requests.
+
+## Controller and Endpoint Usage
+
+Rate limiting is applied through named policies.
+
+A policy can be applied to:
+
+- an individual endpoint
+- an entire controller
+
+Endpoint-level configuration is used when only selected operations in a controller require protection.
+
+Controller-level configuration is used when all actions in the controller share the same rate-limit requirements.
+
+Individual endpoints can also disable rate limiting when they should remain unrestricted.
+
+## Authentication Protection
+
+The authentication policy was applied to the login endpoint.
+
+After the permitted number of requests is exceeded, the endpoint returns:
+
+- `429 Too Many Requests`
+- a `ProblemDetails` response body
+- a `Retry-After` header when available
+
+This reduces the effectiveness of repeated login attempts and basic brute-force activity.
+
+## Voting Protection
+
+The voting policy is intended for vote-submission operations.
+
+It applies a stricter request limit than normal administrative operations because repeated vote submissions are security-sensitive and should not be processed at a high frequency.
+
+## Administrative Write Protection
+
+The administrative-write policy is intended for operations such as:
+
+- student creation
+- staff creation
+- contestant creation
+- bulk student upload
+- other administrative write operations
+
+These operations receive a higher request allowance than authentication or voting while still being protected from excessive traffic.
+
+## Swagger Documentation
+
+The centralized API documentation for protected endpoints was updated to include the `429 Too Many Requests` response.
+
+The response documentation uses `ProblemDetails` as the response type and explains that the request limit has been exceeded.
+
+This prevents Swagger from displaying the `429` response as undocumented.
+
+## Exception Handling
+
+Rate-limit rejections are not handled by the global exception middleware.
+
+A rate-limit rejection is an expected middleware response, not an application exception.
+
+The responsibilities remain separated as follows:
+
+- rate-limit rejections are handled by the rate-limiting middleware
+- expected business outcomes are handled by the Result pattern
+- unexpected failures are handled by the global exception middleware
+
+## Affected Areas
+
+### Models
+
+- rate-limit policy enum
+- rate-limit policy-name configuration
+
+### Service Configuration
+
+- rate-limiting service registration
+- named policy definitions
+- rejection response handling
+- `Retry-After` header handling
+
+### Application Pipeline
+
+- rate-limiting middleware registration
+
+### Controllers
+
+- authentication endpoints
+- voting endpoints
+- selected administrative write endpoints
+- controllers that use a shared policy where appropriate
+
+### API Documentation
+
+- `429 Too Many Requests` responses for protected operations
+
+## Verification
+
+The rate limiter was verified through the login endpoint.
+
+The following behaviour was confirmed:
+
+- requests within the configured limit were accepted
+- requests exceeding the limit returned `429 Too Many Requests`
+- the rejection response used `ProblemDetails`
+- the endpoint became available again after the configured time window
+- Swagger documented the `429` response
+- no global exception-handler changes were required
+
+## Result
+
+Sensitive API operations are now protected by reusable named rate-limit policies.
+
+The implementation remains flexible because limits can be changed centrally without modifying controller logic, and policies can be applied selectively based on the risk and expected traffic of each endpoint.

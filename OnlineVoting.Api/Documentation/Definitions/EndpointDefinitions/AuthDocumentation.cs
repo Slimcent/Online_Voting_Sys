@@ -34,6 +34,11 @@ namespace OnlineVoting.Api.Documentation.Definitions.EndpointDefinitions
                     {
                         Description = "The requested user could not be found.",
                         ResponseType = typeof(ProblemDetails)
+                    },
+                    ["429"] = new ApiResponseDocumentation
+                    {
+                        Description = "Too many login attempts. Try again later.",
+                        ResponseType = typeof(ProblemDetails)
                     }
                 }
             },
