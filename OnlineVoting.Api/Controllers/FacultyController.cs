@@ -5,6 +5,8 @@ using OnlineVoting.Api.Documentation.Attributes;
 using OnlineVoting.Api.Documentation.Definitions.Keys;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Services.Interfaces;
+using OnlineVoting.Models.Results;
+using OnlineVoting.Api.Extensions;
 
 namespace OnlineVoting.Api.Controllers
 {
@@ -12,7 +14,7 @@ namespace OnlineVoting.Api.Controllers
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
     [Authorize(Policy = "Authorization")]
-    public class FacultyController : ControllerBase
+    public class FacultyController : BaseController
     {
         private readonly IFacultyService _facultyService;
 
@@ -25,9 +27,9 @@ namespace OnlineVoting.Api.Controllers
         [ApiDocumentation(FacultyDocumentationKeys.CreateFaculty)]
         public async Task<IActionResult> CreateFaculty([FromQuery] CreateWithNameRequest request)
         {
-            string faculty = await _facultyService.CreateFaculty(request);
+            Result<string> result = await _facultyService.CreateFaculty(request);
 
-            return Ok(faculty);
+            return result.ToActionResult(this);
         }
     }
 }

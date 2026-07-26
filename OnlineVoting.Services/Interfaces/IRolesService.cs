@@ -1,24 +1,25 @@
 ﻿using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Pagination;
+using OnlineVoting.Models.Results;
 
 namespace OnlineVoting.Services.Interfaces
 {
     public interface IRolesService
     {
-        Task<string> CreateRole(CreateRoleRequest request);
-        Task<string> EditRole(string id, CreateRoleRequest request);
-        Task<string> DeleteRole(CreateRoleRequest request);
-        Task<string> AddUserToRole(AddUserToRoleRequest request);
-        Task<string> RemoveUserFromRole(AddUserToRoleRequest request);
-        Task<IList<string>> GetUserRoles(string userName);
-        Task<string> ToggleRoleStatus(string roleId);
-        Task<IEnumerable<RoleResponse>> GetAllRoles();
-        Task<IEnumerable<RoleResponse>> GetAllActiveRoles();
-        Task<IEnumerable<RoleResponse>> GetAllDeactivatedRoles();
-        Task<PagedResponse<RoleResponse>> AllRoles(RoleRequest request);
-        Task<PagedResponse<RoleResponse>> AllActiveRoles(RoleRequest request);
-        Task<PagedResponse<RoleResponse>> AllDeactivatedRoles(RoleRequest request);
-        Task<string> DeleteUserRole(string Id);
+        Task<Result<string>> CreateRole(CreateRoleRequest request);
+        Task<Result<string>> EditRole(string id, CreateRoleRequest request);
+        Task<Result<string>> DeleteRole(CreateRoleRequest request);
+        Task<Result<string>> AddUserToRole(AddUserToRoleRequest request);
+        Task<Result<string>> RemoveUserFromRole(AddUserToRoleRequest request);
+        Task<Result<IList<string>>> GetUserRoles(string userName);
+        Task<Result<string>> ToggleRoleStatus(string roleId);
+        Task<Result<IEnumerable<RoleResponse>>> GetAllRoles();
+        Task<Result<IEnumerable<RoleResponse>>> GetAllActiveRoles();
+        Task<Result<IEnumerable<RoleResponse>>> GetAllDeactivatedRoles();
+        Task<Result<PagedResponse<RoleResponse>>> AllRoles(RoleRequest request);
+        Task<Result<PagedResponse<RoleResponse>>> AllActiveRoles(RoleRequest request);
+        Task<Result<PagedResponse<RoleResponse>>> AllDeactivatedRoles(RoleRequest request);
+        Task<Result<string>> DeleteUserRole(string id);
     }
 }

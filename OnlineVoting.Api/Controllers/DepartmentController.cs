@@ -5,6 +5,8 @@ using OnlineVoting.Api.Documentation.Attributes;
 using OnlineVoting.Api.Documentation.Definitions.Keys;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Services.Interfaces;
+using OnlineVoting.Models.Results;
+using OnlineVoting.Api.Extensions;
 
 namespace OnlineVoting.Api.Controllers
 {
@@ -26,9 +28,9 @@ namespace OnlineVoting.Api.Controllers
         [ApiDocumentation(DepartmentDocumentationKeys.CreateDepartment)]
         public async Task<IActionResult> CreateDepartment([FromQuery] CreateDepartmentRequest request)
         {
-            string dept = await _deptServie.CreateDepartment(request);
+            Result<string> result = await _deptServie.CreateDepartment(request);
 
-            return Ok(dept);
+            return result.ToActionResult(this);
         }
     }
 }

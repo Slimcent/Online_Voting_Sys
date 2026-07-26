@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OnlineVoting.Api.Documentation.Attributes;
 using OnlineVoting.Api.Documentation.Definitions.Keys;
+using OnlineVoting.Api.Extensions;
 using OnlineVoting.Models.Dtos.Request;
-using OnlineVoting.Models.Dtos.Response;
+using OnlineVoting.Models.GlobalMessage;
+using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Interfaces;
 
 namespace OnlineVoting.Api.Controllers
@@ -26,9 +28,9 @@ namespace OnlineVoting.Api.Controllers
         [HttpPost("createstudent", Name = "Create-Students")]
         public async Task<IActionResult> CreateStudent([FromBody] CreateStudentRequest request)
         {
-            var student = await _studentService.CreateStudent(request);
+            Result<Response> result = await _studentService.CreateStudent(request);
 
-            return Ok(student);
+            return result.ToActionResult(this);
         }
 
         [ApiDocumentation(StudentDocumentationKeys.DownloadStudentsExcelTemplate)]
@@ -44,18 +46,18 @@ namespace OnlineVoting.Api.Controllers
         [HttpPost("UploadStudents", Name = "Upload-Students")]
         public async Task<IActionResult> UploadLecturers([FromForm] UploadStudentRequest students)
         {
-            string res = await _studentService.UploadStudents(students);
+            Result<string> result = await _studentService.UploadStudents(students);
 
-            return Ok(res);
+            return result.ToActionResult(this);
         }
 
         [HttpPost("create-contestant", Name = "Create-Contestants")]
         [ApiDocumentation(StudentDocumentationKeys.CreateContestant)]
         public async Task<IActionResult> CreateContestant([FromQuery] string regNo, [FromQuery] string position)
         {
-            var contestant = await _studentService.CreateContestant(regNo, position);
+            Result<Response> result = await _studentService.CreateContestant(regNo, position);
 
-            return Ok(contestant);
+            return result.ToActionResult(this);
         }
     }
 }
