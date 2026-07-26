@@ -1,16 +1,19 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using OnlineVoting.Api.Documentation.Attributes;
 using OnlineVoting.Api.Documentation.Definitions.Keys;
 using OnlineVoting.Api.Extensions;
 using OnlineVoting.Models.Dtos.Request;
+using OnlineVoting.Models.Entities.Configurations;
 using OnlineVoting.Models.GlobalMessage;
 using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Interfaces;
 
 namespace OnlineVoting.Api.Controllers
 {
+    [EnableRateLimiting(RateLimitPolicyNames.AdministrativeWrite)]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
@@ -33,6 +36,7 @@ namespace OnlineVoting.Api.Controllers
             return result.ToActionResult(this);
         }
 
+        [DisableRateLimiting] // Disable rate limiting for this endpoint
         [ApiDocumentation(StudentDocumentationKeys.DownloadStudentsExcelTemplate)]
         [HttpGet("download-students-excel-template", Name = "Download-Students-Excel-Template")]
         public async Task<IActionResult> DownloadCoursesSampleSheet()
