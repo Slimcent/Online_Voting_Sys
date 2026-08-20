@@ -15,11 +15,13 @@ namespace OnlineVoting.Api.Middlewares
                 {
                     //context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-                    IExceptionHandlerFeature? contextFeature =  context.Features.Get<IExceptionHandlerFeature>();
+                    IExceptionHandlerFeature? contextFeature = context.Features.Get<IExceptionHandlerFeature>();
 
                     if (contextFeature != null)
                     {
                         ILoggerMessage logger = context.RequestServices.GetRequiredService<ILoggerMessage>();
+
+                        string correlationId = context.Items[CorrelationIdMiddleware.CorrelationIdItemName]?.ToString() ?? "Unavailable";
 
                         int statusCode;
                         string title;
@@ -36,8 +38,10 @@ namespace OnlineVoting.Api.Middlewares
                                 detail = contextFeature.Error.Message;
                                 type = "https://tools.ietf.org/html/" + "rfc9110#section-15.5.1";
 
-                                logger.LogWarn($"Bad request on {context.Request.Method} {context.Request.Path}:" 
-                                    + $"{contextFeature.Error.Message}");
+                                logger.LogWarn($"Bad request on {context.Request.Method} {context.Request.Path}. "
+                                    + $"CorrelationId: {correlationId}. "
+                                    + $"TraceId: {context.TraceIdentifier}. "
+                                    + $"Message: {contextFeature.Error.Message}");
 
                                 break;
 
@@ -48,8 +52,10 @@ namespace OnlineVoting.Api.Middlewares
                                 detail = contextFeature.Error.Message;
                                 type = "https://tools.ietf.org/html/" + "rfc9110#section-15.5.2";
 
-                                logger.LogWarn($"Invalid login attempt on {context.Request.Method} {context.Request.Path}:" 
-                                    + $"{contextFeature.Error.Message}");
+                                logger.LogWarn($"Invalid login attempt on {context.Request.Method} {context.Request.Path}. "
+                                    + $"CorrelationId: {correlationId}. "
+                                    + $"TraceId: {context.TraceIdentifier}. "
+                                    + $"Message: {contextFeature.Error.Message}");
 
                                 break;
 
@@ -60,8 +66,10 @@ namespace OnlineVoting.Api.Middlewares
                                 detail = contextFeature.Error.Message;
                                 type = "https://tools.ietf.org/html/" + "rfc9110#section-15.5.5";
 
-                                logger.LogWarn($"Resource not found on {context.Request.Method} {context.Request.Path}:" 
-                                    + $"{contextFeature.Error.Message}");
+                                logger.LogWarn($"Resource not found on {context.Request.Method} {context.Request.Path}. "
+                                    + $"CorrelationId: {correlationId}. "
+                                    + $"TraceId: {context.TraceIdentifier}. "
+                                    + $"Message: {contextFeature.Error.Message}");
 
                                 break;
 
@@ -72,8 +80,10 @@ namespace OnlineVoting.Api.Middlewares
                                 detail = contextFeature.Error.Message;
                                 type = "https://tools.ietf.org/html/" + "rfc9110#section-15.5.10";
 
-                                logger.LogWarn($"Conflict while processing {context.Request.Method} {context.Request.Path}:" 
-                                    + $"{contextFeature.Error.Message}");
+                                logger.LogWarn($"Conflict while processing {context.Request.Method} {context.Request.Path}. "
+                                    + $"CorrelationId: {correlationId}. "
+                                    + $"TraceId: {context.TraceIdentifier}. "
+                                    + $"Message: {contextFeature.Error.Message}");
 
                                 break;
 
@@ -84,8 +94,10 @@ namespace OnlineVoting.Api.Middlewares
                                 detail = "An unexpected error occurred.";
                                 type = "https://tools.ietf.org/html/" + "rfc9110#section-15.6.1";
 
-                                logger.LogError(contextFeature.Error, $"An unexpected error occurred while " 
-                                    + $"processing {context.Request.Method} {context.Request.Path}.");
+                                logger.LogError(contextFeature.Error, $"An unexpected error occurred while "
+                                    + $"processing {context.Request.Method} {context.Request.Path}. "
+                                    + $"CorrelationId: {correlationId}. "
+                                    + $"TraceId: {context.TraceIdentifier}.");
 
                                 break;
                         }
@@ -103,6 +115,7 @@ namespace OnlineVoting.Api.Middlewares
                         };
 
                         problemDetails.Extensions["traceId"] = context.TraceIdentifier;
+                        problemDetails.Extensions["correlationId"] = correlationId;
 
                         //logger.LogError($"Something went wrong: {contextFeature.Error}");
 
@@ -117,6 +130,8 @@ namespace OnlineVoting.Api.Middlewares
             app.UseStatusCodePages(async statusCodeContext =>
             {
                 HttpContext context = statusCodeContext.HttpContext;
+
+                string correlationId = context.Items[CorrelationIdMiddleware.CorrelationIdItemName]?.ToString() ?? "Unavailable";
 
                 int statusCode = context.Response.StatusCode;
 
@@ -163,6 +178,7 @@ namespace OnlineVoting.Api.Middlewares
                 };
 
                 problemDetails.Extensions["traceId"] = context.TraceIdentifier;
+                problemDetails.Extensions["correlationId"] = correlationId;
 
                 await context.Response.WriteAsJsonAsync(problemDetails, cancellationToken: context.RequestAborted);
             });
