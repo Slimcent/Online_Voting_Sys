@@ -264,6 +264,7 @@ Exceptions
 ├── ConflictException.cs
 ├── InvalidCredentialsException.cs
 └── NotFoundException.cs
+```
 
 ---
 
@@ -1665,3 +1666,52 @@ The test confirmed that:
 - the request method, path, status code, execution time, and trace ID were recorded
 
 This confirms that a request can be traced from the API response to its corresponding application log entry.
+
+---
+
+# Improve NLog Portability and Message Validation
+
+## Overview
+
+Updated the NLog configuration to remove local machine-specific paths and improved the handling of invalid encoded messages.
+
+## Changes
+
+### NLog Configuration
+
+The NLog configuration previously used absolute paths pointing to the local development environment. This meant the same configuration would not 
+
+work when the application is moved to another machine or deployed.
+
+The log paths now use the application's current directory, so logs can be created regardless of where the application is running.
+
+Exception details were also added to the NLog layout so unexpected errors include the exception and stack trace in the application log.
+
+### Message Validation
+
+While testing the logging changes with the `verify-user` endpoint, an invalid encoded token caused a `FormatException` and returned a `500 Internal Server Error`.
+
+The message decoder was updated to validate the encoded value before returning the decoded message. Invalid or empty values now throw an 
+
+`ArgumentException`, which is already handled as a `400 Bad Request` by the global exception handler.
+
+## Affected Areas
+
+- NLog configuration
+- application and internal log paths
+- exception logging
+- message encoding and decoding
+
+## Verification
+
+The API was restarted and tested after changing the NLog paths. Application logs continued to be written correctly, including correlation IDs, 
+
+trace IDs and request information.
+
+The `verify-user` endpoint was also tested with an invalid encoded token. The test confirmed that the exception and stack trace were written to 
+
+the application log, and the decoder was updated to handle invalid encoded values as bad input rather than an internal server error.
+
+---
+
+---
