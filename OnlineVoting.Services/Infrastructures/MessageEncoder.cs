@@ -7,18 +7,33 @@ namespace OnlineVoting.Services.Infrastructures
     {
         public static string EncodeString(string message)
         {
-            var encodedBytes = Encoding.UTF8.GetBytes(message);
-            var encodedMessage = WebEncoders.Base64UrlEncode(encodedBytes);
+            byte[] encodedBytes = Encoding.UTF8.GetBytes(message);
+            string encodedMessage = WebEncoders.Base64UrlEncode(encodedBytes);
 
             return encodedMessage;
         }
 
         public static string DecodeString(string message)
         {
-            var decodedBytes = WebEncoders.Base64UrlDecode(message);
-            var decodedMessage = Encoding.UTF8.GetString(decodedBytes);
+            return ValidateAndDecodeString(message);
+        }
 
-            return decodedMessage;
+        private static string ValidateAndDecodeString(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+                throw new ArgumentException("Encoded message cannot be empty.");
+
+            try
+            {
+                byte[] decodedBytes = WebEncoders.Base64UrlDecode(message);
+                string decodedMessage = Encoding.UTF8.GetString(decodedBytes);
+
+                return decodedMessage;
+            }
+            catch (FormatException)
+            {
+                throw new ArgumentException($"Encoded message {message} is invalid base64url string.");
+            }
         }
     }
 }
