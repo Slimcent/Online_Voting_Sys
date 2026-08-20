@@ -1,0 +1,74 @@
+{
+  "projects": [
+    {
+      "path": "OnlineVoting.Models/OnlineVoting.Models.csproj",
+      "packages": [
+        { "id": "EPPlus", "version": "8.6.1" },
+        { "id": "FluentValidation", "version": "12.1.1" },
+        { "id": "FluentValidation.AspNetCore", "version": "11.3.1" },
+        { "id": "FluentValidation.DependencyInjectionExtensions", "version": "12.1.1" },
+        { "id": "MailKit", "version": "4.17.0" },
+        { "id": "Microsoft.AspNetCore.Identity.EntityFrameworkCore", "version": "10.0.10" },
+        { "id": "Microsoft.EntityFrameworkCore", "version": "10.0.10" },
+        { "id": "Microsoft.Extensions.Caching.Memory", "version": "10.0.10" },
+        { "id": "Newtonsoft.Json", "version": "13.0.1" },
+        { "id": "System.Drawing.Common", "version": "10.0.10" },
+        { "id": "System.Reflection.Emit", "version": "4.7.0" },
+        { "id": "System.Reflection.Emit.Lightweight", "version": "4.7.0" },
+        { "id": "System.Text.Encodings.Web", "version": "10.0.10" },
+        { "id": "System.Security.Cryptography.Xml", "version": "10.0.10" },
+        { "id": "MimeKit", "version": "4.17.0" }
+      ]
+    },
+    {
+      "path": "OnlineVoting.Api/OnlineVoting.Api.csproj",
+      "packages": [
+        { "id": "Asp.Versioning.Mvc", "version": "10.0.0" },
+        { "id": "Asp.Versioning.Mvc.ApiExplorer", "version": "10.0.0" },
+        { "id": "AspNetCoreRateLimit", "version": "5.0.0" },
+        { "id": "DotNetEnv", "version": "3.2.0" },
+        { "id": "Marvin.Cache.Headers", "version": "7.2.0" },
+        { "id": "Microsoft.AspNetCore.Authentication.JwtBearer", "version": "10.0.10" },
+        { "id": "Microsoft.AspNetCore.JsonPatch", "version": "10.0.10" },
+        { "id": "Microsoft.AspNetCore.Mvc.NewtonsoftJson", "version": "10.0.10" },
+        { "id": "Microsoft.Data.SqlClient", "version": "7.0.2" },
+        { "id": "Microsoft.EntityFrameworkCore.SqlServer", "version": "10.0.10" },
+        { "id": "Microsoft.EntityFrameworkCore.Tools", "version": "10.0.10" },
+        { "id": "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore", "version": "10.0.10" },
+        { "id": "Swashbuckle.AspNetCore", "version": "10.2.3" },
+        { "id": "Swashbuckle.AspNetCore.Annotations", "version": "10.2.3" },
+        { "id": "Swashbuckle.AspNetCore.SwaggerUI", "version": "10.2.3" }
+      ]
+    },
+    {
+      "path": "OnlineVoting.Services/OnlineVoting.Services.csproj",
+      "packages": [
+        { "id": "AutoMapper", "version": "16.2.0" },
+        { "id": "DinkToPdf", "version": "1.0.8" },
+        { "id": "Duende.IdentityModel", "version": "8.1.0" },
+        { "id": "EPPlus", "version": "8.6.1" },
+        { "id": "IdentityModel", "version": "6.0.0" },
+        { "id": "MailKit", "version": "4.17.0" },
+        { "id": "Microsoft.AspNetCore.JsonPatch", "version": "10.0.10" },
+        { "id": "MimeKit", "version": "4.17.0" },
+        { "id": "System.Drawing.Common", "version": "10.0.10" },
+        { "id": "System.IdentityModel.Tokens.Jwt", "version": "8.19.2" }
+      ]
+    },
+    {
+      "path": "VotingSystem.Logger/VotingSystem.Logger.csproj",
+      "packages": [
+        { "id": "NLog.Extensions.Logging", "version": "6.1.4" }
+      ]
+    },
+    {
+      "path": "VotingSystem.Data/VotingSystem.Data.csproj",
+      "packages": [
+        { "id": "Microsoft.EntityFrameworkCore", "version": "10.0.10" },
+        { "id": "Microsoft.Extensions.Configuration.Binder", "version": "10.0.10" },
+        { "id": "System.Linq.Dynamic.Core", "version": "1.7.3" },
+        { "id": "System.Threading.Tasks", "version": "4.3.0" }
+      ]
+    }
+  ]
+}
