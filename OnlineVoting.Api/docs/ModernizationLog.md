@@ -1580,4 +1580,88 @@ The following behaviour was confirmed:
 
 Sensitive API operations are now protected by reusable named rate-limit policies.
 
-The implementation remains flexible because limits can be changed centrally without modifying controller logic, and policies can be applied selectively based on the risk and expected traffic of each endpoint.
+The implementation remains flexible because limits can be changed centrally without modifying controller logic and 
+
+policies can be applied selectively based on the risk and expected traffic of each endpoint.
+
+---
+
+# Correlation IDs and Request Tracing
+
+## Overview
+
+Correlation IDs were added to make API requests easier to trace between client responses and application logs.
+
+Each request now has a correlation ID. If the client provides an `X-Correlation-ID` header, the existing value is used; otherwise, a new ID is 
+
+generated. The correlation ID is returned in the response header and included in error responses where applicable.
+
+ASP.NET Core's existing trace ID is kept separately.
+
+## Implementation
+
+A correlation ID middleware was added to the API request pipeline. It handles the correlation ID for the lifetime of the request and records 
+
+request completion details such as:
+
+- correlation ID
+- trace ID
+- HTTP method
+- request path
+- response status code
+- execution time
+- authenticated user, where available
+
+The middleware is registered globally, so individual controllers do not need to implement request tracing themselves.
+
+The existing exception handling was also updated so exception logs include the correlation ID and trace ID. Supported `ProblemDetails` responses 
+
+now expose both identifiers, making it possible to match an API error with the corresponding server log.
+
+## Result Handling
+
+`ResultActionResultExtensions` was previously located under:
+
+`OnlineVoting.Models/GlobalMessage`
+
+During the correlation ID implementation, the extension needed access to the current `HttpContext` and correlation ID middleware. Keeping it in the 
+
+Models project would introduce a dependency from Models to the API project.
+
+It was therefore moved to:
+
+`OnlineVoting.Api/Extensions/ResultActionResultExtensions.cs`
+
+This keeps the responsibilities separated:
+
+- `OnlineVoting.Models` contains `Result<T>` and `ResultStatus`
+- `OnlineVoting.Api` handles the conversion of results into HTTP responses
+
+Controllers using `ToActionResult` were updated to reference the new API extension namespace.
+
+## Affected Areas
+
+The changes affect the following parts of the application:
+
+- API request middleware
+- global exception and status code handling
+- Result-to-HTTP response handling
+- application logging
+- application startup configuration
+- controllers using `ToActionResult`
+
+The existing `ILoggerMessage`, `LoggerMessage`, and NLog setup were retained.
+
+## Verification
+
+The implementation was tested using the login endpoint with an unsuccessful login request.
+
+The test confirmed that:
+
+- the API returned an `X-Correlation-ID` response header
+- the error response contained the correlation ID and trace ID
+- the correlation ID in the response body matched the response header
+- the same correlation ID appeared in the NLog application log
+- the request method, path, status code, execution time, and trace ID were recorded
+
+This confirms that a request can be traced from the API response to its corresponding application log entry.

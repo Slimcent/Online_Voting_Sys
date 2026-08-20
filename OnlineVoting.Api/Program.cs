@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NLog;
+using OnlineVoting.Api.Extensions;
 using OnlineVoting.Api.Filters;
 using OnlineVoting.Api.Middlewares;
 using OnlineVoting.Models.Entities.Email;
@@ -89,6 +90,8 @@ if (app.Environment.IsDevelopment())
         options.InjectStylesheet("/css/swagger-dark-theme.css");
     });
 }
+
+app.UseCorrelationId();
 
 app.ConfigureExceptionHandler();
 app.ConfigureStatusCodePages();
