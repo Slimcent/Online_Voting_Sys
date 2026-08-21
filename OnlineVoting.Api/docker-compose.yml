@@ -1,0 +1,86 @@
+﻿services:
+  online-voting-sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: online-voting-sql
+    env_file:
+      - .env.docker
+    environment:
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    volumes:
+      - online-voting-sql-data:/var/opt/mssql
+    networks:
+      - online-voting-network
+
+  migration-generator:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    working_dir: /src
+    volumes:
+      - ..:/src
+      - online-voting-api-publish:/publish
+    env_file:
+      - .env.docker
+    depends_on:
+      online-voting-sql:
+        condition: service_healthy
+    command:
+      - /bin/sh
+      - -c
+      - |
+        dotnet tool install --global dotnet-ef --version "10.*" &&
+        export PATH="$$PATH:/root/.dotnet/tools" &&
+
+        find /src -maxdepth 2 -type d -name obj -prune -exec rm -rf {} + &&
+
+        dotnet restore /src/Online_Voting_Sys.sln &&
+
+        if [ ! -d /src/OnlineVoting.Api/Migrations ] || [ -z "$$(find /src/OnlineVoting.Api/Migrations -name '*_*.cs' -type f 2>/dev/null)" ]; then
+          echo "No migrations found. Creating InitialCreate migration." &&
+          dotnet-ef migrations add InitialCreate --project /src/OnlineVoting.Api/OnlineVoting.Api.csproj --startup-project /src/OnlineVoting.Api/OnlineVoting.Api.csproj
+        else
+          echo "Migration already exists. Skipping InitialCreate generation."
+        fi &&
+
+        dotnet publish /src/OnlineVoting.Api/OnlineVoting.Api.csproj -c Release -o /publish --no-restore
+    networks:
+      - online-voting-network
+
+  online-voting-api:
+    image: mcr.microsoft.com/dotnet/aspnet:10.0
+    container_name: online-voting-api
+    working_dir: /app
+    volumes:
+      - online-voting-api-publish:/app
+    env_file:
+      - .env.docker
+    command:
+      - dotnet
+      - OnlineVoting.Api.dll
+    ports:
+      - "8080:8080"
+    depends_on:
+      migration-generator:
+        condition: service_completed_successfully
+      online-voting-sql:
+        condition: service_healthy
+    networks:
+      - online-voting-network
+
+networks:
+  online-voting-network:
+    driver: bridge
+
+volumes:
+  online-voting-sql-data:
+  online-voting-api-publish:

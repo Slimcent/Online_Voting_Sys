@@ -2,12 +2,14 @@ using Asp.Versioning.ApiExplorer;
 using DotNetEnv;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NLog;
 using OnlineVoting.Api.Extensions;
 using OnlineVoting.Api.Filters;
 using OnlineVoting.Api.Middlewares;
+using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities.Email;
 using OnlineVoting.Services.Infrastructures;
 using System.Reflection;
@@ -22,7 +24,8 @@ if (!File.Exists(environmentFilePath))
     environmentFilePath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
 }
 
-Env.Load(environmentFilePath);
+Env.NoClobber()
+    .Load(environmentFilePath);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -115,6 +118,8 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 }).AllowAnonymous();
 
 app.UseStaticFiles();
+
+await app.ApplyDatabaseMigrations();
 
 await SeedApplicationData.EnsurePopulated(app);
 
