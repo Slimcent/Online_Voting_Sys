@@ -41,7 +41,7 @@ namespace OnlineVoting.Services.Implementation
         {
             //CreateUserRequest user = new()
             //{
-            //    Email = request.Email,
+            //   
             //    FirstName = request.FirstName,
             //    Role = request.Role,
             //};
