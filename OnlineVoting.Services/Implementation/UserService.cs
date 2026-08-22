@@ -90,7 +90,7 @@ namespace OnlineVoting.Services.Implementation
         {
             _loggerMessage.LogInfo($"Login attempt received for email {request.Email}.");
 
-            User? user = await _userRepo.GetSingleByAsync(user => user.UserName == request.Email.ToLower().Trim(),
+            User? user = await _userRepo.GetSingleByAsync(user => user.Email == request.Email.ToLower().Trim(),
                 include: user => user.Include(item => item.UserType));
 
             if (user is null)

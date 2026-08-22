@@ -24,8 +24,10 @@ if (!File.Exists(environmentFilePath))
     environmentFilePath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
 }
 
-Env.NoClobber()
-    .Load(environmentFilePath);
+if (File.Exists(environmentFilePath))
+{
+    Env.NoClobber().Load(environmentFilePath);
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -73,33 +75,34 @@ builder.Services.AddAutoMapper(config => { }, Assembly.Load("OnlineVoting.Api"))
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
+    IApiVersionDescriptionProvider provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+
+    foreach (ApiVersionDescription description in provider.ApiVersionDescriptions.Reverse())
     {
-        IApiVersionDescriptionProvider provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+        options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
+            $"Online_Voting_Api {description.GroupName}");
+    }
 
-        foreach (ApiVersionDescription description in provider.ApiVersionDescriptions.Reverse())
-        {
-            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
-                $"Online_Voting_Api {description.GroupName}");
-        }
+    options.DefaultModelsExpandDepth(2);
+    options.DefaultModelExpandDepth(3);
+    options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
 
-        options.DefaultModelsExpandDepth(2);
-        options.DefaultModelExpandDepth(3);
-        options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
-
-        options.InjectStylesheet("/css/swagger-dark-theme.css");
-    });
-}
+    options.InjectStylesheet("/css/swagger-dark-theme.css");
+});
 
 app.UseCorrelationId();
 
 app.ConfigureExceptionHandler();
 app.ConfigureStatusCodePages();
 
-app.UseHttpsRedirection();
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthentication();
 app.UseRateLimiter();
@@ -119,8 +122,14 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 
 app.UseStaticFiles();
 
-await app.ApplyDatabaseMigrations();
-
-await SeedApplicationData.EnsurePopulated(app);
+if (app.Environment.IsDevelopment())
+{
+    await app.ApplyDatabaseMigrations();
+    await SeedApplicationData.EnsurePopulated(app);
+}
+else if (builder.Configuration.GetValue<bool>("Seed:RunOnce"))
+{
+    await SeedApplicationData.EnsurePopulated(app);
+}
 
 app.Run();

@@ -268,7 +268,7 @@ namespace VotingSystem.Data.SeedData
 
         private static async Task SeedAdminUser(VotingDbContext context, UserManager<User> userManager, Seed seed)
         {
-            (Gender? administratorGender, UserType? administratorUserType) = await GetGenderAndUserType(context, seed);
+            (Gender? administratorGender, UserType? administratorUserType, UserType? studentUserType) = await GetGenderAndUserType(context, seed);
 
             string administratorGenderName = seed.AdminUser.Gender.Trim();
 
@@ -339,7 +339,7 @@ namespace VotingSystem.Data.SeedData
         {
             StudentUser studentSeed = seed.StudentUser;
 
-            (Gender? studentGender, UserType? administratorUserType) = await GetGenderAndUserType(context, seed);
+            (Gender? studentGender, UserType? administratorUserType, UserType? studentUserType) = await GetGenderAndUserType(context, seed);
 
             Department? studentDepartment = await context.Set<Department>()
                 .FirstOrDefaultAsync(department => department.Name == studentSeed.Department);
@@ -353,10 +353,7 @@ namespace VotingSystem.Data.SeedData
             Role? studentRole = await roleManager.FindByNameAsync(studentSeed.Role);
 
             if (studentRole == null)
-            {
-                throw new InvalidOperationException($"The student role "
-                    + $"'{studentSeed.Role}' was not found.");
-            }
+                throw new InvalidOperationException($"The student role {studentSeed.Role}' was not found.");
 
             User? studentUser = await userManager.FindByNameAsync(studentSeed.UserName);
 
@@ -379,7 +376,7 @@ namespace VotingSystem.Data.SeedData
                     Email = studentSeed.Email,
                     UserName = studentSeed.UserName,
                     PhoneNumber = studentSeed.PhoneNumber,
-                    UserTypeId = administratorUserType.Id,
+                    UserTypeId = studentUserType.Id,
                     Active = true,
                     EmailConfirmed = true
                 };
@@ -427,16 +424,19 @@ namespace VotingSystem.Data.SeedData
             await context.Set<Student>().AddAsync(student);
         }
 
-        private static async Task<(Gender gender, UserType usertype)> GetGenderAndUserType(VotingDbContext context, Seed seed)
+        private static async Task<(Gender gender, UserType usertype, UserType studentUserType)> GetGenderAndUserType(VotingDbContext context, Seed seed)
         {
             UserType? administratorUserType = await context.Set<UserType>()
                 .FirstOrDefaultAsync(userType => userType.Name.ToLower() == seed.AdminUser.UserType.ToLower());
 
             if (administratorUserType == null)
-            {
-                throw new InvalidOperationException($"The administrator user type "
-                    + $"{seed.AdminUser.UserType} was not found.");
-            }
+                throw new InvalidOperationException($"The administrator user type {seed.AdminUser.UserType} was not found.");
+
+            UserType? studentUserType = await context.Set<UserType>()
+                .FirstOrDefaultAsync(userType => userType.Name.ToLower() == seed.StudentUser.UserType.ToLower());
+
+            if (studentUserType == null)
+                throw new InvalidOperationException($"The student user type {seed.StudentUser.UserType} was not found.");
 
             string administratorGenderName = seed.AdminUser.Gender.Trim();
 
@@ -444,12 +444,9 @@ namespace VotingSystem.Data.SeedData
                 .FirstOrDefaultAsync(gender => gender.Name.ToLower() == administratorGenderName.ToLower());
 
             if (administratorGender == null)
-            {
-                throw new InvalidOperationException($"The administrator gender "
-                    + $"'{seed.AdminUser.Gender}' was not found.");
-            }
+                throw new InvalidOperationException($"The administrator gender {seed.AdminUser.Gender}' was not found.");
 
-            return (administratorGender, administratorUserType);
+            return (administratorGender, administratorUserType, studentUserType);
         }
 
         private static void EnsureIdentityOperationSucceeded(IdentityResult result, string message)

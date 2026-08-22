@@ -25,6 +25,7 @@
 
   migration-generator:
     image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: online-voting-migration-generator
     working_dir: /src
     volumes:
       - ..:/src
@@ -41,13 +42,16 @@
         dotnet tool install --global dotnet-ef --version "10.*" &&
         export PATH="$$PATH:/root/.dotnet/tools" &&
 
-        find /src -maxdepth 2 -type d -name obj -prune -exec rm -rf {} + &&
-
         dotnet restore /src/Online_Voting_Sys.sln &&
 
         if [ ! -d /src/OnlineVoting.Api/Migrations ] || [ -z "$$(find /src/OnlineVoting.Api/Migrations -name '*_*.cs' -type f 2>/dev/null)" ]; then
           echo "No migrations found. Creating InitialCreate migration." &&
-          dotnet-ef migrations add InitialCreate --project /src/OnlineVoting.Api/OnlineVoting.Api.csproj --startup-project /src/OnlineVoting.Api/OnlineVoting.Api.csproj
+          dotnet-ef migrations add InitialCreate \
+            --project /src/OnlineVoting.Api/OnlineVoting.Api.csproj \
+            --startup-project /src/OnlineVoting.Api/OnlineVoting.Api.csproj &&
+
+          echo "Rebuilding Debug output with the generated migration." &&
+          dotnet build /src/OnlineVoting.Api/OnlineVoting.Api.csproj -c Debug --no-restore
         else
           echo "Migration already exists. Skipping InitialCreate generation."
         fi &&
@@ -57,18 +61,18 @@
       - online-voting-network
 
   online-voting-api:
-    image: mcr.microsoft.com/dotnet/aspnet:10.0
+    build:
+      context: ..
+      dockerfile: OnlineVoting.Api/Dockerfile
+    image: online-voting-api:local
     container_name: online-voting-api
     working_dir: /app
     volumes:
       - online-voting-api-publish:/app
     env_file:
       - .env.docker
-    command:
-      - dotnet
-      - OnlineVoting.Api.dll
     ports:
-      - "8080:8080"
+      - "8180:8080"
     depends_on:
       migration-generator:
         condition: service_completed_successfully

@@ -12,7 +12,7 @@ using OnlineVoting.Models.Context;
 namespace OnlineVoting.Api.Migrations
 {
     [DbContext(typeof(VotingDbContext))]
-    [Migration("20260821004402_InitialCreate")]
+    [Migration("20260821214151_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
