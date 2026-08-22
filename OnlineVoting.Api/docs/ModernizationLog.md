@@ -2364,11 +2364,52 @@ Production runtime secrets will remain in MonsterASP rather than being committed
 
 The existing GitHub Actions workflow already restores and builds the solution and verifies that the Docker image can be built.
 
-The next step is to extend this workflow so that a successful production build is deployed automatically to MonsterASP.
-
 ---
 
+### Git-based production deployment
 
+Previously, the API was published to MonsterASP directly from Visual Studio. Although this worked, it meant that the version running in 
+
+production could depend on what was available on a developer's local machine.
+
+To keep the repository as the single source of truth, production deployment was changed to use MonsterASP Git Deploy.
+
+MonsterASP is now connected to the GitHub repository and configured to build:
+
+- Repository: `Slimcent/Online_Voting_Sys`
+- Branch: `main`
+- Project: `OnlineVoting.Api/OnlineVoting.Api.csproj`
+- Deployment type: `Build (.NET)`
+
+The normal workflow is now:
+
+`Feature branch -> development -> main -> production`
+
+Changes are developed on a feature branch and merged into `development` through a pull request. Once the changes have been tested and are ready 
+
+for production, `development` is merged into `main`.
+
+MonsterASP then pulls the application from `main`, builds the API and publishes the result to the website.
+
+During the first Git deployment, the application returned HTTP 500 errors because `main` was still behind the feature and development branches. 
+
+The latest Dockerization and deployment changes had not yet reached `main`.
+
+The feature branch was therefore merged into `development`, followed by `development` into `main`. After deploying again from the updated `main` branch, 
+
+the application started successfully.
+
+The following production endpoints were checked after deployment:
+
+- `/health`
+- `/health/ready`
+- `/swagger/index.html`
+
+All endpoints worked correctly over HTTPS.
+
+Going forward, Visual Studio publishing will not be the normal way of deploying the application. Production should come from the `main` branch 
+
+so that the code in GitHub and the code running in production remain consistent.
 
 ---
 
