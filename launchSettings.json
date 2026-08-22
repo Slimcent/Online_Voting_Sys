@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "Docker Compose": {
+      "commandName": "DockerCompose",
+      "composeLaunchServiceName": "online-voting-api",
+      "serviceActions": {
+        "migration-generator": "StartWithoutDebugging",
+        "online-voting-api": "StartDebugging",
+        "online-voting-sql": "StartWithoutDebugging"
+      },
+      "composeLaunchAction": "LaunchBrowser",
+      "composeLaunchUrl": "http://localhost:8180/swagger/index.html",
+      "commandVersion": "1.0"
+    }
+  }
+}

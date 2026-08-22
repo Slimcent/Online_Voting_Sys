@@ -1,0 +1,22 @@
+[
+  {
+    "Name": "Normal Api",
+    "Projects": [
+      {
+        "Path": "OnlineVoting.Api\\OnlineVoting.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "OnlineVoting.Api"
+      }
+    ]
+  },
+  {
+    "Name": "Docker Compose",
+    "Projects": [
+      {
+        "Path": "docker-compose.dcproj",
+        "Action": "Start",
+        "DebugTarget": "Docker Compose"
+      }
+    ]
+  }
+]

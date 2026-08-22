@@ -5,8 +5,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace OnlineVoting.Api.Migrations
 {
-    public partial class initial : Migration
+    /// <inheritdoc />
+    public partial class InitialCreate : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
@@ -164,15 +166,14 @@ namespace OnlineVoting.Api.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Claim = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    MenuId = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    MenuId1 = table.Column<long>(type: "bigint", nullable: true)
+                    MenuId = table.Column<long>(type: "bigint", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Claims", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Claims_Menus_MenuId1",
-                        column: x => x.MenuId1,
+                        name: "FK_Claims_Menus_MenuId",
+                        column: x => x.MenuId,
                         principalTable: "Menus",
                         principalColumn: "Id");
                 });
@@ -560,9 +561,9 @@ namespace OnlineVoting.Api.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Claims_MenuId1",
+                name: "IX_Claims_MenuId",
                 table: "Claims",
-                column: "MenuId1");
+                column: "MenuId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Contestans_PositionId",
@@ -616,7 +617,9 @@ namespace OnlineVoting.Api.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Students_UserId",
                 table: "Students",
-                column: "UserId");
+                column: "UserId",
+                unique: true,
+                filter: "[UserId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Votes_RegisteredVoterId",
@@ -629,6 +632,7 @@ namespace OnlineVoting.Api.Migrations
                 column: "StudentId");
         }
 
+        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(

@@ -12,17 +12,18 @@ using OnlineVoting.Models.Context;
 namespace OnlineVoting.Api.Migrations
 {
     [DbContext(typeof(VotingDbContext))]
-    [Migration("20260719010618_initial")]
-    partial class initial
+    [Migration("20260821214151_InitialCreate")]
+    partial class InitialCreate
     {
+        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.2")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
@@ -123,7 +124,7 @@ namespace OnlineVoting.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("Active")
                         .HasColumnType("bit");
@@ -163,7 +164,7 @@ namespace OnlineVoting.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("Active")
                         .HasColumnType("bit");
@@ -233,20 +234,17 @@ namespace OnlineVoting.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Claim")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("MenuId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long?>("MenuId1")
+                    b.Property<long?>("MenuId")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("MenuId1");
+                    b.HasIndex("MenuId");
 
                     b.ToTable("Claims");
                 });
@@ -290,7 +288,7 @@ namespace OnlineVoting.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<bool>("Activated")
                         .HasColumnType("bit");
@@ -327,7 +325,7 @@ namespace OnlineVoting.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<bool>("Activated")
                         .HasColumnType("bit");
@@ -359,7 +357,7 @@ namespace OnlineVoting.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -376,7 +374,7 @@ namespace OnlineVoting.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
@@ -587,7 +585,9 @@ namespace OnlineVoting.Api.Migrations
 
                     b.HasIndex("GenderId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NOT NULL");
 
                     b.ToTable("Students");
                 });
@@ -693,7 +693,7 @@ namespace OnlineVoting.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -825,7 +825,7 @@ namespace OnlineVoting.Api.Migrations
                 {
                     b.HasOne("OnlineVoting.Models.Entities.Menu", "Menu")
                         .WithMany()
-                        .HasForeignKey("MenuId1");
+                        .HasForeignKey("MenuId");
 
                     b.Navigation("Menu");
                 });
@@ -909,8 +909,8 @@ namespace OnlineVoting.Api.Migrations
                         .IsRequired();
 
                     b.HasOne("OnlineVoting.Models.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
+                        .WithOne("Student")
+                        .HasForeignKey("OnlineVoting.Models.Entities.Student", "UserId");
 
                     b.Navigation("Department");
 
@@ -983,6 +983,8 @@ namespace OnlineVoting.Api.Migrations
                     b.Navigation("Logins");
 
                     b.Navigation("Staff");
+
+                    b.Navigation("Student");
 
                     b.Navigation("Tokens");
 

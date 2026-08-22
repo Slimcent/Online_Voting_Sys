@@ -306,5 +306,19 @@ namespace OnlineVoting.Api.Middlewares
         {
             return app.UseMiddleware<CorrelationIdMiddleware>();
         }
+
+        public static async Task ApplyDatabaseMigrations(this IApplicationBuilder app)
+        {
+            using IServiceScope scope = app.ApplicationServices.CreateScope();
+
+            VotingDbContext context = scope.ServiceProvider.GetRequiredService<VotingDbContext>();
+
+            IEnumerable<string> migrations = context.Database.GetMigrations();
+
+            if (!migrations.Any())
+                throw new InvalidOperationException("No database migrations were found.");
+
+            await context.Database.MigrateAsync();
+        }
     }
 }

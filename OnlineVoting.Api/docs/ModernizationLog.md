@@ -1714,4 +1714,662 @@ the application log, and the decoder was updated to handle invalid encoded value
 
 ---
 
+## Dockerization and Production Deployment
+
+### Overview
+
+The application was extended to support three separate environments:
+
+- normal local development using SQL Server LocalDB;
+- Docker-based development using SQL Server in a container;
+- production hosting using MonsterASP.NET and a hosted Microsoft SQL Server database.
+
+The goal was to make the application easier to run on a new machine, keep database migrations consistent across all environments and prepare 
+
+the project for automated deployment.
+
+The same application source code and Entity Framework Core migration files are used in all three environments. The databases and 
+
+environment-specific configuration remain separate.
+
+---
+
+## Dockerizing the Application
+
+The application was originally designed to run directly from Visual Studio against SQL Server LocalDB. Docker support was added without removing 
+
+this existing development workflow.
+
+The Dockerization was done incrementally so that the application could still be run normally while the containerized environment was being introduced.
+
+### Step 1: Create the API Dockerfile
+
+A Dockerfile was added at:
+
+    OnlineVoting.Api/Dockerfile
+
+The Dockerfile uses a multi-stage build.
+
+The build stage restores the project dependencies, builds the application and publishes the ASP.NET Core API.
+
+The runtime stage contains only the files required to run the published application.
+
+This keeps the final API image smaller than an image containing the complete .NET SDK.
+
+The API container is built from the same `OnlineVoting.Api` project that is used when running the application normally from Visual Studio.
+
+### Step 2: Add `.dockerignore`
+
+A `.dockerignore` file was added to prevent unnecessary local files from being copied into the Docker build context.
+
+Files such as build output, IDE files, Git metadata, local environment files and other development artifacts do not need to be included when 
+
+building the Docker image.
+
+This reduces the Docker build context and prevents local configuration or secrets from accidentally becoming part of the image.
+
+### Step 3: Add SQL Server to Docker Compose
+
+A Docker Compose configuration was created at:
+
+    OnlineVoting.Api/docker-compose.yml
+
+Instead of requiring SQL Server to be installed or configured manually for the Docker environment, SQL Server runs as a container.
+
+The Docker SQL Server service:
+
+- uses SQL Server 2022;
+- has its own database credentials;
+- stores its database files in a persistent Docker volume;
+- exposes SQL Server to the other containers through the Docker network;
+- uses a health check to determine when SQL Server is ready.
+
+The persistent volume allows the Docker database to survive normal container restarts.
+
+### Step 4: Add the API Service
+
+The ASP.NET Core API was then added to the same Docker Compose configuration.
+
+Docker Compose places the API and SQL Server containers on the same Docker network.
+
+The API therefore connects to SQL Server using the SQL Server service name rather than `localhost`.
+
+This is important because `localhost` inside the API container refers to the API container itself, not the SQL Server container.
+
+### Step 5: Separate Local and Docker Configuration
+
+Normal development and Docker require different database connection strings.
+
+Two local environment files are therefore used:
+
+    OnlineVoting.Api/.env
+    OnlineVoting.Api/.env.docker
+
+`.env` contains configuration for normal local development.
+
+`.env.docker` contains configuration used by Docker Compose.
+
+Normal local development can connect to LocalDB while the Docker environment connects to the SQL Server service running inside Docker.
+
+Both files contain environment-specific or sensitive values and are excluded from Git.
+
+The relevant entries were added to `.gitignore`:
+
+    /OnlineVoting.Api/.env
+    /OnlineVoting.Api/.env.docker
+
+The application was also changed so that `.env` is loaded only when the file exists. This allows production to use server environment variables 
+
+without requiring a development `.env` file to be deployed.
+
+### Step 6: Add SQL Server Readiness Checking
+
+Starting the SQL Server container does not mean SQL Server is immediately ready to accept connections.
+
+A SQL Server health check was therefore added to Docker Compose.
+
+Services that depend on the database wait for SQL Server to become healthy before continuing.
+
+This prevents the API or migration process from attempting to connect while SQL Server is still starting.
+
+### Step 7: Add Database Migration Handling
+
+Entity Framework Core migrations were integrated into the Docker workflow.
+
+The Docker setup includes a migration generator service that checks whether migrations exist.
+
+If the project has no migrations yet, it can generate the initial migration:
+
+    InitialCreate
+
+The generated migration is written back to the source project rather than remaining only inside a temporary container.
+
+This is important because EF Core migrations are part of the application's source code and must be committed to Git.
+
+If migrations already exist, migration generation is skipped.
+
+The application itself uses the existing migration files to bring its development database to the expected schema.
+
+### Step 8: Add the Migration/Publish Service
+
+The Docker Compose setup also includes a migration/publish service.
+
+This service prepares the application before the runtime API container starts.
+
+The resulting published application is made available to the runtime container through the Docker setup.
+
+This separates preparation of the application from the container responsible for serving API requests.
+
+### Step 9: Add Persistent Docker Storage
+
+A named Docker volume was configured for SQL Server.
+
+This means:
+
+    docker compose down
+
+stops and removes the containers but preserves the database.
+
+When a completely fresh database is required, the volume can intentionally be removed with:
+
+    docker compose down -v
+
+The `-v` option should therefore not be used as the normal way of stopping the application because it deletes the Docker database volume.
+
+### Step 10: Integrate Docker Compose with Visual Studio
+
+Docker Compose was connected to the Visual Studio solution through:
+
+    docker-compose.dcproj
+
+The solution now provides two clear ways of starting the application:
+
+    Normal Api
+    Docker Compose
+
+`Normal Api` runs the ASP.NET Core application normally using the local development configuration.
+
+`Docker Compose` starts the containerized environment.
+
+The existing:
+
+    OnlineVoting.Api/docker-compose.yml
+
+remains the Compose configuration used by both the command line and Visual Studio.
+
+This means Docker support was added without replacing the existing local development workflow.
+
+---
+
+## Running the Application
+
+### Normal Local Development
+
+For normal development, select:
+
+    Normal Api
+
+in Visual Studio and start the application.
+
+This runs the API directly on the development machine and uses the configuration from:
+
+    OnlineVoting.Api/.env
+
+The local database is SQL Server LocalDB.
+
+In the Development environment, available migrations are applied and development seed data is created automatically.
+
+### Docker Compose from Visual Studio
+
+Select:
+
+    Docker Compose
+
+as the startup profile and run the solution.
+
+Visual Studio uses the existing Docker Compose configuration to start the required containers.
+
+### Docker Compose from PowerShell
+
+The same environment can be started without Visual Studio.
+
+From the solution root:
+
+    docker compose -f .\OnlineVoting.Api\docker-compose.yml up -d
+
+Check all containers with:
+
+    docker compose -f .\OnlineVoting.Api\docker-compose.yml ps -a
+
+View API logs with:
+
+    docker compose -f .\OnlineVoting.Api\docker-compose.yml logs online-voting-api --tail 100
+
+View migration generator logs with:
+
+    docker compose -f .\OnlineVoting.Api\docker-compose.yml logs migration-generator --tail 100
+
+Stop the environment while preserving the database:
+
+    docker compose -f .\OnlineVoting.Api\docker-compose.yml down
+
+Completely reset the Docker environment and database:
+
+    docker compose -f .\OnlineVoting.Api\docker-compose.yml down -v
+
+After `down -v`, the next startup creates a fresh SQL Server database.
+
+---
+
+## Database Migration Strategy
+
+The project uses one set of Entity Framework Core migration files for all environments.
+
+The environments currently use:
+
+    Local development
+        -> SQL Server LocalDB
+
+    Docker
+        -> SQL Server 2022 container
+
+    Production
+        -> MonsterASP SQL Server
+
+The databases are independent, but the migration source files are shared.
+
+Each database records the migrations it has applied in:
+
+    __EFMigrationsHistory
+
+Creating a migration therefore does not automatically change every database. The migration is first created as source code and must then be 
+
+applied to the required database.
+
+### Testing the Migration Workflow
+
+The migration workflow was tested by adding:
+
+    public bool Active { get; set; }
+
+to the `Contestant` entity.
+
+A migration named:
+
+    Added_Active_To_Contestant
+
+was created.
+
+During this change, the existing incorrectly named table:
+
+    Contestans
+
+was also corrected to:
+
+    Contestants
+
+through the migration.
+
+The migration was applied and verified against LocalDB, Docker SQL Server and the hosted production SQL Server.
+
+The migration history was checked to confirm that the databases contained:
+
+    InitialCreate
+    Added_Active_To_Contestant
+
+This demonstrated that the same migration history can be used consistently across the three database environments.
+
+### Workflow for Future Schema Changes
+
+Future database changes should follow this process:
+
+1. Modify the entity or database model.
+2. Create a new EF Core migration.
+3. Review the generated migration before applying it.
+4. Apply and test it against LocalDB.
+5. Test the application using Docker SQL Server.
+6. Commit the model change and migration together.
+7. Apply the migration deliberately to production.
+
+Production migrations are not automatically executed when the production application starts.
+
+---
+
+## Development and Production Database Initialization
+
+Development is allowed to initialize itself automatically.
+
+The application currently uses:
+
+    if (app.Environment.IsDevelopment())
+    {
+        await app.ApplyDatabaseMigrations();
+        await SeedApplicationData.EnsurePopulated(app);
+    }
+
+This provides a convenient development experience while preventing the production application from unexpectedly changing its database every time 
+
+it starts.
+
+Migration handling was also moved out of the main startup code into an application extension method to keep `Program.cs` focused on application configuration.
+
+Production migrations are applied deliberately rather than as part of normal application startup.
+
+---
+
+## Production Database Setup
+
+A Microsoft SQL Server database was created on MonsterASP.NET.
+
+The production application uses the database connection information provided by MonsterASP through its runtime environment configuration.
+
+Remote database access was also enabled so that the production database can be inspected using SQL Server Management Studio.
+
+The production database was initially empty. The existing EF Core migrations were applied to it and the migration history was checked afterward.
+
+SSMS was then connected successfully to the hosted database, allowing the production tables and data to be inspected directly.
+
+---
+
+## Initial Production Data
+
+Automatic development seeding was intentionally not enabled permanently in Production.
+
+However, a completely new production database still required its initial users, roles, claims, faculty, department, gender records, and other required reference data.
+
+A controlled production bootstrap setting was therefore introduced:
+
+    Seed__RunOnce
+
+For the initial setup it was temporarily configured as:
+
+    Seed__RunOnce=true
+
+The existing seed logic then initialized the required production data.
+
+After confirming that the expected records had been created, the setting was changed back to:
+
+    Seed__RunOnce=false
+
+This keeps normal production startup free from automatic seeding while still providing an explicit mechanism for initializing a new environment.
+
+---
+
+## Production Configuration
+
+Production configuration and secrets are not committed to Git.
+
+MonsterASP environment variables are used for values such as:
+
+    ConnectionStrings__VotingConnection
+    JwtSettings__Secret
+    JwtSettings__Issuer
+    JwtSettings__Audience
+    Seed__AdminUser__Email
+    Seed__AdminUser__Password
+    Seed__AdminUser__Username
+    Seed__StudentUser__Email
+    Seed__StudentUser__Password
+    Seed__StudentUser__Username
+    Seed__RunOnce
+
+ASP.NET Core converts double underscores in environment-variable names to configuration sections.
+
+For example:
+
+    JwtSettings__Secret
+
+maps to:
+
+    JwtSettings:Secret
+
+Development secrets remain in the ignored local environment files while production secrets remain in the hosting environment.
+
+---
+
+## JWT Configuration
+
+Authentication testing exposed an issue with the JWT signing key.
+
+The application uses HS256, but the original secret:
+
+    MySecretKey1234567890
+
+was only 168 bits.
+
+The JWT library rejected it because the signing key must be at least 256 bits for HS256.
+
+The local configuration was corrected first using a sufficiently long random secret. The production environment was then configured with its own strong secret.
+
+Development and production do not need to use the same JWT secret.
+
+Secrets themselves are not stored in this documentation or committed to the repository.
+
+---
+
+## First Production Deployment
+
+Visual Studio Web Deploy was used for the initial production deployment to MonsterASP.
+
+This was useful for establishing the hosting configuration and debugging the application before automating deployment.
+
+Several hosting problems were discovered during this process.
+
+### Incorrect `web.config`
+
+The original deployment contained an incorrect `web.config` with:
+
+- duplicate `aspNetCore` elements;
+- a reference to `MyApplication.exe`;
+- InProcess hosting;
+- stale generated configuration under `bin` and `obj`.
+
+The source file:
+
+    OnlineVoting.Api/web.config
+
+was corrected rather than manually fixing only the copy on the server.
+
+Generated `bin` and `obj` directories were removed and rebuilt.
+
+The repository was checked for stale configuration using:
+
+    Get-ChildItem -Recurse -File |
+        Select-String 'MyApplication.exe|hostingModel="InProcess"'
+
+After the cleanup, the search returned no matches.
+
+This ensured that subsequent deployments were generated from the corrected source configuration.
+
+---
+
+## Out-of-Process Hosting
+
+The application initially failed under IIS with errors including:
+
+    failed to load coreclr
+    CLR worker thread exited prematurely
+
+The API was changed from InProcess to Out-of-Process ASP.NET Core hosting.
+
+The project configuration now contains:
+
+    <AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
+
+and `web.config` launches:
+
+    dotnet
+        -> OnlineVoting.Api.dll
+
+using:
+
+    hostingModel="outofprocess"
+
+With this setup, IIS receives the public request and forwards it to the ASP.NET Core application running as a separate `dotnet` process.
+
+This resolved the CoreCLR startup problem encountered on MonsterASP.
+
+---
+
+## HTTPS
+
+Once HTTP hosting was working, the application was tested over HTTPS.
+
+HTTP `/health` worked correctly while HTTPS initially produced connection resets.
+
+A Let's Encrypt certificate was enabled for:
+
+    online-voting-api.runasp.net
+
+through the MonsterASP control panel.
+
+The HTTPS binding was verified and HTTPS handling was enabled at the hosting level.
+
+Because MonsterASP terminates the public HTTPS connection before forwarding the request to the Out-of-Process ASP.NET Core application, application-level HTTPS redirection was limited to Development:
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseHttpsRedirection();
+    }
+
+After the certificate and hosting configuration were corrected, the production API worked successfully over HTTPS.
+
+---
+
+## Production Verification
+
+The production deployment was verified in stages rather than relying only on the browser opening the application.
+
+The following endpoints were tested:
+
+    /health
+    /health/ready
+
+Both returned:
+
+    Healthy
+
+The basic health endpoint confirmed that the deployed ASP.NET Core application was running.
+
+The readiness endpoint verified the application's configured readiness checks.
+
+Swagger was also enabled during production verification and loaded successfully after the hosting and HTTPS issues were resolved.
+
+Authentication was then tested against the hosted database using the initial production user.
+
+These checks confirmed that the request path was functioning through:
+
+    HTTPS
+        -> MonsterASP / IIS
+        -> ASP.NET Core
+        -> application services
+        -> production SQL Server
+
+---
+
+## Current Environment Architecture
+
+The project now supports three execution paths.
+
+### Normal Development
+
+    Visual Studio
+        |
+        v
+    OnlineVoting.Api
+        |
+        v
+    .env
+        |
+        v
+    SQL Server LocalDB
+
+### Docker Development
+
+    Visual Studio / Docker Compose
+        |
+        v
+    OnlineVoting.Api container
+        |
+        v
+    Docker network
+        |
+        v
+    SQL Server container
+        |
+        v
+    Persistent Docker volume
+
+### Production
+
+    Internet / HTTPS
+        |
+        v
+    MonsterASP IIS
+        |
+        v
+    ASP.NET Core Out-of-Process
+        |
+        v
+    MonsterASP environment variables
+        |
+        v
+    MonsterASP SQL Server
+
+The environments have separate databases and secrets but share the application source code and EF Core migrations.
+
+---
+
+## Deployment Source of Truth
+
+Visual Studio Web Deploy was useful for proving that the application could run successfully on MonsterASP, but it should not remain the normal 
+
+production deployment method.
+
+Manual publishing from a developer machine makes it easier for deployed files to differ from the repository.
+
+The GitHub repository will therefore become the single source of truth for deployment.
+
+The target workflow is:
+
+    Local development
+        |
+        v
+    Local tests
+        |
+        v
+    Docker verification
+        |
+        v
+    Git commit
+        |
+        v
+    GitHub
+        |
+        v
+    GitHub Actions
+        |
+        +--> Restore
+        +--> Build
+        +--> Test
+        +--> Docker build verification
+        |
+        v
+    Production deployment
+        |
+        v
+    MonsterASP
+
+Production runtime secrets will remain in MonsterASP rather than being committed to Git.
+
+The existing GitHub Actions workflow already restores and builds the solution and verifies that the Docker image can be built.
+
+The next step is to extend this workflow so that a successful production build is deployed automatically to MonsterASP.
+
+---
+
+
+
+---
+
 ---

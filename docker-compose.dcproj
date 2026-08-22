@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.Docker.Sdk">
+
+	<PropertyGroup Label="Globals">
+		<ProjectVersion>2.1</ProjectVersion>
+		<DockerTargetOS>Linux</DockerTargetOS>
+		<ProjectGuid>{D7E3D6B4-5A3B-4A27-92D2-6F92F1F1B001}</ProjectGuid>
+
+		<DockerComposeBaseFilePath>OnlineVoting.Api\docker-compose</DockerComposeBaseFilePath>
+
+		<DockerComposeProjectName>online-voting-system</DockerComposeProjectName>
+
+		<DependencyAwareStart>true</DependencyAwareStart>
+		
+		<DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
+		<DockerServiceName>online-voting-api</DockerServiceName>
+		<DockerServiceUrl>http://localhost:8180/swagger/index.html</DockerServiceUrl>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="OnlineVoting.Api\docker-compose.yml">
+			<Link>docker-compose.yml</Link>
+		</None>
+	</ItemGroup>
+
+</Project>
