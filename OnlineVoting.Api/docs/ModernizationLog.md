@@ -2413,4 +2413,49 @@ so that the code in GitHub and the code running in production remain consistent.
 
 ---
 
+### Publishing Docker Images to Docker Hub
+
+The CI workflow was extended to publish the Docker image to Docker Hub after a successful build.
+
+The image is available as:
+
+```text
+slimcent/online-voting
+```
+
+Images are published when changes are pushed or merged into `development` or `main`. Pull requests still build the Docker image as part of CI, but they do not publish it.
+
+The branch determines the image tag:
+
+```text
+development → slimcent/online-voting:development
+main        → slimcent/online-voting:latest
+```
+
+Each build is also tagged with its Git commit SHA. This gives us a specific image for every published version instead of relying only on `development` 
+
+or `latest`.
+
+For example:
+
+```text
+slimcent/online-voting:development
+slimcent/online-voting:949add315724c11b6...
+
+slimcent/online-voting:latest
+slimcent/online-voting:b9b27431558bed7c7...
+```
+
+The Docker Hub credentials used by the workflow are stored as GitHub repository secrets and are not committed to the repository.
+
+The workflow was tested with both branches. A merge into `development` successfully published the `development` image and a later merge 
+
+into `main` published the `latest` image. The corresponding commit SHA images were also created.
+
+MonsterASP continues to use the existing .NET/Web Deploy process for production. The Docker image is published separately so that the application 
+
+already has a container image available if we later move to a hosting environment that supports Docker deployment.
+
+---
+
 ---
