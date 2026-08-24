@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using SchMgr_FUTO.Data.Implementation;
-using SchMgr_FUTO.Data.Interfaces;
-using VotingSystem.Data.Interfaces;
+using OnLineVoting.Data.Implementation;
+using OnlineVoting.Data.Interfaces;
+
 
 namespace VotingSystem.Data.Implementation
 {

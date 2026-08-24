@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage;
-using SchMgr_FUTO.Data.Interfaces;
+using OnlineVoting.Data.Interfaces;
 
-namespace VotingSystem.Data.Interfaces
+namespace OnlineVoting.Data.Interfaces
 {
     public interface IUnitOfWork : IDisposable
     {

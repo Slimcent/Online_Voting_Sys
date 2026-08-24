@@ -8,7 +8,7 @@ using OnlineVoting.Services.Extension;
 using OnlineVoting.Services.Interfaces;
 using System.Net;
 using OnlineVoting.Models.Results;
-using VotingSystem.Data.Interfaces;
+using OnlineVoting.Data.Interfaces;
 
 namespace OnlineVoting.Services.Implementation
 {

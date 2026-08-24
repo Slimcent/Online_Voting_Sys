@@ -1,11 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using OnlineVoting.Models.Pagination;
-using SchMgr_FUTO.Data.Interfaces;
+using OnlineVoting.Data.Interfaces;
 using System.Linq.Expressions;
 using VotingSystem.Data.Extensions;
 
-namespace SchMgr_FUTO.Data.Implementation;
+namespace OnLineVoting.Data.Implementation;
 
 public class Repository<T> : IRepository<T> where T : class
 {

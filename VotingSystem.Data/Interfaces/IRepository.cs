@@ -2,7 +2,7 @@
 using OnlineVoting.Models.Pagination;
 using System.Linq.Expressions;
 
-namespace SchMgr_FUTO.Data.Interfaces;
+namespace OnlineVoting.Data.Interfaces;
 
 public interface IRepository<T>
 {

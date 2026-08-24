@@ -7,7 +7,7 @@ using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Interfaces;
 using System.Security.Claims;
-using VotingSystem.Data.Interfaces;
+using OnlineVoting.Data.Interfaces;
 
 namespace OnlineVoting.Services.Implementation
 {

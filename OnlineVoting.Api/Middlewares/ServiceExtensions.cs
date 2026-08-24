@@ -19,8 +19,10 @@ using OnlineVoting.Models.Configurations;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Entities.Configurations;
+using OnlineVoting.Models.Interfaces;
 using OnlineVoting.Models.Validators.Request;
 using OnlineVoting.Services.Implementation;
+using OnlineVoting.Services.Infrastructures;
 using OnlineVoting.Services.Infrastructures.Authorization;
 using OnlineVoting.Services.Infrastructures.Authorization.Jwt;
 using OnlineVoting.Services.Interfaces;
@@ -30,7 +32,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
 using VotingSystem.Data.Implementation;
-using VotingSystem.Data.Interfaces;
+using OnlineVoting.Data.Interfaces;
 using VotingSystem.Logger;
 
 
@@ -72,6 +74,8 @@ namespace OnlineVoting.Api.Middlewares
             services.AddScoped<IServiceFactory, ServiceFactory>();
             services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
             services.AddSingleton<ILoggerMessage, VotingSystem.Logger.LoggerMessage>();
+            services.AddHttpContextAccessor();
+            services.AddScoped<ICurrentUserContext, CurrentUserContext>();
 
             return services;
         }

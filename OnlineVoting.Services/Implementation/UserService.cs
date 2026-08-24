@@ -7,13 +7,12 @@ using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Dtos.Response.Jwt;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Results;
-using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Extension;
 using OnlineVoting.Services.Infrastructures;
 using OnlineVoting.Services.Interfaces;
-using SchMgr_FUTO.Data.Interfaces;
 using System.Security.Claims;
-using VotingSystem.Data.Interfaces;
+using OnlineVoting.Data.Interfaces;
+
 using VotingSystem.Logger;
 
 namespace OnlineVoting.Services.Implementation

@@ -3,9 +3,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Entities;
-using OnlineVoting.Services.Infrastructures.Extensions;
-using SchMgr_FUTO.Data.Interfaces;
-using VotingSystem.Data.Interfaces;
+using OnlineVoting.Data.Interfaces;
+using OnlineVoting.Models.Extensions;
 
 
 namespace OnlineVoting.Services.Infrastructures.Authorization
