@@ -8,7 +8,7 @@ namespace VotingSystem.Data.Implementation
 {
     public class UnitOfWork<TContext> : IUnitofWork<DbContext> where TContext : DbContext
     {
-        private Dictionary<Type, object> _repositories;
+        private Dictionary<Type, object>? _repositories;
         private readonly TContext _context;
         private IDbContextTransaction? _transaction;
 
@@ -19,10 +19,14 @@ namespace VotingSystem.Data.Implementation
 
         public IRepository<TEntity> GetRepository<TEntity>() where TEntity : class
         {
-            if (_repositories == null) _repositories = new Dictionary<Type, object>();
+            if (_repositories == null)
+                _repositories = new Dictionary<Type, object>();
 
-            var type = typeof(TEntity);
-            if (!_repositories.ContainsKey(type)) _repositories[type] = new Repository<TEntity>(_context);
+            Type type = typeof(TEntity);
+
+            if (!_repositories.ContainsKey(type))
+                _repositories[type] = new Repository<TEntity>(_context);
+
             return (IRepository<TEntity>)_repositories[type];
         }
 
