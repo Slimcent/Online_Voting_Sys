@@ -1,7 +1,7 @@
 ﻿namespace OnlineVoting.Models.Dtos.Request
 {
     /// <summary>
-    /// Represents the information required to identify a user claim.
+    /// Represents the information required to update a user claim.
     /// </summary>
     public class UserClaimsRequest
     {
@@ -9,18 +9,24 @@
         /// The email address of the user who owns the claim.
         /// </summary>
         /// <example>user@example.com</example>
-        public string? Email { get; set; }
+        public required string Email { get; set; }
 
         /// <summary>
-        /// The type of the claim.
+        /// The type of the claim being updated.
         /// </summary>
         /// <example>Permission</example>
-        public string? ClaimType { get; set; }
+        public required string ClaimType { get; set; }
 
         /// <summary>
-        /// The value of the claim.
+        /// The new value of the claim.
+        /// </summary>
+        /// <example>ManageElection</example>
+        public required string ClaimValue { get; set; }
+
+        /// <summary>
+        /// The current claim value that should be replaced.
         /// </summary>
         /// <example>CreateElection</example>
-        public string? ClaimValue { get; set; }
+        public string? OldValue { get; set; }
     }
 }

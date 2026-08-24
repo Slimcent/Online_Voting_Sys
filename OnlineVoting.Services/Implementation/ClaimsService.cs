@@ -81,25 +81,25 @@ namespace OnlineVoting.Services.Implementation
             return operationIds;
         }
 
-        public async Task<Result<UserClaimsResponse>> CreateUserClaims(string email, string claimType, string claimValue)
+        public async Task<Result<UserClaimsResponse>> CreateUserClaims(UserClaimsRequest request)
         {
-            if (string.IsNullOrWhiteSpace(email))
+            if (string.IsNullOrWhiteSpace(request.Email))
                 return Result<UserClaimsResponse>.ValidationError("Email cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(claimType))
+            if (string.IsNullOrWhiteSpace(request.ClaimType))
                 return Result<UserClaimsResponse>.ValidationError("Claim type cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(claimValue))
+            if (string.IsNullOrWhiteSpace(request.ClaimValue))
                 return Result<UserClaimsResponse>.ValidationError("Claim value cannot be empty");
 
-            User user = await _userManager.FindByEmailAsync(email.Trim().ToLower());
+            User user = await _userManager.FindByEmailAsync(request.Email.Trim().ToLower());
             if (user == null)
-                return Result<UserClaimsResponse>.NotFound($"User with email {email} was not found");
+                return Result<UserClaimsResponse>.NotFound($"User with email {request.Email} was not found");
 
-            Claim claim = new Claim(claimType, claimValue, ClaimValueTypes.String);
+            Claim claim = new Claim(request.ClaimType, request.ClaimValue, ClaimValueTypes.String);
 
             IList<Claim> existingClaims = await _userManager.GetClaimsAsync(user);
-            bool claimExists = existingClaims.Any(x => x.Type == claimType && x.Value == claimValue);
+            bool claimExists = existingClaims.Any(x => x.Type == request.ClaimType && x.Value == request.ClaimValue);
 
             if (claimExists)
                 return Result<UserClaimsResponse>.Conflict("The user already has this claim");
@@ -115,8 +115,8 @@ namespace OnlineVoting.Services.Implementation
 
             UserClaimsResponse response = new UserClaimsResponse
             {
-                ClaimType = claimType,
-                ClaimValue = claimValue
+                ClaimType = request.ClaimType,
+                ClaimValue = request.ClaimValue
             };
 
             return Result<UserClaimsResponse>.Created(response);
@@ -148,11 +148,14 @@ namespace OnlineVoting.Services.Implementation
             return Result<string>.Success("User removed from claim successfully");
         }
 
-        public async Task<Result<EditUserClaimsRequest>> EditUserClaims(EditUserClaimsRequest userClaimsDto)
+        public async Task<Result<UserClaimsRequest>> EditUserClaims(UserClaimsRequest userClaimsDto)
         {
             User user = await _userManager.FindByEmailAsync(userClaimsDto.Email.Trim());
             if (user == null)
-                return Result<EditUserClaimsRequest>.NotFound($"User with email {userClaimsDto.Email} was not found");
+                return Result<UserClaimsRequest>.NotFound($"User with email {userClaimsDto.Email} was not found");
+
+            if (string.IsNullOrWhiteSpace(userClaimsDto.OldValue))
+                return Result<UserClaimsRequest>.ValidationError("Old claim value cannot be empty.");
 
             Claim newClaim = new Claim(userClaimsDto.ClaimType.Trim().ToLower(), userClaimsDto.ClaimValue.Trim().ToLower());
 
@@ -162,12 +165,12 @@ namespace OnlineVoting.Services.Implementation
             bool oldClaimExists = existingClaims.Any(x => x.Type == oldClaim.Type && x.Value == oldClaim.Value);
 
             if (!oldClaimExists)
-                return Result<EditUserClaimsRequest>.NotFound("The claim to edit was not found for this user");
+                return Result<UserClaimsRequest>.NotFound("The claim to edit was not found for this user");
 
             bool newClaimExists = existingClaims.Any(x => x.Type == newClaim.Type && x.Value == newClaim.Value);
 
             if (newClaimExists)
-                return Result<EditUserClaimsRequest>.Conflict("The user already has the new claim");
+                return Result<UserClaimsRequest>.Conflict("The user already has the new claim");
 
             IdentityResult result = await _userManager.ReplaceClaimAsync(user, oldClaim, newClaim);
 
@@ -175,10 +178,10 @@ namespace OnlineVoting.Services.Implementation
             {
                 string errorMessage = string.Join("\n", result.Errors.Select(x => x.Description));
 
-                return Result<EditUserClaimsRequest>.ValidationError(errorMessage);
+                return Result<UserClaimsRequest>.ValidationError(errorMessage);
             }
 
-            EditUserClaimsRequest response = new EditUserClaimsRequest
+            UserClaimsRequest response = new UserClaimsRequest
             {
                 Email = userClaimsDto.Email,
                 ClaimType = userClaimsDto.ClaimType,
@@ -186,7 +189,7 @@ namespace OnlineVoting.Services.Implementation
                 OldValue = userClaimsDto.OldValue
             };
 
-            return Result<EditUserClaimsRequest>.Success(response);
+            return Result<UserClaimsRequest>.Success(response);
         }
 
         public async Task<Result<IEnumerable<UserClaimsResponse>>> GetUserClaims(string email)

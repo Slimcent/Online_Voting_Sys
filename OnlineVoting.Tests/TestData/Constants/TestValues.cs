@@ -23,5 +23,8 @@
         public const string ValidRole = "Student";
         public const int ValidGenderId = 1;
         public const int ValidUserType = 2;
+        public const string ValidClaimType = "Permission";
+        public const string ValidClaimValue = "ManageElection";
+        public const string ValidOldClaimValue = "CreateElection";
     }
 }

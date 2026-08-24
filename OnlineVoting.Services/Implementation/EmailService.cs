@@ -93,7 +93,7 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<Result<string>> SendChangeEmail(ChangeEmailRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.NewEmail.ToLower().Trim()) || string.IsNullOrWhiteSpace(request.RecoveryEmail.ToLower().Trim()))
+            if (string.IsNullOrWhiteSpace(request.NewEmail) || string.IsNullOrWhiteSpace(request.RecoveryEmail))
                 return Result<string>.ValidationError("Invalid data sent");
 
             User user = await _userManager.FindByEmailAsync(request.Email);
