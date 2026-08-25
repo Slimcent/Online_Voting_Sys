@@ -17,7 +17,7 @@ namespace OnlineVoting.Api.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.11")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -290,7 +290,7 @@ namespace OnlineVoting.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<bool>("Activated")
+                    b.Property<bool>("Active")
                         .HasColumnType("bit");
 
                     b.Property<DateTime>("CreatedAt")
@@ -327,7 +327,7 @@ namespace OnlineVoting.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<bool>("Activated")
+                    b.Property<bool>("Active")
                         .HasColumnType("bit");
 
                     b.Property<DateTime>("CreatedAt")

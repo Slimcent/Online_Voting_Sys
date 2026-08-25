@@ -16,7 +16,7 @@ namespace OnlineVoting.Tests.UnitTests.Models.Context
             Faculty faculty = new()
             {
                 Name = "Engineering",
-                Activated = true
+                Active = true
             };
 
             context.Faculties.Add(faculty);
@@ -42,7 +42,7 @@ namespace OnlineVoting.Tests.UnitTests.Models.Context
             Faculty faculty = new()
             {
                 Name = "Engineering",
-                Activated = true
+                Active = true
             };
 
             context.Faculties.Add(faculty);
@@ -75,7 +75,7 @@ namespace OnlineVoting.Tests.UnitTests.Models.Context
             Faculty faculty = new()
             {
                 Name = "Engineering",
-                Activated = true
+                Active = true
             };
 
             context.Faculties.Add(faculty);
@@ -97,7 +97,7 @@ namespace OnlineVoting.Tests.UnitTests.Models.Context
             Faculty faculty = new()
             {
                 Name = "Engineering",
-                Activated = true
+                Active = true
             };
 
             context.Faculties.Add(faculty);

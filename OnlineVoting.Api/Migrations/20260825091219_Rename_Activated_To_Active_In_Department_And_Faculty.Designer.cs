@@ -12,8 +12,8 @@ using OnlineVoting.Models.Context;
 namespace OnlineVoting.Api.Migrations
 {
     [DbContext(typeof(VotingDbContext))]
-    [Migration("20260821214151_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260825091219_Rename_Activated_To_Active_In_Department_And_Faculty")]
+    partial class Rename_Activated_To_Active_In_Department_And_Faculty
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -255,6 +255,9 @@ namespace OnlineVoting.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -279,7 +282,7 @@ namespace OnlineVoting.Api.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Contestans");
+                    b.ToTable("Contestants");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Department", b =>

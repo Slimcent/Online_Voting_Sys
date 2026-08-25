@@ -129,7 +129,7 @@ namespace OnlineVoting.Models.Context
             //        .IsUnicode(false)
             //        .HasColumnName("DEPARTMENT_ID");
 
-            //    entity.Property(e => e.Activated).HasColumnName("ACTIVATED");
+            //    entity.Property(e => e.Active).HasColumnName("ACTIVATED");
 
             //    entity.Property(e => e.Name)
             //        .IsRequired()
@@ -161,7 +161,7 @@ namespace OnlineVoting.Models.Context
             //        .HasColumnName("FACULTY_ID")
             //        .IsFixedLength(false);
 
-            //    entity.Property(e => e.Activated).HasColumnName("ACTIVATED");
+            //    entity.Property(e => e.Active).HasColumnName("ACTIVATED");
 
             //    entity.Property(e => e.Name)
             //        .IsRequired()

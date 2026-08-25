@@ -109,4 +109,6 @@ public interface IRepository<T>
     Task<IEnumerable<T>> GetByAsSplitQueryAsync(Expression<Func<T, bool>>? predicate = null,
         Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, int? skip = null, int? take = null,
         Func<IQueryable<T>, IIncludableQueryable<T, object>>? include = null, bool tracking = false);
+
+    Task<List<TResult>> SelectAsync<TResult>(Expression<Func<T, bool>> predicate, Expression<Func<T, TResult>> selector);
 }

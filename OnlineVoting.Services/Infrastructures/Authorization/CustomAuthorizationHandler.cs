@@ -57,9 +57,9 @@ namespace OnlineVoting.Services.Infrastructures.Authorization
 
             bool userRoleHasClaim = userRoles.Any(userRole => userRole.Active && userRole.Role.Active
                 && userRole.Role.RoleClaims.Any(roleClaim => roleClaim.Active
-                && roleClaim.ClaimValue == routeClaim));
+                && roleClaim.ClaimValue.Trim().ToLower() == routeClaim));
 
-            bool userClaimHasClaim = userClaims.Any(userClaim => userClaim.Active && userClaim.ClaimValue == routeClaim);
+            bool userClaimHasClaim = userClaims.Any(userClaim => userClaim.Active && userClaim.ClaimValue.Trim().ToLower() == routeClaim);
 
             if (userRoleHasClaim || userClaimHasClaim)
             {

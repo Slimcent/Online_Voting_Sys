@@ -370,6 +370,13 @@ public class Repository<T> : IRepository<T> where T : class
         await SaveAsync();
     }
 
+    public async Task<List<TResult>> SelectAsync<TResult>(Expression<Func<T, bool>> predicate, Expression<Func<T, TResult>> selector)
+    {
+        return await _dbSet.Where(predicate)
+            .Select(selector)
+            .ToListAsync();
+    }
+
     protected virtual void Dispose(bool disposing)
     {
         if (!disposedValue)

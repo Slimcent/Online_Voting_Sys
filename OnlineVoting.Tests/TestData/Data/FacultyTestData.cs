@@ -1,4 +1,6 @@
 ﻿using OnlineVoting.Models.Context;
+using OnlineVoting.Models.Dtos.Request;
+using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
 
 namespace OnlineVoting.Tests.TestData.Data
@@ -10,7 +12,7 @@ namespace OnlineVoting.Tests.TestData.Data
             return new Faculty
             {
                 Name = name,
-                Activated = activated
+                Active = activated
             };
         }
 
@@ -39,17 +41,36 @@ namespace OnlineVoting.Tests.TestData.Data
             faculty.Departments.Add(new Department
             {
                 Name = "Computer Engineering",
-                Activated = true
+                Active = true
             });
 
             faculty.Departments.Add(new Department
             {
                 Name = "Electrical Engineering",
-                Activated = true
+                Active = true
             });
 
             await context.Faculties.AddAsync(faculty);
             await context.SaveChangesAsync(true);
+        }
+
+        public static CreateFacultyRequest CreateFacultyRequest(string? name = "Engineering", List<string>? names = null)
+        {
+            return new CreateFacultyRequest
+            {
+                Name = name,
+                Names = names
+            };
+        }
+
+        public static FacultyResponse CreateFacultyResponse(long id = 1, string name = "Engineering", bool active = true)
+        {
+            return new FacultyResponse
+            {
+                Id = id,
+                Name = name,
+                Active = active
+            };
         }
     }
 }

@@ -138,11 +138,11 @@ namespace OnlineVoting.Tests.UnitTests.Data.Extensions
 
             PagedList<Faculty> result = await context.Faculties.GetPagedItems(
                 parameters,
-                faculty => faculty.Activated);
+                faculty => faculty.Active);
 
             Assert.Equal(2, result.Count);
             Assert.Equal(2, result.MetaData.TotalCount);
-            Assert.All(result, faculty => Assert.True(faculty.Activated));
+            Assert.All(result, faculty => Assert.True(faculty.Active));
         }
 
         [Fact]
@@ -159,7 +159,7 @@ namespace OnlineVoting.Tests.UnitTests.Data.Extensions
                 OrderBy = "Name desc"
             };
 
-            PagedList<Faculty> result = await context.Faculties.GetPagedItems(parameters, faculty => faculty.Activated);
+            PagedList<Faculty> result = await context.Faculties.GetPagedItems(parameters, faculty => faculty.Active);
 
             Assert.Equal(2, result.Count);
             Assert.Equal("Science", result[0].Name);
@@ -202,17 +202,17 @@ namespace OnlineVoting.Tests.UnitTests.Data.Extensions
                 new Faculty
                 {
                     Name = "Engineering",
-                    Activated = true
+                    Active = true
                 },
                 new Faculty
                 {
                     Name = "Arts",
-                    Activated = false
+                    Active = false
                 },
                 new Faculty
                 {
                     Name = "Science",
-                    Activated = true
+                    Active = true
                 }
             };
 

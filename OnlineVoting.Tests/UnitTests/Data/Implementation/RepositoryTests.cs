@@ -270,7 +270,7 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
 
             await FacultyTestData.SeedFaculties(context);
 
-            long result = repository.Count(faculty => faculty.Activated);
+            long result = repository.Count(faculty => faculty.Active);
 
             Assert.Equal(2, result);
         }
@@ -286,7 +286,7 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
 
             await FacultyTestData.SeedFaculties(context);
 
-            long result = await repository.CountAsync(faculty => faculty.Activated);
+            long result = await repository.CountAsync(faculty => faculty.Active);
 
             Assert.Equal(2, result);
         }
@@ -358,10 +358,10 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
 
             await FacultyTestData.SeedFaculties(context);
 
-            IEnumerable<Faculty> result = repository.GetBy(faculty => faculty.Activated);
+            IEnumerable<Faculty> result = repository.GetBy(faculty => faculty.Active);
 
             Assert.Equal(2, result.Count());
-            Assert.All(result, faculty => Assert.True(faculty.Activated));
+            Assert.All(result, faculty => Assert.True(faculty.Active));
         }
 
         [Fact]
@@ -396,10 +396,10 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
 
             await FacultyTestData.SeedFaculties(context);
 
-            IEnumerable<Faculty> result = await repository.GetByAsync(faculty => faculty.Activated);
+            IEnumerable<Faculty> result = await repository.GetByAsync(faculty => faculty.Active);
 
             Assert.Equal(2, result.Count());
-            Assert.All(result, faculty => Assert.True(faculty.Activated));
+            Assert.All(result, faculty => Assert.True(faculty.Active));
         }
 
         [Fact]
@@ -500,7 +500,7 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
 
             await FacultyTestData.SeedFaculties(context);
 
-            IQueryable<Faculty> query = repository.GetQueryable(faculty => faculty.Activated,
+            IQueryable<Faculty> query = repository.GetQueryable(faculty => faculty.Active,
                 orderBy: items => items.OrderBy(faculty => faculty.Name),
                 skip: 1,
                 take: 1);
@@ -522,7 +522,7 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
 
             await FacultyTestData.SeedFaculties(context);
 
-            IEnumerable<Faculty> result = await repository.GetByAsync(faculty => faculty.Activated, tracking: false);
+            IEnumerable<Faculty> result = await repository.GetByAsync(faculty => faculty.Active, tracking: false);
 
             Faculty faculty = result.First();
 
@@ -540,7 +540,7 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
 
             await FacultyTestData.SeedFaculties(context);
 
-            IEnumerable<Faculty> result = await repository.GetByAsync(faculty => faculty.Activated, tracking: true);
+            IEnumerable<Faculty> result = await repository.GetByAsync(faculty => faculty.Active, tracking: true);
 
             Faculty faculty = result.First();
 
@@ -686,7 +686,7 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
             foreach (Faculty faculty in faculties)
             {
                 context.Entry(faculty).State = EntityState.Detached;
-                faculty.Activated = false;
+                faculty.Active = false;
             }
 
             Repository<Faculty> repository = new(context);
@@ -699,7 +699,7 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
 
             List<Faculty> savedFaculties = await verificationContext.Faculties.ToListAsync();
 
-            Assert.Contains(savedFaculties, faculty => faculty.Activated);
+            Assert.Contains(savedFaculties, faculty => faculty.Active);
         }
 
         [Fact]
@@ -717,7 +717,7 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
             foreach (Faculty faculty in faculties)
             {
                 context.Entry(faculty).State = EntityState.Detached;
-                faculty.Activated = false;
+                faculty.Active = false;
             }
 
             Repository<Faculty> repository = new(context);
@@ -729,7 +729,7 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
             List<Faculty> savedFaculties = await verificationContext.Faculties.ToListAsync();
 
             Assert.Equal(3, savedFaculties.Count);
-            Assert.All(savedFaculties, faculty => Assert.False(faculty.Activated));
+            Assert.All(savedFaculties, faculty => Assert.False(faculty.Active));
         }
 
         [Fact]
@@ -941,7 +941,7 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
 
             await FacultyTestData.SeedFaculties(context);
 
-            List<Faculty> faculties = await context.Faculties.Where(faculty => faculty.Activated).ToListAsync();
+            List<Faculty> faculties = await context.Faculties.Where(faculty => faculty.Active).ToListAsync();
 
             Repository<Faculty> repository = new(context);
 
@@ -968,7 +968,7 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
 
             await FacultyTestData.SeedFaculties(context);
 
-            bool result = repository.DeleteRange(faculty => faculty.Activated);
+            bool result = repository.DeleteRange(faculty => faculty.Active);
 
             Assert.True(result);
 
@@ -995,7 +995,7 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
 
             await FacultyTestData.SeedFaculties(context);
 
-            List<Faculty> faculties = await context.Faculties.Where(faculty => faculty.Activated).ToListAsync();
+            List<Faculty> faculties = await context.Faculties.Where(faculty => faculty.Active).ToListAsync();
 
             Repository<Faculty> repository = new(context);
 
@@ -1020,7 +1020,7 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
 
             await FacultyTestData.SeedFaculties(context);
 
-            await repository.DeleteRangeAsync(faculty => faculty.Activated);
+            await repository.DeleteRangeAsync(faculty => faculty.Active);
 
             await using VotingDbContext verificationContext = TestDbContextFactory.Create(databaseName);
 
@@ -1106,7 +1106,7 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
                 OrderBy = "Name"
             };
 
-            PagedList<Faculty> result = await repository.GetPagedItems(parameters, faculty => faculty.Activated);
+            PagedList<Faculty> result = await repository.GetPagedItems(parameters, faculty => faculty.Active);
 
             Assert.Equal(2, result.Count);
             Assert.Equal(2, result.MetaData.TotalCount);
@@ -1143,7 +1143,7 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
             await FacultyTestData.SeedFaculties(context);
 
             Faculty? result = await repository.LastAsync(
-                faculty => faculty.Activated,
+                faculty => faculty.Active,
                 query => query.OrderBy(faculty => faculty.Name));
 
             Assert.NotNull(result);
@@ -1218,10 +1218,10 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
 
             await FacultyTestData.SeedFaculties(context);
 
-            IEnumerable<Faculty> result = await repository.GetByAsSplitQueryAsync(faculty => faculty.Activated);
+            IEnumerable<Faculty> result = await repository.GetByAsSplitQueryAsync(faculty => faculty.Active);
 
             Assert.Equal(2, result.Count());
-            Assert.All(result, faculty => Assert.True(faculty.Activated));
+            Assert.All(result, faculty => Assert.True(faculty.Active));
         }
 
         [Fact]
