@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Newtonsoft.Json;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
@@ -7,27 +6,25 @@ using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Interfaces;
 using System.Security.Claims;
-using OnlineVoting.Data.Interfaces;
+using VotingSystem.Logger;
 
 namespace OnlineVoting.Services.Implementation
 {
     public class ClaimsService : IClaimsService
     {
         private readonly UserManager<User> _userManager;
-        private readonly IMapper _mapper;
-        private readonly IServiceFactory _serviceFactory;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly ILoggerMessage _loggerMessage;
 
         public ClaimsService(IServiceFactory serviceFactory)
         {
             _userManager = serviceFactory.GetService<UserManager<User>>();
-            _serviceFactory = serviceFactory;
-            _unitOfWork = _serviceFactory.GetService<IUnitOfWork>();
-            _mapper = _serviceFactory.GetService<IMapper>();
+            _loggerMessage = serviceFactory.GetService<ILoggerMessage>();
         }
 
         public async Task<List<string>> GetRouteNames(string baseUrl)
         {
+            _loggerMessage.LogInfo("Route names request received.");
+
             List<string> operationIds = new();
 
             using (HttpClient client = new())
@@ -71,10 +68,12 @@ namespace OnlineVoting.Services.Implementation
                             operationIds.Add(operationPatch);
                         }
                     }
+
+                    _loggerMessage.LogInfo($"{operationIds.Count} route names found.");
                 }
                 else
                 {
-                    Console.WriteLine("Internal server Error");
+                    _loggerMessage.LogWarn("Route names request failed because the Swagger document could not be retrieved.");
                 }
             }
 
@@ -83,26 +82,53 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<Result<UserClaimsResponse>> CreateUserClaims(UserClaimsRequest request)
         {
+            _loggerMessage.LogInfo($"User claim creation request received for email {request.Email}.");
+
             if (string.IsNullOrWhiteSpace(request.Email))
+            {
+                _loggerMessage.LogWarn("User claim creation failed because the email was empty.");
+
                 return Result<UserClaimsResponse>.ValidationError("Email cannot be empty");
+            }
 
             if (string.IsNullOrWhiteSpace(request.ClaimType))
+            {
+                _loggerMessage.LogWarn("User claim creation failed because the claim type was empty.");
+
                 return Result<UserClaimsResponse>.ValidationError("Claim type cannot be empty");
+            }
 
             if (string.IsNullOrWhiteSpace(request.ClaimValue))
+            {
+                _loggerMessage.LogWarn("User claim creation failed because the claim value was empty.");
+
                 return Result<UserClaimsResponse>.ValidationError("Claim value cannot be empty");
+            }
 
-            User user = await _userManager.FindByEmailAsync(request.Email.Trim().ToLower());
+            string email = request.Email.Trim();
+            string claimType = request.ClaimType.Trim();
+            string claimValue = request.ClaimValue.Trim();
+
+            User user = await _userManager.FindByEmailAsync(email);
+
             if (user == null)
-                return Result<UserClaimsResponse>.NotFound($"User with email {request.Email} was not found");
+            {
+                _loggerMessage.LogWarn($"User claim creation failed because user with email {email} was not found.");
 
-            Claim claim = new Claim(request.ClaimType, request.ClaimValue, ClaimValueTypes.String);
+                return Result<UserClaimsResponse>.NotFound($"User with email {request.Email} was not found");
+            }
+
+            Claim claim = new Claim(claimType, claimValue, ClaimValueTypes.String);
 
             IList<Claim> existingClaims = await _userManager.GetClaimsAsync(user);
-            bool claimExists = existingClaims.Any(x => x.Type == request.ClaimType && x.Value == request.ClaimValue);
+            bool claimExists = existingClaims.Any(x => x.Type == claimType && x.Value == claimValue);
 
             if (claimExists)
+            {
+                _loggerMessage.LogWarn($"User claim creation skipped because user {user.Id} already has the claim.");
+
                 return Result<UserClaimsResponse>.Conflict("The user already has this claim");
+            }
 
             IdentityResult result = await _userManager.AddClaimAsync(user, claim);
 
@@ -110,31 +136,50 @@ namespace OnlineVoting.Services.Implementation
             {
                 string errorMessage = string.Join("\n", result.Errors.Select(x => x.Description));
 
+                _loggerMessage.LogWarn($"User claim creation failed for user {user.Id}.");
+
                 return Result<UserClaimsResponse>.ValidationError(errorMessage);
             }
 
             UserClaimsResponse response = new UserClaimsResponse
             {
-                ClaimType = request.ClaimType,
-                ClaimValue = request.ClaimValue
+                ClaimType = claimType,
+                ClaimValue = claimValue
             };
+
+            _loggerMessage.LogInfo($"Claim created successfully for user {user.Id}.");
 
             return Result<UserClaimsResponse>.Created(response);
         }
 
         public async Task<Result<string>> DeleteClaims(UserClaimsRequest request)
         {
-            User user = await _userManager.FindByEmailAsync(request.Email);
-            if (user == null)
-                return Result<string>.NotFound($"User with email {request.Email} was not found");
+            _loggerMessage.LogInfo($"User claim deletion request received for email {request.Email}.");
 
-            Claim claim = new Claim(request.ClaimType, request.ClaimValue);
+            string email = request.Email.Trim();
+            string claimType = request.ClaimType.Trim();
+            string claimValue = request.ClaimValue.Trim();
+
+            User user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
+            {
+                _loggerMessage.LogWarn($"User claim deletion failed because user with email {email} was not found.");
+
+                return Result<string>.NotFound($"User with email {request.Email} was not found");
+            }
+
+            Claim claim = new Claim(claimType, claimValue);
 
             IList<Claim> existingClaims = await _userManager.GetClaimsAsync(user);
-            bool claimExists = existingClaims.Any(x => x.Type == request.ClaimType && x.Value == request.ClaimValue);
+            bool claimExists = existingClaims.Any(x => x.Type == claimType && x.Value == claimValue);
 
             if (!claimExists)
+            {
+                _loggerMessage.LogWarn($"User claim deletion failed because the claim was not found for user {user.Id}.");
+
                 return Result<string>.NotFound("The claim was not found for this user");
+            }
 
             IdentityResult result = await _userManager.RemoveClaimAsync(user, claim);
 
@@ -142,35 +187,64 @@ namespace OnlineVoting.Services.Implementation
             {
                 string errorMessage = string.Join("\n", result.Errors.Select(x => x.Description));
 
+                _loggerMessage.LogWarn($"User claim deletion failed for user {user.Id}.");
+
                 return Result<string>.ValidationError(errorMessage);
             }
+
+            _loggerMessage.LogInfo($"Claim removed successfully from user {user.Id}.");
 
             return Result<string>.Success("User removed from claim successfully");
         }
 
-        public async Task<Result<UserClaimsRequest>> EditUserClaims(UserClaimsRequest userClaimsDto)
+        public async Task<Result<UserClaimsResponse>> EditUserClaims(UserClaimsRequest request)
         {
-            User user = await _userManager.FindByEmailAsync(userClaimsDto.Email.Trim());
+            _loggerMessage.LogInfo($"User claim update request received for email {request.Email}.");
+
+            string email = request.Email.Trim();
+
+            User user = await _userManager.FindByEmailAsync(email);
+
             if (user == null)
-                return Result<UserClaimsRequest>.NotFound($"User with email {userClaimsDto.Email} was not found");
+            {
+                _loggerMessage.LogWarn($"User claim update failed because user with email {email} was not found.");
 
-            if (string.IsNullOrWhiteSpace(userClaimsDto.OldValue))
-                return Result<UserClaimsRequest>.ValidationError("Old claim value cannot be empty.");
+                return Result<UserClaimsResponse>.NotFound($"User with email {request.Email} was not found");
+            }
 
-            Claim newClaim = new Claim(userClaimsDto.ClaimType.Trim().ToLower(), userClaimsDto.ClaimValue.Trim().ToLower());
+            if (string.IsNullOrWhiteSpace(request.OldValue))
+            {
+                _loggerMessage.LogWarn($"User claim update failed because the old claim value was empty for user {user.Id}.");
 
-            Claim oldClaim = new Claim(userClaimsDto.ClaimType.Trim().ToLower(), userClaimsDto.OldValue.Trim().ToLower());
+                return Result<UserClaimsResponse>.ValidationError("Old claim value cannot be empty.");
+            }
+
+            string claimType = request.ClaimType.Trim();
+            string claimValue = request.ClaimValue.Trim();
+            string oldValue = request.OldValue.Trim();
+
+            Claim newClaim = new Claim(claimType, claimValue);
+
+            Claim oldClaim = new Claim(claimType, oldValue);
 
             IList<Claim> existingClaims = await _userManager.GetClaimsAsync(user);
             bool oldClaimExists = existingClaims.Any(x => x.Type == oldClaim.Type && x.Value == oldClaim.Value);
 
             if (!oldClaimExists)
-                return Result<UserClaimsRequest>.NotFound("The claim to edit was not found for this user");
+            {
+                _loggerMessage.LogWarn($"User claim update failed because the existing claim was not found for user {user.Id}.");
+
+                return Result<UserClaimsResponse>.NotFound("The claim to edit was not found for this user");
+            }
 
             bool newClaimExists = existingClaims.Any(x => x.Type == newClaim.Type && x.Value == newClaim.Value);
 
             if (newClaimExists)
-                return Result<UserClaimsRequest>.Conflict("The user already has the new claim");
+            {
+                _loggerMessage.LogWarn($"User claim update failed because user {user.Id} already has the new claim.");
+
+                return Result<UserClaimsResponse>.Conflict("The user already has the new claim");
+            }
 
             IdentityResult result = await _userManager.ReplaceClaimAsync(user, oldClaim, newClaim);
 
@@ -178,26 +252,38 @@ namespace OnlineVoting.Services.Implementation
             {
                 string errorMessage = string.Join("\n", result.Errors.Select(x => x.Description));
 
-                return Result<UserClaimsRequest>.ValidationError(errorMessage);
+                _loggerMessage.LogWarn($"User claim update failed for user {user.Id}.");
+
+                return Result<UserClaimsResponse>.ValidationError(errorMessage);
             }
 
-            UserClaimsRequest response = new UserClaimsRequest
+            UserClaimsResponse response = new UserClaimsResponse
             {
-                Email = userClaimsDto.Email,
-                ClaimType = userClaimsDto.ClaimType,
-                ClaimValue = userClaimsDto.ClaimValue,
-                OldValue = userClaimsDto.OldValue
+                Email = email,
+                ClaimType = claimType,
+                ClaimValue = claimValue,
+                OldValue = oldValue
             };
 
-            return Result<UserClaimsRequest>.Success(response);
+            _loggerMessage.LogInfo($"Claim updated successfully for user {user.Id}.");
+
+            return Result<UserClaimsResponse>.Success(response);
         }
 
         public async Task<Result<IEnumerable<UserClaimsResponse>>> GetUserClaims(string email)
         {
-            User user = await _userManager.FindByEmailAsync(email);
+            _loggerMessage.LogInfo($"User claims request received for email {email}.");
+
+            string userEmail = email.Trim();
+
+            User user = await _userManager.FindByEmailAsync(userEmail);
 
             if (user == null)
+            {
+                _loggerMessage.LogWarn($"User claims request failed because user with email {userEmail} was not found.");
+
                 return Result<IEnumerable<UserClaimsResponse>>.NotFound($"User with email {email} was not found");
+            }
 
             IList<Claim> claims = await _userManager.GetClaimsAsync(user);
 
@@ -206,6 +292,8 @@ namespace OnlineVoting.Services.Implementation
                 ClaimType = x.Type,
                 ClaimValue = x.Value
             });
+
+            _loggerMessage.LogInfo($"{claims.Count} claims found for user {user.Id}.");
 
             return Result<IEnumerable<UserClaimsResponse>>.Success(response);
         }

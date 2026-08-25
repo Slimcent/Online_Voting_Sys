@@ -9,7 +9,7 @@ namespace OnlineVoting.Services.Interfaces
         Task<List<string>> GetRouteNames(string baseUrl);
         Task<Result<UserClaimsResponse>> CreateUserClaims(UserClaimsRequest request);
         Task<Result<string>> DeleteClaims(UserClaimsRequest request);
-        Task<Result<UserClaimsRequest>> EditUserClaims(UserClaimsRequest userClaimsDto);
+        Task<Result<UserClaimsResponse>> EditUserClaims(UserClaimsRequest userClaimsDto);
         Task<Result<IEnumerable<UserClaimsResponse>>> GetUserClaims(string email);
     }
 }

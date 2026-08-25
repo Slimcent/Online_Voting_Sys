@@ -43,7 +43,7 @@ namespace OnlineVoting.Api.Controllers
         [ApiDocumentation(ClaimsDocumentationKeys.EditClaim)]
         public async Task<IActionResult> EditClaim([FromBody] UserClaimsRequest request)
         {
-            Result<UserClaimsRequest> result = await _claimsService.EditUserClaims(request);
+            Result<UserClaimsResponse> result = await _claimsService.EditUserClaims(request);
 
             return result.ToActionResult(this);
         }

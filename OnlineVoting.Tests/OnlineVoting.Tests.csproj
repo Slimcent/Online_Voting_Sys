@@ -33,7 +33,6 @@
     <Folder Include="IntegrationTests\Database\" />
     <Folder Include="TestData\Fixtures\" />
     <Folder Include="UnitTests\Api\" />
-    <Folder Include="UnitTests\Services\" />
   </ItemGroup>
 
 </Project>
