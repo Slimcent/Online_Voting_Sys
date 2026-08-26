@@ -59,7 +59,7 @@ namespace OnlineVoting.Api.Documentation.Definitions.EndpointDefinitions
         {
             Dictionary<string, ApiResponseDocumentation> responses = new()
             {
-                ["200"] = new ApiResponseDocumentation
+                ["201"] = new ApiResponseDocumentation
                 {
                     Description = successDescription
                 },

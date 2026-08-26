@@ -17,7 +17,7 @@ namespace OnlineVoting.Api.Documentation.Definitions.EndpointDefinitions
 
                 Responses = new Dictionary<string, ApiResponseDocumentation>
                 {
-                    ["200"] = new ApiResponseDocumentation
+                    ["201"] = new ApiResponseDocumentation
                     {
                         Description = "The department was created successfully.",
 
