@@ -73,7 +73,6 @@ namespace OnlineVoting.Api.Middlewares
             services.AddScoped<DbContext, VotingDbContext>();
             services.AddScoped<IServiceFactory, ServiceFactory>();
             services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
-            services.AddSingleton<ILoggerMessage, VotingSystem.Logger.LoggerMessage>();
             services.AddHttpContextAccessor();
             services.AddScoped<ICurrentUserContext, CurrentUserContext>();
 
@@ -264,6 +263,8 @@ namespace OnlineVoting.Api.Middlewares
                     if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out TimeSpan retryAfter))
                         context.HttpContext.Response.Headers.RetryAfter = ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString();
 
+                    string correlationId = context.HttpContext.Items[CorrelationIdMiddleware.CorrelationIdItemName]?.ToString() ?? "Unavailable";
+
                     ProblemDetails problemDetails = new()
                     {
                         Status = StatusCodes.Status429TooManyRequests,
@@ -271,6 +272,9 @@ namespace OnlineVoting.Api.Middlewares
                         Detail = "The request limit has been exceeded. Try again later.",
                         Instance = context.HttpContext.Request.Path
                     };
+
+                    problemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
+                    problemDetails.Extensions["correlationId"] = correlationId;
 
                     await context.HttpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
                 };
