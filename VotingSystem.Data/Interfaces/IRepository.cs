@@ -2,7 +2,7 @@
 using OnlineVoting.Models.Pagination;
 using System.Linq.Expressions;
 
-namespace SchMgr_FUTO.Data.Interfaces;
+namespace OnlineVoting.Data.Interfaces;
 
 public interface IRepository<T>
 {
@@ -14,9 +14,9 @@ public interface IRepository<T>
 
     Task AddRangeAsync(IEnumerable<T> records);
 
-    long Count(Expression<Func<T, bool>> predicate = null);
+    long Count(Expression<Func<T, bool>>? predicate = null);
 
-    Task<long> CountAsync(Expression<Func<T, bool>> predicate = null);
+    Task<long> CountAsync(Expression<Func<T, bool>>? predicate = null);
 
     Task<decimal> SumAsync(Expression<Func<T, decimal>> predicate);
 
@@ -46,50 +46,49 @@ public interface IRepository<T>
 
     void Dispose();
 
-    IEnumerable<T> GetAll(Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, params string[] includeProperties);
+    IEnumerable<T> GetAll(Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, params string[] includeProperties);
 
-    Task<IEnumerable<T>> GetAllAsync(Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
-        Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null);
+    Task<IEnumerable<T>> GetAllAsync(Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>>? include = null);
 
-    IEnumerable<T> GetBy(Expression<Func<T, bool>> predicate = null,
-        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null,
+    IEnumerable<T> GetBy(Expression<Func<T, bool>>? predicate = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, int? skip = null, int? take = null,
         params string[] includeProperties);
 
-    Task<PagedList<T>> GetPagedItems(RequestParameters parameters, Expression<Func<T, bool>> predicate = null,
-        Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null);
+    Task<PagedList<T>> GetPagedItems(RequestParameters parameters, Expression<Func<T, bool>>? predicate = null,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>>? include = null);
 
-    Task<IEnumerable<T>> GetByAsync(Expression<Func<T, bool>> predicate = null,
-        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null,
+    Task<IEnumerable<T>> GetByAsync(Expression<Func<T, bool>>? predicate = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, int? skip = null, int? take = null,
         params string[] includeProperties);
 
-    Task<IEnumerable<T>> GetByAsync(Expression<Func<T, bool>> predicate = null,
-        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null,
-        Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null, bool tracking = false);
+    Task<IEnumerable<T>> GetByAsync(Expression<Func<T, bool>>? predicate = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, int? skip = null, int? take = null,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>>? include = null, bool tracking = false);
 
-    Task<T> GetSingleByAsync(Expression<Func<T, bool>> predicate = null,
-        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null,
-        Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null, bool tracking = false);
+    Task<T?> GetSingleByAsync(Expression<Func<T, bool>>? predicate = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, int? skip = null, int? take = null,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>>? include = null, bool tracking = false);
 
+    Task<T?> LastAsync(Expression<Func<T, bool>>? predicate = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>>? include = null, bool disableTracking = true);
 
-    Task<T> LastAsync(Expression<Func<T, bool>> predicate = null,
-        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
-        Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null, bool disableTracking = true);
+    T? GetById(object id);
 
-    T GetById(object id);
+    Task<T?> GetByIdAsync(object id);
 
-    Task<T> GetByIdAsync(object id);
+    Task<bool> AnyAsync(Expression<Func<T, bool>>? predicate = null);
 
-    Task<bool> AnyAsync(Expression<Func<T, bool>> predicate = null);
+    bool Any(Expression<Func<T, bool>>? predicate = null);
 
-    bool Any(Expression<Func<T, bool>> predicate = null);
+    IQueryable<T> GetQueryable(Expression<Func<T, bool>>? predicate = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, int? skip = null, int? take = null,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>>? include = null);
 
-    IQueryable<T> GetQueryable(Expression<Func<T, bool>> predicate = null,
-        Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null,
-        Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null);
+    T? GetSingleBy(Expression<Func<T, bool>> predicate);
 
-    T GetSingleBy(Expression<Func<T, bool>> predicate);
-
-    Task<T> GetSingleByAsync(Expression<Func<T, bool>> predicate);
+    Task<T?> GetSingleByAsync(Expression<Func<T, bool>> predicate);
 
     int Save();
 
@@ -98,8 +97,18 @@ public interface IRepository<T>
     T Update(T obj);
 
     Task<T> UpdateAsync(T obj, bool tracking = false);
+
     Task UpdateRangeAsync(IEnumerable<T> records);
+
     void UpdateRange(IEnumerable<T> records);
-    Task<T> GetSingleByAsSplitQueryAsync(Expression<Func<T, bool>> predicate = null, Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null, Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null, bool tracking = false);
-    Task<IEnumerable<T>> GetByAsSplitQueryAsync(Expression<Func<T, bool>> predicate = null, Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null, int? skip = null, int? take = null, Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null, bool tracking = false);
+
+    Task<T?> GetSingleByAsSplitQueryAsync(Expression<Func<T, bool>>? predicate = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, int? skip = null, int? take = null,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>>? include = null, bool tracking = false);
+
+    Task<IEnumerable<T>> GetByAsSplitQueryAsync(Expression<Func<T, bool>>? predicate = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null, int? skip = null, int? take = null,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>>? include = null, bool tracking = false);
+
+    Task<List<TResult>> SelectAsync<TResult>(Expression<Func<T, bool>> predicate, Expression<Func<T, TResult>> selector);
 }

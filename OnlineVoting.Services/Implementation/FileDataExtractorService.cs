@@ -5,27 +5,36 @@ using OfficeOpenXml;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Services.Extension;
 using OnlineVoting.Services.Interfaces;
+using VotingSystem.Logger;
 
 namespace OnlineVoting.Services.Implementation
 {
     public class FileDataExtractorService : IFileDataExtractorService
     {
         private readonly IConverter _converter;
+        private readonly ILoggerMessage _loggerMessage;
 
-        public FileDataExtractorService(IConverter converter)
+        public FileDataExtractorService(IConverter converter, ILoggerMessage loggerMessage)
         {
             _converter = converter;
+            _loggerMessage = loggerMessage;
         }
 
         public List<Dictionary<string, string>> ExtractFromExcel(IFormFile file, string[] nullableFields = null, string[] ignoreFields = null, int headerRow = 1, int contentRow = 2)
         {
+            _loggerMessage.LogInfo($"Excel extraction request received for file {file?.FileName}.");
+
             if (file == null)
             {
+                _loggerMessage.LogWarn("Excel extraction failed because the file was empty.");
+
                 throw new InvalidOperationException("File is empty");
             }
 
             if (!Path.GetExtension(file.FileName).Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
             {
+                _loggerMessage.LogWarn($"Excel extraction failed because file {file.FileName} has an incorrect format.");
+
                 throw new InvalidDataException("Incorrect file format");
             }
 
@@ -39,7 +48,7 @@ namespace OnlineVoting.Services.Implementation
 
             possibleEmptyFields = possibleEmptyFields.Select(c => c.ToLower()).ToList();
 
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            ExcelPackage.License.SetNonCommercialPersonal("OnlineVoting");
             using MemoryStream stream = new();
             file.CopyTo(stream);
             using ExcelPackage ep = new(stream);
@@ -72,6 +81,8 @@ namespace OnlineVoting.Services.Implementation
                     }
                     else if (worksheet.Cells[row, column].Value == null)
                     {
+                        _loggerMessage.LogWarn($"Excel extraction failed because file {file.FileName} contains an empty required field.");
+
                         throw new InvalidDataException("Excel has empty fields. Crosscheck it and submit again");
                     }
                     else
@@ -86,11 +97,16 @@ namespace OnlineVoting.Services.Implementation
                 excelData.Add(cell);
             }
             ep.Save();
+
+            _loggerMessage.LogInfo($"{excelData.Count} records extracted successfully from file {file.FileName}.");
+
             return excelData;
         }
 
         public PDFDto ConvertToPDF(string htmlString, string fileName)
         {
+            _loggerMessage.LogInfo($"PDF conversion request received for file {fileName}.");
+
             GlobalSettings globalSettings = new()
             {
                 ColorMode = ColorMode.Color,
@@ -121,7 +137,11 @@ namespace OnlineVoting.Services.Implementation
             };
             byte[] file = _converter.Convert(pdf);
 
+            _loggerMessage.LogInfo($"PDF conversion completed successfully for file {fileName}.");
+
             return new PDFDto() { FileStream = file, FileName = fileName };
         }
+
+
     }
 }

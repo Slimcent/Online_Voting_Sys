@@ -2,7 +2,28 @@
 {
     public class UserClaimsResponse
     {
-        public string? ClaimType { get; set; }
-        public string? ClaimValue { get; set; }
+        /// <summary>
+        /// The email address of the user who owns the claim.
+        /// </summary>
+        /// <example>user@example.com</example>
+        public string Email { get; set; }
+
+        /// <summary>
+        /// The type of the claim being updated.
+        /// </summary>
+        /// <example>Permission</example>
+        public string ClaimType { get; set; }
+
+        /// <summary>
+        /// The new value of the claim.
+        /// </summary>
+        /// <example>ManageElection</example>
+        public string ClaimValue { get; set; }
+
+        /// <summary>
+        /// The current claim value that should be replaced.
+        /// </summary>
+        /// <example>CreateElection</example>
+        public string OldValue { get; set; }
     }
 }

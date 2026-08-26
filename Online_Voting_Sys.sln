@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.32112.339
+# Visual Studio Version 18
+VisualStudioVersion = 18.9.12112.369
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OnlineVoting.Api", "OnlineVoting.Api\OnlineVoting.Api.csproj", "{AD603F8B-7D92-44C6-A60A-5A88047398CE}"
 EndProject
@@ -14,6 +14,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VotingSystem.Data", "VotingSystem.Data\VotingSystem.Data.csproj", "{AF59832A-8238-4A9E-9486-88FF346A3ED9}"
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{D7E3D6B4-5A3B-4A27-92D2-6F92F1F1B001}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnlineVoting.Tests", "OnlineVoting.Tests\OnlineVoting.Tests.csproj", "{DE547B08-9E95-4552-A7D3-68A18FCE068D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -91,6 +93,18 @@ Global
 		{D7E3D6B4-5A3B-4A27-92D2-6F92F1F1B001}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D7E3D6B4-5A3B-4A27-92D2-6F92F1F1B001}.Release|x64.ActiveCfg = Release|Any CPU
 		{D7E3D6B4-5A3B-4A27-92D2-6F92F1F1B001}.Release|x86.ActiveCfg = Release|Any CPU
+		{DE547B08-9E95-4552-A7D3-68A18FCE068D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE547B08-9E95-4552-A7D3-68A18FCE068D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE547B08-9E95-4552-A7D3-68A18FCE068D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DE547B08-9E95-4552-A7D3-68A18FCE068D}.Debug|x64.Build.0 = Debug|Any CPU
+		{DE547B08-9E95-4552-A7D3-68A18FCE068D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DE547B08-9E95-4552-A7D3-68A18FCE068D}.Debug|x86.Build.0 = Debug|Any CPU
+		{DE547B08-9E95-4552-A7D3-68A18FCE068D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE547B08-9E95-4552-A7D3-68A18FCE068D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE547B08-9E95-4552-A7D3-68A18FCE068D}.Release|x64.ActiveCfg = Release|Any CPU
+		{DE547B08-9E95-4552-A7D3-68A18FCE068D}.Release|x64.Build.0 = Release|Any CPU
+		{DE547B08-9E95-4552-A7D3-68A18FCE068D}.Release|x86.ActiveCfg = Release|Any CPU
+		{DE547B08-9E95-4552-A7D3-68A18FCE068D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

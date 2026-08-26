@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 
-namespace OnlineVoting.Services.Infrastructures.Extensions
+namespace OnlineVoting.Models.Extensions
 {
     public static class ClaimsPrincipalExtension
     {

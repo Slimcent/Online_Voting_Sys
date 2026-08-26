@@ -14,7 +14,7 @@ namespace OnlineVoting.Api.Documentation.Definitions.EndpointDefinitions
 
                 Responses = new Dictionary<string, ApiResponseDocumentation>
                 {
-                    ["200"] = new ApiResponseDocumentation
+                    ["201"] = new ApiResponseDocumentation
                     {
                         Description = "The student was created successfully."
                     },
@@ -76,7 +76,7 @@ namespace OnlineVoting.Api.Documentation.Definitions.EndpointDefinitions
 
                 Responses = new Dictionary<string, ApiResponseDocumentation>
                 {
-                    ["200"] = new ApiResponseDocumentation
+                    ["201"] = new ApiResponseDocumentation
                     {
                         Description = "The contestant was created successfully."
                     },
