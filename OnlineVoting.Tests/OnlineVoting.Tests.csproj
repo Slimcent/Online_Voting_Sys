@@ -35,4 +35,12 @@
     <Folder Include="UnitTests\Api\" />
   </ItemGroup>
 
+	<ItemGroup>
+		<None Include="..\OnlineVoting.Api\Template\EmailTemplate.html">
+			<Link>Template\EmailTemplate.html</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>Template\EmailTemplate.html</TargetPath>
+		</None>
+	</ItemGroup>
+
 </Project>
