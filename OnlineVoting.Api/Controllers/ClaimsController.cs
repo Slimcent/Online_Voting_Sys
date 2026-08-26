@@ -21,7 +21,7 @@ namespace OnlineVoting.Api.Controllers
 
         public ClaimsController(IClaimsService claimsService) => _claimsService = claimsService;
 
-        [HttpPost("addusertoclaims")]
+        [HttpPost("add-user-to-claims", Name = "Add-User-To-Claims")]
         [ApiDocumentation(ClaimsDocumentationKeys.AddUserToClaims)]
         public async Task<IActionResult> AddUserToClaims([FromBody] UserClaimsRequest request)
         {
@@ -30,7 +30,7 @@ namespace OnlineVoting.Api.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpPost("deleteclaim")]
+        [HttpPost("delete-claim", Name = "Delete-Claim")]
         [ApiDocumentation(ClaimsDocumentationKeys.DeleteClaim)]
         public async Task<IActionResult> DeleteClaim([FromBody] UserClaimsRequest request)
         {
@@ -39,7 +39,7 @@ namespace OnlineVoting.Api.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpPost("editclaim")]
+        [HttpPost("edit-claim", Name = "Edit-Claim")]
         [ApiDocumentation(ClaimsDocumentationKeys.EditClaim)]
         public async Task<IActionResult> EditClaim([FromBody] UserClaimsRequest request)
         {
@@ -48,7 +48,7 @@ namespace OnlineVoting.Api.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpGet("userclaims")]
+        [HttpGet("user-claims", Name = "Get-User-Claims")]
         [ApiDocumentation(ClaimsDocumentationKeys.GetUserClaims)]
         public async Task<IActionResult> GetUserClaims([FromQuery] string email)
         {

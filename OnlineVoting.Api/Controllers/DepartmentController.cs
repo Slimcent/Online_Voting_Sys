@@ -42,7 +42,7 @@ namespace OnlineVoting.Api.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpGet("{id:long}", Name = "Get-Department")]
+        [HttpGet("department/{id:long}", Name = "Get-Department")]
         public async Task<IActionResult> GetDepartment(long id)
         {
             Result<DepartmentResponse> result = await _departmentService.GetDepartment(id);
@@ -50,7 +50,7 @@ namespace OnlineVoting.Api.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpGet("faculty/{facultyId:long}", Name = "Get-Departments-By-Faculty")]
+        [HttpGet("departments-by-faculty/{facultyId:long}", Name = "Get-Departments-By-Faculty")]
         public async Task<IActionResult> GetDepartmentsByFacultyId(long facultyId)
         {
             Result<IEnumerable<DepartmentResponse>> result = await _departmentService.GetDepartmentsByFacultyId(facultyId);
@@ -58,7 +58,7 @@ namespace OnlineVoting.Api.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpGet("faculty/{facultyId:long}/paged-departments", Name = "Get-Paged-Departments-By-Faculty")]
+        [HttpGet("paged-departments-by-faculty/{facultyId:long}", Name = "Get-Paged-Departments-By-Faculty")]
         public async Task<IActionResult> GetDepartmentsByFacultyId(long facultyId, [FromQuery] DepartmentRequestParameters parameters)
         {
             Result<PagedResponse<DepartmentResponse>> result = await _departmentService.GetDepartmentsByFacultyId(facultyId, parameters);
@@ -66,7 +66,7 @@ namespace OnlineVoting.Api.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpPut("{id:long}", Name = "Update-Department")]
+        [HttpPut("update-department/{id:long}", Name = "Update-Department")]
         public async Task<IActionResult> UpdateDepartment(long id, [FromBody] CreateDepartmentRequest request)
         {
             Result<string> result = await _departmentService.UpdateDepartment(id, request);
@@ -74,7 +74,7 @@ namespace OnlineVoting.Api.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpPatch("{id:long}/department-activation", Name = "Department-Activation")]
+        [HttpPatch("department-activation/{id:long}", Name = "Department-Activation")]
         public async Task<IActionResult> ToggleDepartmentActivation(long id)
         {
             Result<string> result = await _departmentService.ToggleDepartmentActivation(id);
@@ -82,7 +82,7 @@ namespace OnlineVoting.Api.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpDelete("{id:long}", Name = "Delete-Department")]
+        [HttpDelete("delete-department/{id:long}", Name = "Delete-Department")]
         public async Task<IActionResult> DeleteDepartment(long id)
         {
             Result<string> result = await _departmentService.DeleteDepartment(id);

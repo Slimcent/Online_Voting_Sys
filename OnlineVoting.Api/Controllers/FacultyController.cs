@@ -6,7 +6,6 @@ using OnlineVoting.Api.Documentation.Definitions.Keys;
 using OnlineVoting.Api.Extensions;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
-using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Pagination;
 using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Interfaces;
@@ -43,7 +42,7 @@ namespace OnlineVoting.Api.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpGet("{id:long}", Name = "Get-Faculty")]
+        [HttpGet("faculty/{id:long}", Name = "Get-Faculty")]
         public async Task<IActionResult> GetFaculty(long id)
         {
             Result<FacultyResponse> result = await _facultyService.GetFaculty(id);
@@ -51,7 +50,7 @@ namespace OnlineVoting.Api.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpPut("{id:long}", Name = "Update-Faculty")]
+        [HttpPut("update-faculty/{id:long}", Name = "Update-Faculty")]
         public async Task<IActionResult> UpdateFaculty(long id, [FromBody] CreateWithNameRequest request)
         {
             Result<string> result = await _facultyService.UpdateFaculty(id, request);
@@ -59,7 +58,7 @@ namespace OnlineVoting.Api.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpPatch("{id:long}/faculty-activation", Name = "Faculty-Activation")]
+        [HttpPatch("faculty-activation/{id:long}", Name = "Faculty-Activation")]
         public async Task<IActionResult> ToggleFacultyActivation(long id)
         {
             Result<string> result = await _facultyService.ToggleFacultyActivation(id);
@@ -67,7 +66,7 @@ namespace OnlineVoting.Api.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpDelete("{id:long}", Name = "Delete-Faculty")]
+        [HttpDelete("delete-faculty/{id:long}", Name = "Delete-Faculty")]
         public async Task<IActionResult> DeleteFaculty(long id)
         {
             Result<string> result = await _facultyService.DeleteFaculty(id);
@@ -83,7 +82,7 @@ namespace OnlineVoting.Api.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpGet("{id:long}/faculty-with-departments", Name = "Get-Faculty-With-Departments")]
+        [HttpGet("faculty-with-departments/{id:long}", Name = "Get-Faculty-With-Departments")]
         public async Task<IActionResult> GetFacultyWithDepartments(long id)
         {
             Result<FacultyResponse> result = await _facultyService.GetFacultyWithDepartments(id);
