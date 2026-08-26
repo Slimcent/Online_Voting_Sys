@@ -15,7 +15,7 @@ namespace OnlineVoting.Api.Controllers
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
     [Authorize(Policy = "Authorization")]
-    public class ClaimsController : ControllerBase
+    public class ClaimsController : BaseController
     {
         private readonly IClaimsService _claimsService;
 
