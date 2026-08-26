@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace VotingSystem.Data.Extensions
 {
@@ -11,27 +7,32 @@ namespace VotingSystem.Data.Extensions
     {
         public static string CreateOrderQuery<T>(string orderByQueryString)
         {
-            var orderParams = orderByQueryString.Trim().Split(',');
-            var propertyInfos = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            var orderQueryBuilder = new StringBuilder();
+            string[] orderParams = orderByQueryString.Trim().Split(',');
+            PropertyInfo[] propertyInfos = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            StringBuilder orderQueryBuilder = new();
 
-            foreach (var param in orderParams)
+            foreach (string param in orderParams)
             {
                 if (string.IsNullOrWhiteSpace(param))
                     continue;
 
-                var propertyFromQueryName = param.Split(" ")[0];
-                var objectProperty = propertyInfos.FirstOrDefault(pi => pi.Name.Equals(propertyFromQueryName, StringComparison.InvariantCultureIgnoreCase));
+                string trimmedParam = param.Trim();
+                string propertyFromQueryName = trimmedParam.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0];
+
+                PropertyInfo? objectProperty = propertyInfos.FirstOrDefault(property =>
+                    property.Name.Equals(propertyFromQueryName, StringComparison.InvariantCultureIgnoreCase));
 
                 if (objectProperty == null)
                     continue;
 
-                var direction = param.EndsWith(" desc") ? "descending" : "ascending";
+                string direction = trimmedParam.EndsWith(" desc", StringComparison.InvariantCultureIgnoreCase)
+                    ? "descending"
+                    : "ascending";
 
                 orderQueryBuilder.Append($"{objectProperty.Name} {direction}, ");
             }
 
-            var orderQuery = orderQueryBuilder.ToString().TrimEnd(',', ' ');
+            string orderQuery = orderQueryBuilder.ToString().TrimEnd(',', ' ');
 
             return orderQuery;
         }

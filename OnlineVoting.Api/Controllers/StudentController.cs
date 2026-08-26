@@ -28,7 +28,7 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [ApiDocumentation(StudentDocumentationKeys.CreateStudent)]
-        [HttpPost("createstudent", Name = "Create-Students")]
+        [HttpPost("create-student", Name = "Create-Students")]
         public async Task<IActionResult> CreateStudent([FromBody] CreateStudentRequest request)
         {
             Result<Response> result = await _studentService.CreateStudent(request);
@@ -39,7 +39,7 @@ namespace OnlineVoting.Api.Controllers
         [DisableRateLimiting] // Disable rate limiting for this endpoint
         [ApiDocumentation(StudentDocumentationKeys.DownloadStudentsExcelTemplate)]
         [HttpGet("download-students-excel-template", Name = "Download-Students-Excel-Template")]
-        public async Task<IActionResult> DownloadCoursesSampleSheet()
+        public async Task<IActionResult> DownloadStudentsExcelTemplate()
         {
             Models.Dtos.Response.FileStreamResponse excelSheet = await _studentService.DownloadStudentsList();
 
@@ -47,8 +47,8 @@ namespace OnlineVoting.Api.Controllers
         }
 
         [ApiDocumentation(StudentDocumentationKeys.UploadStudents)]
-        [HttpPost("UploadStudents", Name = "Upload-Students")]
-        public async Task<IActionResult> UploadLecturers([FromForm] UploadStudentRequest students)
+        [HttpPost("upload-students", Name = "Upload-Students")]
+        public async Task<IActionResult> UploadStudents([FromForm] UploadStudentRequest students)
         {
             Result<string> result = await _studentService.UploadStudents(students);
 

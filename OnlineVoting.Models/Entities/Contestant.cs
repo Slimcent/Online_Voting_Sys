@@ -11,7 +11,7 @@ namespace OnlineVoting.Models.Entities
         public DateTime UpdatedAt { get; set; }
         public string? CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }
-        public bool Active { get; set; }
+        public bool Active { get; set; } = true;
         public virtual Student? Student { get; set; }
         public virtual Position? Position { get; set; }
     }

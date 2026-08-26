@@ -229,7 +229,7 @@ namespace VotingSystem.Data.SeedData
             Faculty faculty = new Faculty
             {
                 Name = facultyName,
-                Activated = true
+                Active = true
             };
 
             await context.Set<Faculty>().AddAsync(faculty);
@@ -260,7 +260,7 @@ namespace VotingSystem.Data.SeedData
             {
                 Name = departmentName,
                 FacultyId = faculty.Id,
-                Activated = true
+                Active = true
             };
 
             await context.Set<Department>().AddAsync(department);

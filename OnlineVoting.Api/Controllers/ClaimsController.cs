@@ -15,22 +15,22 @@ namespace OnlineVoting.Api.Controllers
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
     [Authorize(Policy = "Authorization")]
-    public class ClaimsController : ControllerBase
+    public class ClaimsController : BaseController
     {
         private readonly IClaimsService _claimsService;
 
         public ClaimsController(IClaimsService claimsService) => _claimsService = claimsService;
 
-        [HttpPost("addusertoclaims")]
+        [HttpPost("add-user-to-claims", Name = "Add-User-To-Claims")]
         [ApiDocumentation(ClaimsDocumentationKeys.AddUserToClaims)]
-        public async Task<IActionResult> AddUserToClaims([FromQuery] string email, [FromQuery] string claimType, [FromQuery] string claimValue)
+        public async Task<IActionResult> AddUserToClaims([FromBody] UserClaimsRequest request)
         {
-            Result<UserClaimsResponse> result = await _claimsService.CreateUserClaims(email, claimType, claimValue);
+            Result<UserClaimsResponse> result = await _claimsService.CreateUserClaims(request);
 
             return result.ToActionResult(this);
         }
 
-        [HttpPost("deleteclaim")]
+        [HttpPost("delete-claim", Name = "Delete-Claim")]
         [ApiDocumentation(ClaimsDocumentationKeys.DeleteClaim)]
         public async Task<IActionResult> DeleteClaim([FromBody] UserClaimsRequest request)
         {
@@ -39,16 +39,16 @@ namespace OnlineVoting.Api.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpPost("editclaim")]
+        [HttpPost("edit-claim", Name = "Edit-Claim")]
         [ApiDocumentation(ClaimsDocumentationKeys.EditClaim)]
-        public async Task<IActionResult> EditClaim([FromBody] EditUserClaimsRequest request)
+        public async Task<IActionResult> EditClaim([FromBody] UserClaimsRequest request)
         {
-            Result<EditUserClaimsRequest> result = await _claimsService.EditUserClaims(request);
+            Result<UserClaimsResponse> result = await _claimsService.EditUserClaims(request);
 
             return result.ToActionResult(this);
         }
 
-        [HttpGet("userclaims")]
+        [HttpGet("user-claims", Name = "Get-User-Claims")]
         [ApiDocumentation(ClaimsDocumentationKeys.GetUserClaims)]
         public async Task<IActionResult> GetUserClaims([FromQuery] string email)
         {

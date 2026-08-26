@@ -9,33 +9,24 @@ namespace OnlineVoting.Api.Documentation.Definitions.EndpointDefinitions
     {
         public static readonly IReadOnlyDictionary<
             string,
-            ApiOperationDocumentation> Operations =
-            new Dictionary<string, ApiOperationDocumentation>
+            ApiOperationDocumentation> Operations = new Dictionary<string, ApiOperationDocumentation>
             {
-                [RoleDocumentationKeys.GetAllRoles] =
-                    new ApiOperationDocumentation
+                [RoleDocumentationKeys.GetAllRoles] = new ApiOperationDocumentation
                     {
                         Summary = "Gets all roles.",
 
-                        Description =
-                            "Returns all roles, regardless of their current status.",
+                        Description = "Returns all roles, regardless of their current status.",
 
-                        Responses =
-                            CreateRoleListResponses(
-                                "The roles were returned successfully.")
+                        Responses = CreateRoleListResponses("The roles were returned successfully.")
                     },
 
-                [RoleDocumentationKeys.GetAllActiveRoles] =
-                    new ApiOperationDocumentation
+                [RoleDocumentationKeys.GetAllActiveRoles] = new ApiOperationDocumentation
                     {
                         Summary = "Gets all active roles.",
 
-                        Description =
-                            "Returns all roles that are currently active.",
+                        Description = "Returns all roles that are currently active.",
 
-                        Responses =
-                            CreateRoleListResponses(
-                                "The active roles were returned successfully.")
+                        Responses = CreateRoleListResponses("The active roles were returned successfully.")
                     },
 
                 [RoleDocumentationKeys.GetAllDeactivatedRoles] =
@@ -218,7 +209,7 @@ namespace OnlineVoting.Api.Documentation.Definitions.EndpointDefinitions
         {
             return new Dictionary<string, ApiResponseDocumentation>
             {
-                ["200"] =
+                ["201"] =
                     new ApiResponseDocumentation
                     {
                         Description = successDescription,

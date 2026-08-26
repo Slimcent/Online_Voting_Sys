@@ -10,8 +10,7 @@ using OnlineVoting.Services.Extension;
 using OnlineVoting.Services.Infrastructures;
 using OnlineVoting.Services.Interfaces;
 using OnlineVoting.Services.Utilities;
-using SchMgr_FUTO.Data.Interfaces;
-using VotingSystem.Data.Interfaces;
+using OnlineVoting.Data.Interfaces;
 using OnlineVoting.Models.Results;
 
 namespace OnlineVoting.Services.Implementation

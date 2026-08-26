@@ -21,9 +21,6 @@ namespace OnlineVoting.Api.Mapper
             CreateMap<Position, CreateWithNameRequest>();
             CreateMap<Position, PositionResponse>();
 
-            //Faculty
-            CreateMap<CreateWithNameRequest, Faculty>();
-
             //Department
             CreateMap<CreateDepartmentRequest, Department>();
 

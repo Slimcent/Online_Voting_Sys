@@ -1,17 +1,22 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Interfaces;
-using System;
+using OnlineVoting.Models.Extensions;
 
 namespace OnlineVoting.Models.Context
 {
     public class VotingDbContext : IdentityDbContext<User, Role, string, ApplicationUserClaim, ApplicationUserRole,
         IdentityUserLogin<string>, ApplicationRoleClaim, IdentityUserToken<string>>
     {
-        public VotingDbContext(DbContextOptions<VotingDbContext> options) : base(options)
+
+        private readonly ICurrentUserContext _currentUserContext;
+
+        public VotingDbContext(DbContextOptions<VotingDbContext> options, ICurrentUserContext currentUserContext) : base(options)
         {
+            _currentUserContext = currentUserContext;
         }
 
         public override int SaveChanges(bool acceptAllChangesOnSuccess)
@@ -28,26 +33,27 @@ namespace OnlineVoting.Models.Context
 
         private void OnBeforeSaving()
         {
-            var entries = ChangeTracker.Entries();
+            IEnumerable<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry> entries = ChangeTracker.Entries();
+            string? username = _currentUserContext.Username;
 
-            foreach (var entry in entries)
+            foreach (Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry in entries)
             {
                 if (entry.Entity is ITracker trackable)
                 {
-                    var now = DateTime.UtcNow;
-                    //var user = GetCurrentUser();
+                    DateTime now = DateTime.UtcNow;
+
                     switch (entry.State)
                     {
                         case EntityState.Modified:
                             trackable.UpdatedAt = now;
-                            //trackable.UpdatedBy = user;
+                            trackable.UpdatedBy = username;
                             break;
 
                         case EntityState.Added:
                             trackable.CreatedAt = now;
                             trackable.UpdatedAt = now;
-                            //trackable.CreatedBy = user;
-                            //trackable.UpdatedBy = user;
+                            trackable.CreatedBy = username;
+                            trackable.UpdatedBy = username;
                             break;
                     }
                 }
@@ -123,7 +129,7 @@ namespace OnlineVoting.Models.Context
             //        .IsUnicode(false)
             //        .HasColumnName("DEPARTMENT_ID");
 
-            //    entity.Property(e => e.Activated).HasColumnName("ACTIVATED");
+            //    entity.Property(e => e.Active).HasColumnName("ACTIVATED");
 
             //    entity.Property(e => e.Name)
             //        .IsRequired()
@@ -155,7 +161,7 @@ namespace OnlineVoting.Models.Context
             //        .HasColumnName("FACULTY_ID")
             //        .IsFixedLength(false);
 
-            //    entity.Property(e => e.Activated).HasColumnName("ACTIVATED");
+            //    entity.Property(e => e.Active).HasColumnName("ACTIVATED");
 
             //    entity.Property(e => e.Name)
             //        .IsRequired()

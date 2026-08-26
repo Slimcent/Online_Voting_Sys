@@ -5,12 +5,11 @@ using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
+using OnlineVoting.Models.Extensions;
 using OnlineVoting.Models.Pagination;
 using OnlineVoting.Models.Results;
-using OnlineVoting.Services.Infrastructures.Extensions;
 using OnlineVoting.Services.Interfaces;
-using SchMgr_FUTO.Data.Interfaces;
-using VotingSystem.Data.Interfaces;
+using OnlineVoting.Data.Interfaces;
 
 namespace OnlineVoting.Services.Implementation
 {

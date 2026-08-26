@@ -6,8 +6,8 @@ using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Pagination;
 using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Interfaces;
-using SchMgr_FUTO.Data.Interfaces;
-using VotingSystem.Data.Interfaces;
+using OnlineVoting.Data.Interfaces;
+
 
 namespace OnlineVoting.Services.Implementation
 {
