@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OnlineVoting.Models.Context;
 
@@ -11,9 +12,11 @@ using OnlineVoting.Models.Context;
 namespace OnlineVoting.Api.Migrations
 {
     [DbContext(typeof(VotingDbContext))]
-    partial class VotingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260826203853_Created_RefreshToken_Table")]
+    partial class Created_RefreshToken_Table
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -431,9 +434,6 @@ namespace OnlineVoting.Api.Migrations
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("FamilyExpiresAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("FamilyId")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -453,12 +453,6 @@ namespace OnlineVoting.Api.Migrations
                     b.Property<string>("RevokedReason")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
 
                     b.Property<string>("TokenHash")
                         .IsRequired()

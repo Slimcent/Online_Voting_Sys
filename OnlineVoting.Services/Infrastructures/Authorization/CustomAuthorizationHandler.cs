@@ -2,9 +2,10 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
-using OnlineVoting.Models.Entities;
 using OnlineVoting.Data.Interfaces;
+using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Extensions;
+using VotingSystem.Logger;
 
 
 namespace OnlineVoting.Services.Infrastructures.Authorization
@@ -14,12 +15,14 @@ namespace OnlineVoting.Services.Infrastructures.Authorization
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly IRepository<ApplicationUserClaim> _userClaimRepo;
         private readonly IRepository<ApplicationUserRole> _userRoleRepo;
+        private readonly ILoggerMessage _loggerMessage;
 
-        public CustomAuthorizationHandler(IHttpContextAccessor contextAccessor, IUnitOfWork unitOfWork)
+        public CustomAuthorizationHandler(IHttpContextAccessor contextAccessor, IUnitOfWork unitOfWork, ILoggerMessage loggerMessage)
         {
             _contextAccessor = contextAccessor;
             _userRoleRepo = unitOfWork.GetRepository<ApplicationUserRole>();
             _userClaimRepo = unitOfWork.GetRepository<ApplicationUserClaim>();
+            _loggerMessage = loggerMessage;
         }
 
         protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, AuthorizationRequirement requirement)
@@ -63,9 +66,13 @@ namespace OnlineVoting.Services.Infrastructures.Authorization
 
             if (userRoleHasClaim || userClaimHasClaim)
             {
+                _loggerMessage.LogInfo($"Authorization succeeded for user {userId}. Required claim: {routeClaim}");
+
                 context.Succeed(requirement);
                 return;
             }
+
+            _loggerMessage.LogWarn($"Authorization denied for user {userId}. Required claim: {routeClaim}");
 
             context.Fail();
         }

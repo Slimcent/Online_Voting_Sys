@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OnlineVoting.Models.Context;
 
@@ -11,9 +12,11 @@ using OnlineVoting.Models.Context;
 namespace OnlineVoting.Api.Migrations
 {
     [DbContext(typeof(VotingDbContext))]
-    partial class VotingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260826210720_Added_RowVersion_To_RefreshToken")]
+    partial class Added_RowVersion_To_RefreshToken
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

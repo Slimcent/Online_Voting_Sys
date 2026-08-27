@@ -117,6 +117,21 @@ namespace OnlineVoting.Services.Implementation
 
             JwtToken userToken = await GetTokenAsync(user, userRole);
 
+            RefreshTokenContext refreshTokenContext = new()
+            {
+                UserId = user.Id
+            };
+
+            Result<RefreshTokenResponse> refreshTokenResult = await _serviceFactory.GetService<IRefreshTokenService>()
+                .CreateRefreshToken(refreshTokenContext);
+
+            if (!refreshTokenResult.IsSuccess)
+            {
+                _loggerMessage.LogWarn($"Login failed because refresh token could not be created for user {user.Id}.");
+
+                return Result<LoggedInUserResponse>.FromFailure(refreshTokenResult);
+            }
+
             List<Claim> userClaims = (await _userManager.GetClaimsAsync(user)).ToList();
 
             List<string> userRoles = (await _userManager.GetRolesAsync(user)).ToList();

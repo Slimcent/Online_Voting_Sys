@@ -8,6 +8,7 @@ using OnlineVoting.Api.Extensions;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Request.Email;
 using OnlineVoting.Models.Dtos.Response;
+using OnlineVoting.Models.Dtos.Response.Jwt;
 using OnlineVoting.Models.Entities.Configurations;
 using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Interfaces;
@@ -22,11 +23,12 @@ namespace OnlineVoting.Api.Controllers
     {
         private readonly IUserService _userService;
         private readonly IEmailService _emailService;
-
-        public AuthController(IUserService userService, IEmailService emailService)
+        private readonly IRefreshTokenService _refreshTokenService;
+        public AuthController(IUserService userService, IEmailService emailService, IRefreshTokenService refreshTokenService)
         {
             _userService = userService;
             _emailService = emailService;
+            _refreshTokenService = refreshTokenService;
         }
 
         [AllowAnonymous]
@@ -105,6 +107,36 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> ChangeEmail([FromQuery] string userId, [FromBody] ChangeEmailRequestDto request)
         {
             Result<string> result = await _userService.ChangeEmail(userId, request);
+
+            return result.ToActionResult(this);
+        }
+
+        [AllowAnonymous]
+        [HttpPost("refresh-token", Name = "Refresh-Token")]
+        [ApiDocumentation(AuthDocumentationKeys.Auth.RefreshToken)]
+        public async Task<IActionResult> RefreshToken()
+        {
+            Result<JwtToken> result = await _refreshTokenService.RefreshAccessToken();
+
+            return result.ToActionResult(this);
+        }
+
+        [AllowAnonymous]
+        [HttpPost("logout", Name = "Logout")]
+        [ApiDocumentation(AuthDocumentationKeys.Auth.RefreshToken)]
+        public async Task<IActionResult> Logout()
+        {
+            Result<string> result = await _refreshTokenService.RevokeCurrentRefreshToken();
+
+            return result.ToActionResult(this);
+        }
+
+        [AllowAnonymous]
+        [HttpPost("logout-all", Name = "Logout-All")]
+        [ApiDocumentation(AuthDocumentationKeys.Auth.LogoutAll)]
+        public async Task<IActionResult> LogoutAll()
+        {
+            Result<string> result = await _refreshTokenService.RevokeAllCurrentUserTokens();
 
             return result.ToActionResult(this);
         }

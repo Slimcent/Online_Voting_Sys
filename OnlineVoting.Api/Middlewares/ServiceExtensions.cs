@@ -75,6 +75,7 @@ namespace OnlineVoting.Api.Middlewares
             services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
             services.AddHttpContextAccessor();
             services.AddScoped<ICurrentUserContext, CurrentUserContext>();
+            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
             return services;
         }

@@ -1,6 +1,6 @@
 ﻿using OnlineVoting.Models.Pagination;
 
-namespace OnlineVoting.Models.Dtos.Response
+namespace OnlineVoting.Models.Dtos.Request
 {
     /// <summary>
     /// Represents pagination, sorting and search parameters
