@@ -19,6 +19,12 @@
             public const string SendChangeEmailMail = "Auth.SendChangeEmailMail";
 
             public const string ChangeEmail = "Auth.ChangeEmail";
+
+            public const string RefreshToken = "Auth.RefreshToken";
+
+            public const string Logout = "Auth.Logout";
+
+            public const string LogoutAll = "Auth.LogoutAll";
         }
     }
 }

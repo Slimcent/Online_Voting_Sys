@@ -71,6 +71,7 @@ namespace OnlineVoting.Models.Context
         public virtual DbSet<Menu> Menus { get; set; }
         public virtual DbSet<Claims> Claims { get; set; }
         public virtual DbSet<UserType> UserTypes { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
 
 
@@ -103,6 +104,48 @@ namespace OnlineVoting.Models.Context
                     .WithOne(e => e.User)
                     .HasForeignKey(ur => ur.UserId)
                     .IsRequired();
+
+                b.HasMany(e => e.RefreshTokens)
+                    .WithOne(e => e.User)
+                    .HasForeignKey(refreshToken => refreshToken.UserId)
+                    .IsRequired();
+            });
+
+            modelBuilder.Entity<RefreshToken>(b =>
+            {
+                b.HasIndex(e => e.TokenHash)
+                    .IsUnique();
+
+                b.HasIndex(e => e.FamilyId);
+
+                b.Property(e => e.TokenHash)
+                    .IsRequired()
+                    .HasMaxLength(64);
+
+                b.Property(e => e.FamilyId)
+                    .IsRequired()
+                    .HasMaxLength(32);
+
+                b.Property(e => e.ReplacedByTokenHash)
+                    .HasMaxLength(64);
+
+                b.Property(e => e.RevokedReason)
+                    .HasMaxLength(200);
+
+                b.Property(e => e.CreatedByIp)
+                    .HasMaxLength(45);
+
+                b.Property(e => e.RevokedByIp)
+                    .HasMaxLength(45);
+
+                b.Property(e => e.UserAgent)
+                    .HasMaxLength(512);
+
+                b.Property(e => e.UserId)
+                    .IsRequired();
+
+                b.Property(e => e.RowVersion)
+                    .IsRowVersion();
             });
 
             modelBuilder.Entity<Role>(b =>
