@@ -1,17 +1,22 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Interfaces;
-using System;
+using OnlineVoting.Models.Extensions;
 
 namespace OnlineVoting.Models.Context
 {
     public class VotingDbContext : IdentityDbContext<User, Role, string, ApplicationUserClaim, ApplicationUserRole,
         IdentityUserLogin<string>, ApplicationRoleClaim, IdentityUserToken<string>>
     {
-        public VotingDbContext(DbContextOptions<VotingDbContext> options) : base(options)
+
+        private readonly ICurrentUserContext _currentUserContext;
+
+        public VotingDbContext(DbContextOptions<VotingDbContext> options, ICurrentUserContext currentUserContext) : base(options)
         {
+            _currentUserContext = currentUserContext;
         }
 
         public override int SaveChanges(bool acceptAllChangesOnSuccess)
@@ -28,26 +33,27 @@ namespace OnlineVoting.Models.Context
 
         private void OnBeforeSaving()
         {
-            var entries = ChangeTracker.Entries();
+            IEnumerable<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry> entries = ChangeTracker.Entries();
+            string? username = _currentUserContext.Username;
 
-            foreach (var entry in entries)
+            foreach (Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry entry in entries)
             {
                 if (entry.Entity is ITracker trackable)
                 {
-                    var now = DateTime.UtcNow;
-                    //var user = GetCurrentUser();
+                    DateTime now = DateTime.UtcNow;
+
                     switch (entry.State)
                     {
                         case EntityState.Modified:
                             trackable.UpdatedAt = now;
-                            //trackable.UpdatedBy = user;
+                            trackable.UpdatedBy = username;
                             break;
 
                         case EntityState.Added:
                             trackable.CreatedAt = now;
                             trackable.UpdatedAt = now;
-                            //trackable.CreatedBy = user;
-                            //trackable.UpdatedBy = user;
+                            trackable.CreatedBy = username;
+                            trackable.UpdatedBy = username;
                             break;
                     }
                 }
@@ -65,6 +71,7 @@ namespace OnlineVoting.Models.Context
         public virtual DbSet<Menu> Menus { get; set; }
         public virtual DbSet<Claims> Claims { get; set; }
         public virtual DbSet<UserType> UserTypes { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
 
 
@@ -97,6 +104,48 @@ namespace OnlineVoting.Models.Context
                     .WithOne(e => e.User)
                     .HasForeignKey(ur => ur.UserId)
                     .IsRequired();
+
+                b.HasMany(e => e.RefreshTokens)
+                    .WithOne(e => e.User)
+                    .HasForeignKey(refreshToken => refreshToken.UserId)
+                    .IsRequired();
+            });
+
+            modelBuilder.Entity<RefreshToken>(b =>
+            {
+                b.HasIndex(e => e.TokenHash)
+                    .IsUnique();
+
+                b.HasIndex(e => e.FamilyId);
+
+                b.Property(e => e.TokenHash)
+                    .IsRequired()
+                    .HasMaxLength(64);
+
+                b.Property(e => e.FamilyId)
+                    .IsRequired()
+                    .HasMaxLength(32);
+
+                b.Property(e => e.ReplacedByTokenHash)
+                    .HasMaxLength(64);
+
+                b.Property(e => e.RevokedReason)
+                    .HasMaxLength(200);
+
+                b.Property(e => e.CreatedByIp)
+                    .HasMaxLength(45);
+
+                b.Property(e => e.RevokedByIp)
+                    .HasMaxLength(45);
+
+                b.Property(e => e.UserAgent)
+                    .HasMaxLength(512);
+
+                b.Property(e => e.UserId)
+                    .IsRequired();
+
+                b.Property(e => e.RowVersion)
+                    .IsRowVersion();
             });
 
             modelBuilder.Entity<Role>(b =>
@@ -123,7 +172,7 @@ namespace OnlineVoting.Models.Context
             //        .IsUnicode(false)
             //        .HasColumnName("DEPARTMENT_ID");
 
-            //    entity.Property(e => e.Activated).HasColumnName("ACTIVATED");
+            //    entity.Property(e => e.Active).HasColumnName("ACTIVATED");
 
             //    entity.Property(e => e.Name)
             //        .IsRequired()
@@ -155,7 +204,7 @@ namespace OnlineVoting.Models.Context
             //        .HasColumnName("FACULTY_ID")
             //        .IsFixedLength(false);
 
-            //    entity.Property(e => e.Activated).HasColumnName("ACTIVATED");
+            //    entity.Property(e => e.Active).HasColumnName("ACTIVATED");
 
             //    entity.Property(e => e.Name)
             //        .IsRequired()

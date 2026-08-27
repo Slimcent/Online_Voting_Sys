@@ -2458,4 +2458,566 @@ already has a container image available if we later move to a hosting environmen
 
 ---
 
+# Automated Testing
+
+## Overview
+
+Automated tests were added to the project to make it easier to verify changes during the modernization.
+
+Testing was introduced gradually, starting with the models, followed by the services and controllers. Once the tests were stable locally, they were 
+
+added to the CI pipeline so that they run automatically when code is pushed.
+
+The testing work followed this order:
+
+```text
+Models
+  |
+  v
+Services
+  |
+  v
+Controllers
+  |
+  v
+CI
+```
+
+---
+
+## Test Setup
+
+The tests are contained in the `OnlineVoting.Tests` project and use xUnit as the test framework.
+
+Moq is used for mocking dependencies, while Entity Framework Core InMemory and SQLite are available for tests that require database behaviour.
+
+The main test packages are:
+
+```text
+Microsoft.NET.Test.Sdk
+xunit
+xunit.runner.visualstudio
+Moq
+coverlet.collector
+Microsoft.EntityFrameworkCore.InMemory
+Microsoft.EntityFrameworkCore.Sqlite
+SQLitePCLRaw.lib.e_sqlite3
+```
+
+The test project references:
+
+```text
+OnlineVoting.Api
+OnlineVoting.Models
+OnlineVoting.Services
+VotingSystem.Data
+```
+
+The current test structure is:
+
+```text
+OnlineVoting.Tests
+|
++-- UnitTests
+|
++-- IntegrationTests
+|   |
+|   +-- Api
+|   |
+|   +-- Data
+|   |
+|   +-- Database
+|
++-- TestData
+    |
+    +-- Constants
+    |
+    +-- Data
+    |
+    +-- Factories
+    |
+    +-- Fixtures
+```
+
+Shared test data and setup are kept under `TestData` instead of being repeated across test classes.
+
+---
+
+## Model Tests
+
+Testing started with the models.
+
+These tests cover the behaviour of the request, response, entity, pagination and other shared models used by the application.
+
+Starting here made it possible to verify the objects used by the rest of the application before testing the business and API layers.
+
+---
+
+## Service Tests
+
+After the model tests, tests were added and expanded for the service layer.
+
+The service tests cover the application's business logic without going through the controllers.
+
+The tested areas include:
+
+- roles;
+- claims;
+- faculties;
+- departments;
+- email operations;
+- user-related operations.
+
+Both successful operations and relevant failure cases are tested.
+
+The service tests also cover the `Result<T>` pattern introduced during the modernization. Services can return statuses such as:
+
+```text
+Success
+Created
+NoContent
+ValidationError
+NotFound
+Conflict
+Unauthorized
+Forbidden
+```
+
+This allows service behaviour to be tested directly without depending on ASP.NET Core HTTP responses.
+
+---
+
+## Email Service Tests
+
+Tests were added for the main email operations, including:
+
+- account creation;
+- password reset;
+- voter registration.
+
+These tests verify the email data and token generation without sending real emails.
+
+The email service uses:
+
+```text
+OnlineVoting.Api/Template/EmailTemplate.html
+```
+
+The test project copies this template to its output directory so that it is available when the email tests run.
+
+The following configuration was added to `OnlineVoting.Tests.csproj`:
+
+```xml
+<ItemGroup>
+    <None Include="..\OnlineVoting.Api\Template\EmailTemplate.html">
+        <Link>Template\EmailTemplate.html</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <TargetPath>Template\EmailTemplate.html</TargetPath>
+    </None>
+</ItemGroup>
+```
+
+---
+
+## Controller Tests
+
+Controller tests were added after the corresponding services had been tested.
+
+The services are mocked in these tests because the business logic is already covered by the service tests. The controller tests instead check 
+
+that request values are passed correctly to the service and that the returned `Result<T>` is converted into the expected HTTP response.
+
+Controller tests were added for:
+
+```text
+ClaimsController
+DepartmentController
+FacultyController
+RolesController
+```
+
+### ClaimsController
+
+The claims controller tests cover its calls to `IClaimsService` and the handling of the returned results.
+
+The tests were also updated when the controller was changed to inherit from `BaseController`.
+
+### DepartmentController
+
+The department controller tests cover:
+
+```text
+CreateDepartment
+GetDepartments
+GetDepartment
+GetDepartmentsByFacultyId
+GetDepartmentsByFacultyId with pagination
+UpdateDepartment
+ToggleDepartmentActivation
+DeleteDepartment
+```
+
+They verify request bodies, department and faculty IDs, pagination parameters, and the calls made to `IDepartmentService`.
+
+The tests also cover the endpoint names added during the controller cleanup:
+
+```text
+Create-Department
+Get-Departments
+Get-Department
+Get-Departments-By-Faculty
+Get-Paged-Departments-By-Faculty
+Update-Department
+Department-Activation
+Delete-Department
+```
+
+### FacultyController
+
+The faculty controller tests cover:
+
+```text
+CreateFaculty
+GetFaculties
+GetFaculty
+UpdateFaculty
+ToggleFacultyActivation
+DeleteFaculty
+GetFacultiesWithDepartments
+GetFacultyWithDepartments
+```
+
+They verify the values passed to `IFacultyService` and the HTTP results returned by the controller.
+
+The faculty endpoints were also tested after their URL templates and endpoint names were standardised.
+
+### RolesController
+
+The role service was already covered by service tests, so the `RolesController` tests focus on the controller itself.
+
+They verify that the correct `IRolesService` methods are called and that the service results are converted correctly into HTTP responses.
+
+---
+
+## Result Response Handling
+
+The modernized controllers use:
+
+```csharp
+return result.ToActionResult(this);
+```
+
+`ResultActionResultExtensions` handles the conversion from service results to HTTP responses:
+
+```text
+Success         -> 200 OK
+Created         -> 201 Created
+NoContent       -> 204 No Content
+ValidationError -> 400 Bad Request
+Unauthorized    -> 401 Unauthorized
+Forbidden       -> 403 Forbidden
+NotFound        -> 404 Not Found
+Conflict        -> 409 Conflict
+```
+
+This response handling is covered by the controller tests and avoids repeating the same response logic in every controller action.
+
+---
+
+## Local Verification
+
+Tests were run throughout the modernization rather than waiting until all changes were complete.
+
+Relevant test groups were run after each change, followed by the complete test suite once the model, service, and controller tests were in place.
+
+After the tests were passing locally, the next step was to run them automatically through GitHub Actions.
+
+---
+
+# Automated Testing in CI
+
+## CI Test Job
+
+The GitHub Actions workflow was updated to run the test suite automatically.
+
+Build and Test are separate jobs:
+
+```text
+Build ----+
+          |
+          +----> Docker
+          |
+Test -----+
+```
+
+The Build job restores and builds the solution in Release configuration.
+
+The Test job performs its own setup and runs:
+
+```text
+dotnet test Online_Voting_Sys.sln --configuration Release --no-restore
+```
+
+Keeping them separate makes it clear in GitHub Actions whether a failure comes from the build or from the tests.
+
+The Docker job depends on both jobs, so it only continues when Build and Test have succeeded.
+
+---
+
+## CI Triggers
+
+The workflow runs on every push.
+
+Pull requests targeting `development` or `main` also run the workflow.
+
+For feature branch pushes, Build and Test run automatically.
+
+For pull requests to `development` or `main`, the Docker image is also built for verification without being published.
+
+For pushes or merges to `development` and `main`, Docker publishing only continues after Build and Test have passed.
+
+Production deployment remains limited to `main`.
+
+---
+
+## Cross-Platform Email Template Fix
+
+The first CI test run exposed an issue with the email template path.
+
+The email template was previously loaded using:
+
+```
+Directory.GetCurrentDirectory() + "\\Template\\EmailTemplate.html"
+```
+
+This worked on Windows but failed on the Ubuntu runner used by GitHub Actions.
+
+Three email tests failed because the template could not be found:
+
+```
+SendResetPasswordEmail_WithExistingUser_ShouldGenerateTokenAndSendEmail
+SendVoterEmail_ShouldSendEmail
+SendCreateUserEmail_ShouldGenerateTokensAndSendEmail
+```
+
+The template path was changed to:
+
+```
+Path.Combine("Template", "EmailTemplate.html")
+```
+
+and the file is resolved relative to:
+
+```
+AppContext.BaseDirectory
+```
+
+This removed the Windows-specific path and made the template loading work on both Windows and Linux.
+
+---
+
+## CI Verification
+
+After fixing the template path, the complete test suite passed on the Ubuntu GitHub Actions runner:
+
+```
+Failed:   0
+Passed: 419
+Skipped: 0
+Total:  419
+```
+
+The current CI flow is:
+
+```
+Push / Pull Request
+        |
+   +----+----+
+   |         |
+ Build      Test
+   |         |
+   +----+----+
+        |
+      Docker
+        |
+ development/main
+        |
+    Docker Hub
+        |
+    main only
+        |
+      Deploy
+```
+
+Tests are now part of the normal development workflow. A failed build or failed test stops the Docker job and prevents the change from continuing to the later deployment stages.
+
+---
+
+# JWT and Authorization Improvements
+
+The JWT and authorization code was reviewed and cleaned up without changing the existing authentication or permission behaviour.
+
+## Authorization Logging
+
+Logging was added to `CustomAuthorizationHandler` to make authorization decisions easier to trace.
+
+Successful authorization is logged as information, while denied authorization is logged as a warning.
+
+```
+_loggerMessage.LogInfo($"Authorization succeeded for user {userId}. Required claim: {routeClaim}");
+
+_loggerMessage.LogWarn($"Authorization denied for user {userId}. Required claim: {routeClaim}");
+```
+
+The existing lowercase claim comparison was kept because claim values are not always stored with the same casing.
+
+## JWT Cleanup
+
+`JwtAuthenticator` was cleaned up by:
+
+- removing the unused `IdentityOptions`;
+- removing unnecessary `async` usage;
+- replacing `var` with explicit types;
+- marking the optional `expires` and `additionalClaims` parameters as nullable;
+- using UTF-8 for the signing key to match JWT validation.
+
+JWT generation is also logged without writing the token or secret to the logs.
+
+```
+_loggerMessage.LogInfo($"JWT token generated for user {user.Id} with role {role}");
+```
+
+The existing token claims, expiry behaviour, issuer, audience and signing algorithm were not changed.
+
+## Verification
+
+The project was built and the existing tests were run after the changes.
+
+The JWT and authorization behaviour remained unchanged while the implementation became cleaner and easier to trace.
+
+---
+
+# Controller and Endpoint Improvements
+
+The API controllers were reviewed to make their routes, endpoint names, response handling and documentation more consistent.
+
+## Controller Consistency
+
+Controllers being modernized were updated to inherit from `BaseController` so that common API behaviour is handled consistently.
+
+The controllers also use the shared `Result<T>` response handling where applicable:
+
+```
+return result.ToActionResult(this);
+```
+
+This keeps HTTP status handling out of the individual controller actions.
+
+## Route and Endpoint Names
+
+The Faculty and Department endpoints were updated to use clear URL templates instead of relying only on route parameters.
+
+```
+[HttpGet("faculty/{id:long}", Name = "Get-Faculty")]
+
+[HttpGet("department/{id:long}", Name = "Get-Department")]
+
+[HttpGet("departments-by-faculty/{facultyId:long}", Name = "Get-Departments-By-Faculty")]
+
+[HttpGet("paged-departments-by-faculty/{facultyId:long}", Name = "Get-Paged-Departments-By-Faculty")]
+```
+
+Each endpoint also has an explicit `Name`. These names are important because the custom authorization handler uses them when checking the user's claims.
+
+## API Documentation
+
+The Faculty and Department endpoints were connected to the custom Swagger documentation system using `ApiDocumentation`.
+
+Documentation keys were added for the individual operations and mapped to their definitions in:
+
+```
+FacultyDocumentation.cs
+DepartmentDocumentation.cs
+```
+
+Example Usage:
+
+```
+[ApiDocumentation(FacultyDocumentationKeys.GetFaculty)]
+
+[ApiDocumentation(DepartmentDocumentationKeys.GetDepartment)]
+```
+
+The documentation includes the endpoint summary, description, response type and expected error responses.
+
+## Verification
+
+The controller changes were covered by the controller tests added earlier.
+
+The tests passed after the route, endpoint name, `BaseController`, and documentation changes, confirming that the cleanup did not break the existing controller behaviour.
+
+---
+
+## Refresh Token Rotation and Session Revocation
+
+### Overview
+
+Refresh-token support was added so users can renew access tokens without signing in again while still keeping sessions revocable and auditable.
+
+The implementation includes:
+
+- cryptographically secure refresh tokens;
+- SHA-256 hashing before database storage;
+- `HttpOnly` and `Secure` cookies;
+- refresh-token rotation;
+- token-family tracking;
+- absolute family expiry;
+- logout and logout-all support;
+- token reuse detection;
+- optimistic concurrency using `RowVersion`;
+- IP address and user-agent tracking.
+
+The raw refresh token is never stored in the database.
+
+### Token Rotation
+
+Each refresh token is single-use.
+
+When a refresh succeeds:
+
+1. the current refresh token is revoked;
+2. a replacement token is created in the same family;
+3. the old token stores the hash of the replacement;
+4. the database changes are committed inside one transaction;
+5. the new cookie is written only after the transaction commits.
+
+If the refresh operation fails, the transaction is rolled back and the failed request does not create its own replacement token.
+
+### Token Reuse Detection
+
+During testing, a rotated token was initially rejected as a normal revoked token before the reuse-detection logic could run.
+
+Validation was updated so that a revoked token with a `ReplacedByTokenHash` is treated as a reused rotated token.
+
+When reuse is detected, all active tokens in that family are revoked.
+
+Tokens revoked through normal logout are still rejected, but they are not treated as rotation reuse.
+
+### Concurrent Refresh Requests
+
+`RowVersion` is used to protect against two requests trying to rotate the same refresh token at the same time.
+
+The losing request receives a concurrency failure, rolls back its transaction and revokes the active token created by the successful request.
+
+The final concurrent test produced:
+
+```
+Request 1 -> HTTP 200
+Request 2 -> HTTP 401
+```
+
+---
+
+---
+
 ---

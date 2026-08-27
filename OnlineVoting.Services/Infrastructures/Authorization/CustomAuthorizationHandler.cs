@@ -2,10 +2,10 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using OnlineVoting.Data.Interfaces;
 using OnlineVoting.Models.Entities;
-using OnlineVoting.Services.Infrastructures.Extensions;
-using SchMgr_FUTO.Data.Interfaces;
-using VotingSystem.Data.Interfaces;
+using OnlineVoting.Models.Extensions;
+using VotingSystem.Logger;
 
 
 namespace OnlineVoting.Services.Infrastructures.Authorization
@@ -15,12 +15,14 @@ namespace OnlineVoting.Services.Infrastructures.Authorization
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly IRepository<ApplicationUserClaim> _userClaimRepo;
         private readonly IRepository<ApplicationUserRole> _userRoleRepo;
+        private readonly ILoggerMessage _loggerMessage;
 
-        public CustomAuthorizationHandler(IHttpContextAccessor contextAccessor, IUnitOfWork unitOfWork)
+        public CustomAuthorizationHandler(IHttpContextAccessor contextAccessor, IUnitOfWork unitOfWork, ILoggerMessage loggerMessage)
         {
             _contextAccessor = contextAccessor;
             _userRoleRepo = unitOfWork.GetRepository<ApplicationUserRole>();
             _userClaimRepo = unitOfWork.GetRepository<ApplicationUserClaim>();
+            _loggerMessage = loggerMessage;
         }
 
         protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, AuthorizationRequirement requirement)
@@ -58,15 +60,19 @@ namespace OnlineVoting.Services.Infrastructures.Authorization
 
             bool userRoleHasClaim = userRoles.Any(userRole => userRole.Active && userRole.Role.Active
                 && userRole.Role.RoleClaims.Any(roleClaim => roleClaim.Active
-                && roleClaim.ClaimValue == routeClaim));
+                && roleClaim.ClaimValue.Trim().ToLower() == routeClaim));
 
-            bool userClaimHasClaim = userClaims.Any(userClaim => userClaim.Active && userClaim.ClaimValue == routeClaim);
+            bool userClaimHasClaim = userClaims.Any(userClaim => userClaim.Active && userClaim.ClaimValue.Trim().ToLower() == routeClaim);
 
             if (userRoleHasClaim || userClaimHasClaim)
             {
+                _loggerMessage.LogInfo($"Authorization succeeded for user {userId}. Required claim: {routeClaim}");
+
                 context.Succeed(requirement);
                 return;
             }
+
+            _loggerMessage.LogWarn($"Authorization denied for user {userId}. Required claim: {routeClaim}");
 
             context.Fail();
         }

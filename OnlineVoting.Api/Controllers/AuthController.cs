@@ -8,6 +8,7 @@ using OnlineVoting.Api.Extensions;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Request.Email;
 using OnlineVoting.Models.Dtos.Response;
+using OnlineVoting.Models.Dtos.Response.Jwt;
 using OnlineVoting.Models.Entities.Configurations;
 using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Interfaces;
@@ -22,14 +23,13 @@ namespace OnlineVoting.Api.Controllers
     {
         private readonly IUserService _userService;
         private readonly IEmailService _emailService;
-
-        public AuthController(IUserService userService, IEmailService emailService)
+        private readonly IRefreshTokenService _refreshTokenService;
+        public AuthController(IUserService userService, IEmailService emailService, IRefreshTokenService refreshTokenService)
         {
             _userService = userService;
             _emailService = emailService;
+            _refreshTokenService = refreshTokenService;
         }
-
-
 
         [AllowAnonymous]
         [HttpPost("login", Name = "Login")]
@@ -45,7 +45,7 @@ namespace OnlineVoting.Api.Controllers
         [AllowAnonymous]
         [HttpPost("verify-user", Name = "Verify-User")]
         [ApiDocumentation(AuthDocumentationKeys.Auth.VerifyUser)]
-        public async Task<IActionResult> VerifyUser(VerifyAccountRequest request)
+        public async Task<IActionResult> VerifyUser([FromBody] VerifyAccountRequest request)
         {
             Result<string> result = await _userService.VerifyUser(request);
 
@@ -55,7 +55,7 @@ namespace OnlineVoting.Api.Controllers
         [AllowAnonymous]
         [HttpPost("send-reset-password-mail", Name = "Request-Password-Mail")]
         [ApiDocumentation(AuthDocumentationKeys.Auth.SendResetPasswordMail)]
-        public async Task<IActionResult> SendResetPasswordMail(string email)
+        public async Task<IActionResult> SendResetPasswordMail([FromQuery] string email)
         {
             Result<string> result = await _emailService.SendResetPasswordEmail(email);
 
@@ -65,7 +65,7 @@ namespace OnlineVoting.Api.Controllers
         [AllowAnonymous]
         [HttpPost("reset-password", Name = "Reset-Password")]
         [ApiDocumentation(AuthDocumentationKeys.Auth.ResetPassword)]
-        public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
             Result<string> result = await _userService.ResetPassword(request);
 
@@ -74,36 +74,70 @@ namespace OnlineVoting.Api.Controllers
 
         [HttpPost("change-password", Name = "Change-Password")]
         [ApiDocumentation(AuthDocumentationKeys.Auth.ChangePassword)]
-        public async Task<IActionResult> ChangePassword(string userId, ChangePasswordRequest request)
+        public async Task<IActionResult> ChangePassword([FromQuery] string userId, [FromBody] ChangePasswordRequest request)
         {
             Result<string> result = await _userService.ChangePassword(userId, request);
+
             return result.ToActionResult(this);
         }
 
         [AllowAnonymous]
         [HttpPost("update-recovery-email", Name = "Update-Recovery-Email")]
         [ApiDocumentation(AuthDocumentationKeys.Auth.UpdateRecoveryEmail)]
-        public async Task<IActionResult> UpdateRecoveryEmail(string userId, string email)
+        public async Task<IActionResult> UpdateRecoveryEmail([FromQuery] string userId, [FromQuery] string email)
         {
-            await _userService.UpdateRecoveryEmail(userId, email);
-            return Ok();
+            Result<string> result = await _userService.UpdateRecoveryEmail(userId, email);
+
+            return result.ToActionResult(this);
         }
 
         [AllowAnonymous]
-        [HttpPost("send-change-email-mail", Name = "send-change-email-mail")]
+        [HttpPost("send-change-email-mail", Name = "Send-Change-Email-Mail")]
         [ApiDocumentation(AuthDocumentationKeys.Auth.SendChangeEmailMail)]
-        public async Task<IActionResult> SendResetEmail(ChangeEmailRequest request)
+        public async Task<IActionResult> SendChangeEmailMail([FromBody] ChangeEmailRequest request)
         {
             Result<string> result = await _emailService.SendChangeEmail(request);
+
             return result.ToActionResult(this);
         }
 
         [AllowAnonymous]
         [HttpPost("change-email", Name = "Change-Email")]
         [ApiDocumentation(AuthDocumentationKeys.Auth.ChangeEmail)]
-        public async Task<IActionResult> ChangeEmail(string userId, ChangeEmailRequestDto request)
+        public async Task<IActionResult> ChangeEmail([FromQuery] string userId, [FromBody] ChangeEmailRequestDto request)
         {
             Result<string> result = await _userService.ChangeEmail(userId, request);
+
+            return result.ToActionResult(this);
+        }
+
+        [AllowAnonymous]
+        [HttpPost("refresh-token", Name = "Refresh-Token")]
+        [ApiDocumentation(AuthDocumentationKeys.Auth.RefreshToken)]
+        public async Task<IActionResult> RefreshToken()
+        {
+            Result<JwtToken> result = await _refreshTokenService.RefreshAccessToken();
+
+            return result.ToActionResult(this);
+        }
+
+        [AllowAnonymous]
+        [HttpPost("logout", Name = "Logout")]
+        [ApiDocumentation(AuthDocumentationKeys.Auth.RefreshToken)]
+        public async Task<IActionResult> Logout()
+        {
+            Result<string> result = await _refreshTokenService.RevokeCurrentRefreshToken();
+
+            return result.ToActionResult(this);
+        }
+
+        [AllowAnonymous]
+        [HttpPost("logout-all", Name = "Logout-All")]
+        [ApiDocumentation(AuthDocumentationKeys.Auth.LogoutAll)]
+        public async Task<IActionResult> LogoutAll()
+        {
+            Result<string> result = await _refreshTokenService.RevokeAllCurrentUserTokens();
+
             return result.ToActionResult(this);
         }
     }

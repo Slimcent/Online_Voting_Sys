@@ -11,11 +11,11 @@ namespace OnlineVoting.Services.Extension
             if (string.IsNullOrEmpty(path))
                 return "File not found";
 
-            StreamReader str = new StreamReader(path);
-            string MailText = str.ReadToEnd();
-            str.Close();
+            string filePath = Path.Combine(AppContext.BaseDirectory, path);
 
-            return MailText;
+            using StreamReader streamReader = new(filePath);
+
+            return streamReader.ReadToEnd();
         }
 
         public static EmailDataDto SendVoterEmailData(EmailRequestDto request)
@@ -34,7 +34,7 @@ namespace OnlineVoting.Services.Extension
 
             string url = $"{request.AppUrl}";
 
-            string filePath = Directory.GetCurrentDirectory() + "\\Template\\EmailTemplate.html";
+            string filePath = Path.Combine("Template", "EmailTemplate.html");
             string MailText = GetFilePath(filePath);
 
             MailText = MailText.Replace("[Header]", $"Hello {request.ToName}")
@@ -70,7 +70,7 @@ namespace OnlineVoting.Services.Extension
 
             emailMessage.Date = DateTime.Now;
 
-            string filePath = Directory.GetCurrentDirectory() + "\\Template\\EmailTemplate.html";
+            string filePath = Path.Combine("Template", "EmailTemplate.html");
             string MailText = GetFilePath(filePath);
 
             string encodedUsername = MessageEncoder.EncodeString(request.ToEmail);
@@ -112,7 +112,7 @@ namespace OnlineVoting.Services.Extension
 
             emailMessage.Date = DateTime.Now;
 
-            string filePath = Directory.GetCurrentDirectory() + "\\Template\\EmailTemplate.html";
+            string filePath = Path.Combine("Template", "EmailTemplate.html");
             string MailText = GetFilePath(filePath);
 
             string encodedToken = MessageEncoder.EncodeString(request.ResetPasswordToken);
@@ -152,7 +152,7 @@ namespace OnlineVoting.Services.Extension
 
             emailMessage.Date = DateTime.Now;
 
-            string filePath = Directory.GetCurrentDirectory() + "\\Template\\EmailTemplate.html";
+            string filePath = Path.Combine("Template", "EmailTemplate.html");
             string MailText = GetFilePath(filePath);
 
             string encodedChangeEmailToken = MessageEncoder.EncodeString(request.ChangeEmailToken);

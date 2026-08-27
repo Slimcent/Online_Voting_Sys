@@ -2,6 +2,7 @@
 using OnlineVoting.Api.Documentation.Definitions.Keys;
 using OnlineVoting.Api.Documentation.Models;
 using OnlineVoting.Models.Dtos.Response;
+using OnlineVoting.Models.Dtos.Response.Jwt;
 
 namespace OnlineVoting.Api.Documentation.Definitions.EndpointDefinitions
 {
@@ -137,6 +138,59 @@ namespace OnlineVoting.Api.Documentation.Definitions.EndpointDefinitions
 
                 Responses = CreateAuthenticationOperationResponses("The email address was changed successfully.", includeNotFound: true,
                     includeConflict: true)
+            },
+
+            [AuthDocumentationKeys.Auth.RefreshToken] = new ApiOperationDocumentation
+            {
+                Summary = "Refreshes the access token.",
+                Description = "Uses the current refresh token to issue a new access token and rotate the refresh token.",
+
+                Responses = new Dictionary<string, ApiResponseDocumentation>
+                {
+                    ["200"] = new ApiResponseDocumentation
+                    {
+                        Description = "The access token was refreshed successfully.",
+                        ResponseType = typeof(JwtToken)
+                    },
+
+                    ["401"] = CommonApiResponses.Unauthorized("The refresh token is invalid, expired or revoked."),
+
+                    ["403"] = CommonApiResponses.Forbidden("The user account is inactive or has no assigned role.")
+                }
+            },
+
+            [AuthDocumentationKeys.Auth.Logout] = new ApiOperationDocumentation
+            {
+                Summary = "Logs out the current session.",
+                Description = "Revokes the refresh token for the current session and removes the refresh token cookie.",
+
+                Responses = new Dictionary<string, ApiResponseDocumentation>
+                {
+                    ["200"] = new ApiResponseDocumentation
+                    {
+                        Description = "The current session was logged out successfully.",
+                        ResponseType = typeof(string)
+                    },
+
+                    ["401"] = CommonApiResponses.Unauthorized("The refresh token is missing or invalid.")
+                }
+            },
+
+            [AuthDocumentationKeys.Auth.LogoutAll] = new ApiOperationDocumentation
+            {
+                Summary = "Logs out all user sessions.",
+                Description = "Revokes all active refresh tokens belonging to the current user and removes the current refresh token cookie.",
+
+                Responses = new Dictionary<string, ApiResponseDocumentation>
+                {
+                    ["200"] = new ApiResponseDocumentation
+                    {
+                        Description = "All user sessions were logged out successfully.",
+                        ResponseType = typeof(string)
+                    },
+
+                    ["401"] = CommonApiResponses.Unauthorized("The refresh token is missing or invalid.")
+                }
             }
         };
 

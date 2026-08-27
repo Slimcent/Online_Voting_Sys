@@ -13,7 +13,7 @@ namespace OnlineVoting.Services.Extension
         public static Models.Dtos.Response.FileStreamResponse ConvertToExcel<T>(this IList<T> collection, ExcelDownloadConfig config)
         {
             var stream = new MemoryStream();
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            ExcelPackage.License.SetNonCommercialPersonal("OnlineVoting");
 
             using (var ep = new ExcelPackage(stream))
             {

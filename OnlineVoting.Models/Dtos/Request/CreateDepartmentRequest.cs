@@ -1,4 +1,6 @@
-﻿namespace OnlineVoting.Models.Dtos.Request
+﻿using OnlineVoting.Models.Pagination;
+
+namespace OnlineVoting.Models.Dtos.Request
 {
     /// <summary>
     /// Represents the information required to create one or more departments.
@@ -21,6 +23,19 @@
         /// The identifier of the faculty to which the department belongs.
         /// </summary>
         /// <example>1</example>
-        public int FacultyId { get; set; }
+        public long FacultyId { get; set; }
+    }
+
+
+    /// <summary>
+    /// Provides pagination, sorting and search parameters for department requests.
+    /// </summary>
+    public class DepartmentRequestParameters : RequestParameters
+    {
+        /// <summary>
+        /// The identifier of the faculty used to filter departments.
+        /// </summary>
+        /// <example>1</example>
+        public long? FacultyId { get; set; }
     }
 }

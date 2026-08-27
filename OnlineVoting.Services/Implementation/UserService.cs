@@ -7,13 +7,12 @@ using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Dtos.Response.Jwt;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Results;
-using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Extension;
 using OnlineVoting.Services.Infrastructures;
 using OnlineVoting.Services.Interfaces;
-using SchMgr_FUTO.Data.Interfaces;
 using System.Security.Claims;
-using VotingSystem.Data.Interfaces;
+using OnlineVoting.Data.Interfaces;
+
 using VotingSystem.Logger;
 
 namespace OnlineVoting.Services.Implementation
@@ -117,6 +116,21 @@ namespace OnlineVoting.Services.Implementation
             string? userRole = allUserRoles.FirstOrDefault();
 
             JwtToken userToken = await GetTokenAsync(user, userRole);
+
+            RefreshTokenContext refreshTokenContext = new()
+            {
+                UserId = user.Id
+            };
+
+            Result<RefreshTokenResponse> refreshTokenResult = await _serviceFactory.GetService<IRefreshTokenService>()
+                .CreateRefreshToken(refreshTokenContext);
+
+            if (!refreshTokenResult.IsSuccess)
+            {
+                _loggerMessage.LogWarn($"Login failed because refresh token could not be created for user {user.Id}.");
+
+                return Result<LoggedInUserResponse>.FromFailure(refreshTokenResult);
+            }
 
             List<Claim> userClaims = (await _userManager.GetClaimsAsync(user)).ToList();
 

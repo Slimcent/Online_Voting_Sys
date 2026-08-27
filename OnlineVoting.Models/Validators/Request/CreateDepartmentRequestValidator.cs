@@ -4,8 +4,7 @@ using OnlineVoting.Models.Validators.Shared;
 
 namespace OnlineVoting.Models.Validators.Request
 {
-    public class CreateDepartmentRequestValidator
-        : AbstractValidator<CreateDepartmentRequest>
+    public class CreateDepartmentRequestValidator : AbstractValidator<CreateDepartmentRequest>
     {
         public CreateDepartmentRequestValidator()
         {
@@ -15,8 +14,7 @@ namespace OnlineVoting.Models.Validators.Request
 
             RuleFor(request => request)
                 .Must(HaveOneDepartmentInput)
-                .WithMessage(
-                    "Provide either a department name or a list of department names.");
+                .WithMessage("Provide either a department name or a list of department names.");
 
             RuleFor(request => request)
                 .Must(NotHaveBothDepartmentInputs)

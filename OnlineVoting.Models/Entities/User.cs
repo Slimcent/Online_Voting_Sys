@@ -18,8 +18,9 @@ namespace OnlineVoting.Models.Entities
         public virtual Student? Student { get; set; }
         public virtual UserType UserType { get; set; }
         public virtual ICollection<ApplicationUserClaim> Claims { get; set; }
+        public virtual ICollection<ApplicationUserRole> UserRoles { get; set; }
         public virtual ICollection<IdentityUserLogin<string>> Logins { get; set; }
         public virtual ICollection<IdentityUserToken<string>> Tokens { get; set; }
-        public virtual ICollection<ApplicationUserRole> UserRoles { get; set; }
+        public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     }
 }
