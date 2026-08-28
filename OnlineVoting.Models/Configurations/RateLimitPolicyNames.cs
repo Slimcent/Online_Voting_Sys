@@ -1,6 +1,6 @@
 ﻿using OnlineVoting.Models.Enums;
 
-namespace OnlineVoting.Models.Entities.Configurations
+namespace OnlineVoting.Models.Configurations
 {
     public static class RateLimitPolicyNames
     {

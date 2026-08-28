@@ -2,7 +2,7 @@
 
 namespace OnlineVoting.Models.Entities
 {
-    public class Faculty : ITracker
+    public class Faculty : ITracker, IAuditable
     {
         public Faculty()
         {

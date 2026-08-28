@@ -225,6 +225,159 @@ namespace OnlineVoting.Api.Migrations
                     b.ToTable("AspNetUserRoles", (string)null);
                 });
 
+            modelBuilder.Entity("OnlineVoting.Models.Entities.AuditLocation", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .HasColumnType("nvarchar(36)");
+
+                    b.Property<string>("AuditTrailId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("nvarchar(36)");
+
+                    b.Property<double?>("DeviceAccuracyMeters")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("DeviceLatitude")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("DeviceLocationCapturedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("DeviceLongitude")
+                        .HasColumnType("float");
+
+                    b.Property<string>("IpCity")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("IpCountry")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<double?>("IpLatitude")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("IpLongitude")
+                        .HasColumnType("float");
+
+                    b.Property<string>("IpRegion")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuditTrailId")
+                        .IsUnique();
+
+                    b.ToTable("AuditLocations");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.AuditOutcome", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("AuditOutcomes");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.AuditTrail", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .HasColumnType("nvarchar(36)");
+
+                    b.Property<string>("ActorUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ActorUsername")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("EndpointName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("EntityId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("EntityType")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("EventName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("HttpMethod")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<string>("NewValues")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OldValues")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("OutcomeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorUserId");
+
+                    b.HasIndex("CorrelationId");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("EndpointName");
+
+                    b.HasIndex("OutcomeId");
+
+                    b.HasIndex("EntityType", "EntityId");
+
+                    b.ToTable("AuditTrails");
+                });
+
             modelBuilder.Entity("OnlineVoting.Models.Entities.Claims", b =>
                 {
                     b.Property<long>("Id")
@@ -893,6 +1046,28 @@ namespace OnlineVoting.Api.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("OnlineVoting.Models.Entities.AuditLocation", b =>
+                {
+                    b.HasOne("OnlineVoting.Models.Entities.AuditTrail", "AuditTrail")
+                        .WithOne("Location")
+                        .HasForeignKey("OnlineVoting.Models.Entities.AuditLocation", "AuditTrailId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AuditTrail");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.AuditTrail", b =>
+                {
+                    b.HasOne("OnlineVoting.Models.Entities.AuditOutcome", "Outcome")
+                        .WithMany("AuditTrails")
+                        .HasForeignKey("OutcomeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Outcome");
+                });
+
             modelBuilder.Entity("OnlineVoting.Models.Entities.Claims", b =>
                 {
                     b.HasOne("OnlineVoting.Models.Entities.Menu", "Menu")
@@ -1028,6 +1203,16 @@ namespace OnlineVoting.Api.Migrations
                     b.Navigation("RegisteredVoter");
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.AuditOutcome", b =>
+                {
+                    b.Navigation("AuditTrails");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.AuditTrail", b =>
+                {
+                    b.Navigation("Location");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Department", b =>
