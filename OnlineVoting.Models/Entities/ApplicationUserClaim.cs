@@ -3,7 +3,7 @@ using OnlineVoting.Models.Interfaces;
 
 namespace OnlineVoting.Models.Entities
 {
-    public class ApplicationUserClaim : IdentityUserClaim<string>, ITracker
+    public class ApplicationUserClaim : IdentityUserClaim<string>, ITracker, IAuditable
     {
         public bool Active { get; set; }
         public string? CreatedBy { get; set; }

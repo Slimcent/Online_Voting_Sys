@@ -1,7 +1,7 @@
 ﻿using OnlineVoting.Models.Interfaces;
 namespace OnlineVoting.Models.Entities
 {
-    public class Position : ITracker
+    public class Position : ITracker, IAuditable
     {
         public Guid Id { get; set; }
         public string? Name { get; set; }

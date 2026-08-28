@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OnlineVoting.Models.Context;
 
@@ -11,9 +12,11 @@ using OnlineVoting.Models.Context;
 namespace OnlineVoting.Api.Migrations
 {
     [DbContext(typeof(VotingDbContext))]
-    partial class VotingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260827184230_Added_AuditTrail_Table")]
+    partial class Added_AuditTrail_Table
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -223,55 +226,6 @@ namespace OnlineVoting.Api.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
-                });
-
-            modelBuilder.Entity("OnlineVoting.Models.Entities.AuditLocation", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasMaxLength(36)
-                        .HasColumnType("nvarchar(36)");
-
-                    b.Property<string>("AuditTrailId")
-                        .IsRequired()
-                        .HasMaxLength(36)
-                        .HasColumnType("nvarchar(36)");
-
-                    b.Property<double?>("DeviceAccuracyMeters")
-                        .HasColumnType("float");
-
-                    b.Property<double?>("DeviceLatitude")
-                        .HasColumnType("float");
-
-                    b.Property<DateTime?>("DeviceLocationCapturedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<double?>("DeviceLongitude")
-                        .HasColumnType("float");
-
-                    b.Property<string>("IpCity")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("IpCountry")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<double?>("IpLatitude")
-                        .HasColumnType("float");
-
-                    b.Property<double?>("IpLongitude")
-                        .HasColumnType("float");
-
-                    b.Property<string>("IpRegion")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AuditTrailId")
-                        .IsUnique();
-
-                    b.ToTable("AuditLocations");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.AuditOutcome", b =>
@@ -1046,17 +1000,6 @@ namespace OnlineVoting.Api.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("OnlineVoting.Models.Entities.AuditLocation", b =>
-                {
-                    b.HasOne("OnlineVoting.Models.Entities.AuditTrail", "AuditTrail")
-                        .WithOne("Location")
-                        .HasForeignKey("OnlineVoting.Models.Entities.AuditLocation", "AuditTrailId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("AuditTrail");
-                });
-
             modelBuilder.Entity("OnlineVoting.Models.Entities.AuditTrail", b =>
                 {
                     b.HasOne("OnlineVoting.Models.Entities.AuditOutcome", "Outcome")
@@ -1208,11 +1151,6 @@ namespace OnlineVoting.Api.Migrations
             modelBuilder.Entity("OnlineVoting.Models.Entities.AuditOutcome", b =>
                 {
                     b.Navigation("AuditTrails");
-                });
-
-            modelBuilder.Entity("OnlineVoting.Models.Entities.AuditTrail", b =>
-                {
-                    b.Navigation("Location");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Department", b =>
