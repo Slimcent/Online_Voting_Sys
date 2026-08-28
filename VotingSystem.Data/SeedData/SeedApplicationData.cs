@@ -35,6 +35,7 @@ namespace VotingSystem.Data.SeedData
                 {
                     await SeedUserTypes(context, seed);
                     await SeedGenders(context, seed);
+                    await SeedAuditData.SeedAuditOutcomes(context);
 
                     // These records must be saved before the admin
                     // and student seed methods can query them.
