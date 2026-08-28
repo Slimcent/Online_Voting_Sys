@@ -4,6 +4,7 @@ using DinkToPdf.Contracts;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -15,14 +16,15 @@ using Microsoft.OpenApi;
 using OnlineVoting.Api.Configurations;
 using OnlineVoting.Api.Documentation.Filters;
 using OnlineVoting.Api.Filters;
+using OnlineVoting.Data.Interfaces;
 using OnlineVoting.Models.Configurations;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
-using OnlineVoting.Models.Entities.Configurations;
 using OnlineVoting.Models.Interfaces;
 using OnlineVoting.Models.Validators.Request;
 using OnlineVoting.Services.Implementation;
 using OnlineVoting.Services.Infrastructures;
+using OnlineVoting.Services.Infrastructures.Auditing;
 using OnlineVoting.Services.Infrastructures.Authorization;
 using OnlineVoting.Services.Infrastructures.Authorization.Jwt;
 using OnlineVoting.Services.Interfaces;
@@ -32,8 +34,9 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
 using VotingSystem.Data.Implementation;
-using OnlineVoting.Data.Interfaces;
 using VotingSystem.Logger;
+using Microsoft.AspNetCore.HttpOverrides;
+using System.Net;
 
 
 namespace OnlineVoting.Api.Middlewares
@@ -76,6 +79,15 @@ namespace OnlineVoting.Api.Middlewares
             services.AddHttpContextAccessor();
             services.AddScoped<ICurrentUserContext, CurrentUserContext>();
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+            services.AddScoped<IAuditMetadataProvider, AuditMetadataProvider>();
+            services.AddScoped<IAuditTrailService, AuditTrailService>();
+            services.AddMemoryCache();
+
+            services.AddHttpClient<IIpGeolocationService, IpGeolocationService>(client =>
+            {
+                client.BaseAddress = new Uri("https://ipwho.is/");
+                client.Timeout = TimeSpan.FromSeconds(2);
+            });
 
             return services;
         }
@@ -174,6 +186,10 @@ namespace OnlineVoting.Api.Middlewares
 
                 options.OperationFilter<ApiDocumentationOperationFilter>();
                 options.SupportNonNullableReferenceTypes();
+
+                // Custom operation filter to add the "X-Device-Location" header parameter to all API endpoints.
+                // This middleware was only added just to test X-Device-Location on swagger.
+                //options.OperationFilter<DeviceLocationHeaderOperationFilter>(); 
 
                 options.AddSecurityDefinition(
                     "Bearer",
@@ -328,6 +344,26 @@ namespace OnlineVoting.Api.Middlewares
                 throw new InvalidOperationException("No database migrations were found.");
 
             await context.Database.MigrateAsync();
+        }
+
+        public static void ConfigureForwardedHeaders(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+                    | ForwardedHeaders.XForwardedProto;
+
+                IEnumerable<IConfigurationSection> knownProxySections =
+                    configuration.GetSection("ReverseProxy:KnownProxies").GetChildren();
+
+                foreach (IConfigurationSection knownProxySection in knownProxySections)
+                {
+                    string? knownProxy = knownProxySection.Value;
+
+                    if (IPAddress.TryParse(knownProxy, out IPAddress? ipAddress))
+                        options.KnownProxies.Add(ipAddress);
+                }
+            });
         }
     }
 }

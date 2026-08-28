@@ -61,6 +61,7 @@ builder.Services.AddControllers(setupAction =>
 
 builder.Services.ConfigureCors();
 builder.Services.ConfigureIISIntegration();
+builder.Services.ConfigureForwardedHeaders(builder.Configuration);
 builder.Services.AddDBConnection(builder.Configuration);
 builder.Services.ConfigureHealthChecks();
 builder.Services.ConfigureRateLimiting();
@@ -72,7 +73,10 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.ConfigureApiVersioning();
 builder.Services.ConfigureSwagger();
 builder.Services.AddAutoMapper(config => { }, Assembly.Load("OnlineVoting.Api"));
+
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 // Configure the HTTP request pipeline.
 app.UseSwagger();
@@ -109,6 +113,8 @@ app.UseCors("CorsPolicy");
 app.UseAuthentication();
 app.UseRateLimiter();
 app.UseAuthorization();
+
+app.UseMiddleware<IpGeolocationMiddleware>();
 
 app.MapControllers();
 

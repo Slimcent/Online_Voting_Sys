@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
-using OnlineVoting.Models.Interfaces;
+using OnlineVoting.Tests.TestData.Data;
+using OnlineVoting.Tests.TestData.Factories;
 
 namespace OnlineVoting.Tests.UnitTests.Models.Context
 {
@@ -10,14 +11,11 @@ namespace OnlineVoting.Tests.UnitTests.Models.Context
         [Fact]
         public async Task SaveChanges_AddedTrackableEntity_ShouldSetCreatedAndUpdatedAuditFields()
         {
-            TestCurrentUserContext currentUserContext = new("adminuser");
-            await using VotingDbContext context = CreateContext(currentUserContext);
+            using AuditDbContextFactory factory = new("adminuser");
 
-            Faculty faculty = new()
-            {
-                Name = "Engineering",
-                Active = true
-            };
+            VotingDbContext context = factory.Context;
+
+            Faculty faculty = FacultyTestData.CreateFaculty("Engineering");
 
             context.Faculties.Add(faculty);
 
@@ -36,22 +34,21 @@ namespace OnlineVoting.Tests.UnitTests.Models.Context
         [Fact]
         public async Task SaveChanges_ModifiedTrackableEntity_ShouldUpdateUpdatedAuditFields()
         {
-            TestCurrentUserContext currentUserContext = new("adminuser");
-            await using VotingDbContext context = CreateContext(currentUserContext);
+            using AuditDbContextFactory factory = new("adminuser");
 
-            Faculty faculty = new()
-            {
-                Name = "Engineering",
-                Active = true
-            };
+            VotingDbContext context = factory.Context;
+
+            Faculty faculty = FacultyTestData.CreateFaculty("Engineering");
 
             context.Faculties.Add(faculty);
+
             await context.SaveChangesAsync(true);
 
             DateTime originalCreatedAt = faculty.CreatedAt;
             string? originalCreatedBy = faculty.CreatedBy;
 
-            currentUserContext.Username = "editoruser";
+            factory.CurrentUserContext.Username = "editoruser";
+
             faculty.Name = "Updated Engineering";
 
             DateTime beforeUpdate = DateTime.UtcNow;
@@ -69,14 +66,11 @@ namespace OnlineVoting.Tests.UnitTests.Models.Context
         [Fact]
         public async Task SaveChanges_NoCurrentUser_ShouldAllowNullAuditUser()
         {
-            TestCurrentUserContext currentUserContext = new(null);
-            await using VotingDbContext context = CreateContext(currentUserContext);
+            using AuditDbContextFactory factory = new(null, null);
 
-            Faculty faculty = new()
-            {
-                Name = "Engineering",
-                Active = true
-            };
+            VotingDbContext context = factory.Context;
+
+            Faculty faculty = FacultyTestData.CreateFaculty("Engineering");
 
             context.Faculties.Add(faculty);
 
@@ -91,16 +85,14 @@ namespace OnlineVoting.Tests.UnitTests.Models.Context
         [Fact]
         public async Task SaveChanges_UnchangedTrackableEntity_ShouldNotChangeAuditFields()
         {
-            TestCurrentUserContext currentUserContext = new("adminuser");
-            await using VotingDbContext context = CreateContext(currentUserContext);
+            using AuditDbContextFactory factory = new("adminuser");
 
-            Faculty faculty = new()
-            {
-                Name = "Engineering",
-                Active = true
-            };
+            VotingDbContext context = factory.Context;
+
+            Faculty faculty = FacultyTestData.CreateFaculty("Engineering");
 
             context.Faculties.Add(faculty);
+
             await context.SaveChangesAsync(true);
 
             DateTime createdAt = faculty.CreatedAt;
@@ -116,23 +108,59 @@ namespace OnlineVoting.Tests.UnitTests.Models.Context
             Assert.Equal(updatedBy, faculty.UpdatedBy);
         }
 
-        private static VotingDbContext CreateContext(ICurrentUserContext currentUserContext)
+        [Fact]
+        public async Task AuditLocation_ShouldPersistWithAuditTrail()
         {
-            DbContextOptions<VotingDbContext> options = new DbContextOptionsBuilder<VotingDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
+            using AuditDbContextFactory factory = new();
 
-            return new VotingDbContext(options, currentUserContext);
-        }
+            VotingDbContext context = factory.Context;
 
-        private sealed class TestCurrentUserContext : ICurrentUserContext
-        {
-            public TestCurrentUserContext(string? username)
+            AuditOutcome outcome = await context.AuditOutcomes
+                .SingleAsync(auditOutcome => auditOutcome.Name == "Success");
+
+            AuditTrail auditTrail = new()
             {
-                Username = username;
-            }
+                ActorUserId = "user-id",
+                ActorUsername = "super.admin",
+                EndpointName = "Create-Faculty",
+                EventName = "Created",
+                HttpMethod = "POST",
+                EntityType = nameof(Faculty),
+                EntityId = "1",
+                OutcomeId = outcome.Id,
+                IpAddress = "203.0.113.10"
+            };
 
-            public string? Username { get; set; }
+            AuditLocation auditLocation = new()
+            {
+                AuditTrailId = auditTrail.Id,
+                AuditTrail = auditTrail,
+                IpCountry = "Germany",
+                IpRegion = "North Rhine-Westphalia",
+                IpCity = "Paderborn",
+                IpLatitude = 51.7189,
+                IpLongitude = 8.7575,
+                DeviceLatitude = 51.718912,
+                DeviceLongitude = 8.757481,
+                DeviceAccuracyMeters = 8.5,
+                DeviceLocationCapturedAt = DateTime.UtcNow
+            };
+
+            context.AuditTrails.Add(auditTrail);
+            context.AuditLocations.Add(auditLocation);
+
+            await context.SaveChangesAsync();
+
+            context.ChangeTracker.Clear();
+
+            AuditTrail? savedAuditTrail = await context.AuditTrails.Include(item => item.Location).SingleOrDefaultAsync(item => item.Id == auditTrail.Id);
+
+            Assert.NotNull(savedAuditTrail);
+            Assert.NotNull(savedAuditTrail.Location);
+            Assert.Equal("Germany", savedAuditTrail.Location.IpCountry);
+            Assert.Equal("Paderborn", savedAuditTrail.Location.IpCity);
+            Assert.Equal(51.718912, savedAuditTrail.Location.DeviceLatitude);
+            Assert.Equal(8.5, savedAuditTrail.Location.DeviceAccuracyMeters);
         }
     }
 }

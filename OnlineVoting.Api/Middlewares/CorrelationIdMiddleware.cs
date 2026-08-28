@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using OnlineVoting.Models.Configurations;
+using System.Diagnostics;
 using System.Security.Claims;
 using VotingSystem.Logger;
 
@@ -7,7 +8,7 @@ namespace OnlineVoting.Api.Middlewares
     public class CorrelationIdMiddleware
     {
         public const string CorrelationIdHeaderName = "X-Correlation-ID";
-        public const string CorrelationIdItemName = "CorrelationId";
+        public const string CorrelationIdItemName = RequestContextKeys.CorrelationId;
 
         private readonly RequestDelegate _next;
 

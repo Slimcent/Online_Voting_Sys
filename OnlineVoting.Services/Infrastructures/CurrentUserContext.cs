@@ -13,6 +13,7 @@ namespace OnlineVoting.Services.Infrastructures
             _httpContextAccessor = httpContextAccessor;
         }
 
+        public string? UserId => _httpContextAccessor.HttpContext?.User?.GetUserId();
         public string? Username => _httpContextAccessor.HttpContext?.User?.GetUsername();
     }
 }
