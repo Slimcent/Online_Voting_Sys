@@ -55,7 +55,7 @@ namespace OnlineVoting.Api.Middlewares
         });
 
         public static void ConfigureLoggerService(this IServiceCollection services) =>
-            services.AddScoped<ILoggerMessage, VotingSystem.Logger.LoggerMessage>();
+            services.AddSingleton<ILoggerMessage, VotingSystem.Logger.LoggerMessage>();
 
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {

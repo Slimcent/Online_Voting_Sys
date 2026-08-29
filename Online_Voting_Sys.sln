@@ -17,6 +17,8 @@ Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnlineVoting.Tests", "OnlineVoting.Tests\OnlineVoting.Tests.csproj", "{DE547B08-9E95-4552-A7D3-68A18FCE068D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnlineVoting.Caching", "OnlineVoting.Caching\OnlineVoting.Caching.csproj", "{C1CD369B-DC4D-483F-91EA-2B1B559DEF28}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -105,6 +107,18 @@ Global
 		{DE547B08-9E95-4552-A7D3-68A18FCE068D}.Release|x64.Build.0 = Release|Any CPU
 		{DE547B08-9E95-4552-A7D3-68A18FCE068D}.Release|x86.ActiveCfg = Release|Any CPU
 		{DE547B08-9E95-4552-A7D3-68A18FCE068D}.Release|x86.Build.0 = Release|Any CPU
+		{C1CD369B-DC4D-483F-91EA-2B1B559DEF28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1CD369B-DC4D-483F-91EA-2B1B559DEF28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1CD369B-DC4D-483F-91EA-2B1B559DEF28}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C1CD369B-DC4D-483F-91EA-2B1B559DEF28}.Debug|x64.Build.0 = Debug|Any CPU
+		{C1CD369B-DC4D-483F-91EA-2B1B559DEF28}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C1CD369B-DC4D-483F-91EA-2B1B559DEF28}.Debug|x86.Build.0 = Debug|Any CPU
+		{C1CD369B-DC4D-483F-91EA-2B1B559DEF28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1CD369B-DC4D-483F-91EA-2B1B559DEF28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1CD369B-DC4D-483F-91EA-2B1B559DEF28}.Release|x64.ActiveCfg = Release|Any CPU
+		{C1CD369B-DC4D-483F-91EA-2B1B559DEF28}.Release|x64.Build.0 = Release|Any CPU
+		{C1CD369B-DC4D-483F-91EA-2B1B559DEF28}.Release|x86.ActiveCfg = Release|Any CPU
+		{C1CD369B-DC4D-483F-91EA-2B1B559DEF28}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
