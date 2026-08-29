@@ -35,7 +35,8 @@ using System.Text;
 using System.Threading.RateLimiting;
 using VotingSystem.Data.Implementation;
 using VotingSystem.Logger;
-using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.ResponseCompression;
+using System.IO.Compression;
 using System.Net;
 
 
@@ -364,6 +365,36 @@ namespace OnlineVoting.Api.Middlewares
                         options.KnownProxies.Add(ipAddress);
                 }
             });
+        }
+
+        public static IServiceCollection ConfigureResponseCompression(this IServiceCollection services, IConfiguration configuration)
+        {
+            bool enableForHttps = configuration.GetValue<bool>("ResponseCompression:EnableForHttps");
+
+            services.AddResponseCompression(options =>
+            {
+                options.EnableForHttps = enableForHttps;
+
+                options.Providers.Add<BrotliCompressionProvider>();
+                options.Providers.Add<GzipCompressionProvider>();
+
+                options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+                [
+                    "application/problem+json"
+                ]);
+            });
+
+            services.Configure<BrotliCompressionProviderOptions>(options =>
+            {
+                options.Level = CompressionLevel.Fastest;
+            });
+
+            services.Configure<GzipCompressionProviderOptions>(options =>
+            {
+                options.Level = CompressionLevel.Fastest;
+            });
+
+            return services;
         }
     }
 }

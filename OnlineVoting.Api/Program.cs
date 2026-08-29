@@ -63,6 +63,7 @@ builder.Services.AddControllers(setupAction =>
 builder.Services.ConfigureCors();
 builder.Services.ConfigureIISIntegration();
 builder.Services.ConfigureForwardedHeaders(builder.Configuration);
+builder.Services.ConfigureResponseCompression(builder.Configuration);
 builder.Services.AddApplicationCaching(builder.Configuration);
 builder.Services.AddDBConnection(builder.Configuration);
 builder.Services.ConfigureHealthChecks();
@@ -79,6 +80,7 @@ builder.Services.AddAutoMapper(config => { }, Assembly.Load("OnlineVoting.Api"))
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+app.UseResponseCompression();
 
 // Configure the HTTP request pipeline.
 app.UseSwagger();
