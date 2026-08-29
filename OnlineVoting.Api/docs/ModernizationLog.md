@@ -4160,3 +4160,53 @@ Tests were added or updated for:
 - Dependency injection registration.
 
 ---
+
+## Redis L2 Caching
+
+### Goal
+Added Redis as the distributed L2 cache for HybridCache and verify that cached data can be shared across application instances.
+
+### What Changed
+- Added Redis to Docker Compose using `redis:7.4-alpine`.
+- Added a Redis health check with `redis-cli ping`.
+- Added Redis connection settings for Docker and local development.
+- Enabled distributed caching through `Caching__DistributedEnabled`.
+- Kept Redis disabled by default in `appsettings.json`.
+- Docker API connects with `online-voting-redis:6379`.
+- Local Visual Studio runs connect with `localhost:6379`.
+
+### Verification
+Faculty caching was used to verify the Redis setup.
+
+The Redis cache was cleared, a Faculty endpoint was called, and the expected cache key was created in Redis.
+
+After restarting the API, the Redis key was still available. `redis-cli MONITOR` confirmed that HybridCache read the cached Faculty response from 
+
+Redis after the local L1 cache had been cleared.
+
+The same behavior was also verified with the API running locally from Visual Studio.
+
+### Tests
+Added Redis integration tests using Testcontainers.
+
+The tests verified that:
+- A value cached by one HybridCache instance can be read by a new instance from Redis.
+- The cache factory is not called when the value already exists in Redis.
+- Tag invalidation marks the Redis value as stale.
+- A new cache instance runs the factory again after the related tag is invalidated.
+
+### Current Setup
+
+```
+Application Services
+        ↓
+ICacheService
+        ↓
+HybridCache
+     ├── L1 Memory
+     └── L2 Redis
+```
+
+### 
+
+---

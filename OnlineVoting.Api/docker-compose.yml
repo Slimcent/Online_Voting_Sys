@@ -23,6 +23,20 @@
     networks:
       - online-voting-network
 
+  online-voting-redis:
+    image: redis:7.4-alpine
+    container_name: online-voting-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    networks:
+      - online-voting-network
+
   migration-generator:
     image: mcr.microsoft.com/dotnet/sdk:10.0
     container_name: online-voting-migration-generator
@@ -77,6 +91,8 @@
       migration-generator:
         condition: service_completed_successfully
       online-voting-sql:
+        condition: service_healthy
+      online-voting-redis:
         condition: service_healthy
     networks:
       - online-voting-network
