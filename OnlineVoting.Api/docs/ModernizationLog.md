@@ -4207,6 +4207,112 @@ HybridCache
      └── L2 Redis
 ```
 
-### 
+---
+
+## Response Compression
+
+### Goal
+Add configurable response compression for API responses while keeping compression concerns outside controllers and services.
+
+### Architecture
+
+```
+Client
+  ↓
+Reverse Proxy / Hosting Layer
+  ↓
+Forwarded Headers
+  ↓
+Response Compression Middleware
+  ↓
+Controllers
+  ↓
+Services
+  ↓
+Cache / Database
+  ↓
+Response Compression Middleware
+  ↓
+Reverse Proxy / Hosting Layer
+  ↓
+Client
+```
+
+Compression is handled at the API infrastructure layer.
+
+### Compression Flow
+
+| Protocol | `EnableForHttps` | Application Compression | Expected Compression Owner |
+|---|---:|---|---|
+| HTTP | `false` | Enabled | ASP.NET Core |
+| HTTP | `true` | Enabled | ASP.NET Core |
+| HTTPS | `false` | Disabled | Reverse proxy / hosting layer |
+| HTTPS | `true` | Enabled | ASP.NET Core |
+
+Production deployments can therefore choose where HTTPS compression is handled without changing application code.
+
+### Changed
+- Added ASP.NET Core response compression.
+- Added Brotli and Gzip providers.
+- Configured both providers with `CompressionLevel.Fastest`.
+- Added `application/problem+json` to supported MIME types.
+- Added `UseResponseCompression()` to the middleware pipeline.
+- Added configurable HTTPS compression through `ResponseCompression:EnableForHttps`.
+- Kept HTTPS application compression disabled by default.
+- Added response compression integration tests.
+
+### Configuration
+
+Default configuration:
+
+```json
+"ResponseCompression": {
+  "EnableForHttps": false
+}
+```
+
+For environments where the reverse proxy or hosting platform handles HTTPS compression:
+
+```env
+ResponseCompression__EnableForHttps=false
+```
+
+For environments where ASP.NET Core must handle HTTPS compression:
+
+```env
+ResponseCompression__EnableForHttps=true
+```
+
+### Middleware Order
+
+```
+app.UseForwardedHeaders();
+app.UseResponseCompression();
+```
+
+Forwarded headers are processed before compression so the original request scheme is available when the application is hosted behind a reverse proxy.
+
+### Compression Providers
+
+Supported providers:
+
+```
+Brotli
+Gzip
+```
+
+The provider is selected from the client's `Accept-Encoding` header. A response is compressed using one provider only.
+
+### Tests
+
+Added integration coverage for:
+
+- Brotli compression.
+- Gzip compression.
+- Requests without compression support.
+- HTTPS compression disabled.
+- HTTPS compression enabled.
+
+The Brotli and Gzip tests also verify that the compressed response can be successfully decompressed.
 
 ---
