@@ -4135,6 +4135,28 @@ HybridCache
         └── L2 Redis - planned
 ```
 
----
+### Tests
+
+Tests were added or updated for:
+
+- Cache hits.
+- Cache misses.
+- Cache set operations.
+- Key removal.
+- Tag removal.
+- Disabled caching.
+- Invalid distributed cache configuration.
+- Configuration binding and validation.
+- Faculty caching.
+- Department caching.
+- Paginated caching.
+- Repository and mapper bypass on cache hits.
+- Cache invalidation after successful writes.
+- No invalidation after failed or no-op writes.
+- Faculty and Department cross-cache invalidation.
+- Cache failure handling.
+- Cache failure logging.
+- Cancellation handling.
+- Dependency injection registration.
 
 ---
