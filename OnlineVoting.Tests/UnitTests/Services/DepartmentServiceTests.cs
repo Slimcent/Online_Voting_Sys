@@ -5,6 +5,9 @@ using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Pagination;
 using OnlineVoting.Models.Results;
+using OnlineVoting.Services.Caching.Keys;
+using OnlineVoting.Services.Caching.Policies;
+using OnlineVoting.Services.Caching.Tags;
 using OnlineVoting.Tests.TestData.Data;
 using OnlineVoting.Tests.TestData.Factories;
 using System.Linq.Expressions;
@@ -144,6 +147,8 @@ namespace OnlineVoting.Tests.UnitTests.Services
 
             factory.Mapper.Verify(mapper => mapper.Map<Department>(request), Times.Once);
             factory.DepartmentRepository.Verify(repository => repository.AddAsync(department, false), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Department, It.IsAny<CancellationToken>()), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Faculty, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -251,6 +256,8 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Assert.All(mappedDepartments, department => Assert.Equal(1, department.FacultyId));
 
             factory.DepartmentRepository.Verify(repository => repository.AddRangeAsync(mappedDepartments), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Department, It.IsAny<CancellationToken>()), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Faculty, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -682,6 +689,8 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Assert.Equal(2, department.FacultyId);
 
             factory.DepartmentRepository.Verify(repository => repository.UpdateAsync(department, false), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Department, It.IsAny<CancellationToken>()), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Faculty, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -724,6 +733,8 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Assert.False(department.Active);
 
             factory.DepartmentRepository.Verify(repository => repository.UpdateAsync(department, false), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Department, It.IsAny<CancellationToken>()), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Faculty, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -749,6 +760,8 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Assert.True(department.Active);
 
             factory.DepartmentRepository.Verify(repository => repository.UpdateAsync(department, false), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Department, It.IsAny<CancellationToken>()), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Faculty, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -790,6 +803,183 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Assert.Equal("Department deleted successfully.", result.Value);
 
             factory.DepartmentRepository.Verify(repository => repository.DeleteAsync(department, false), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Department, It.IsAny<CancellationToken>()), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Faculty, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetDepartment_WithCachedDepartment_ShouldReturnCachedDepartmentWithoutQueryingRepository()
+        {
+            DepartmentServiceFactory factory = new();
+
+            DepartmentResponse cachedResponse = new()
+            {
+                Id = 1,
+                Name = "Computer Engineering"
+            };
+
+            factory.CacheService.Setup(cacheService => cacheService.GetOrCreate<DepartmentResponse?>(DepartmentCacheKeys.GetDepartment(1),
+                It.IsAny<Func<CancellationToken, ValueTask<DepartmentResponse?>>>(),
+                CachePolicies.Department,
+                It.IsAny<CancellationToken>()))
+            .Returns(ValueTask.FromResult<DepartmentResponse?>(cachedResponse));
+
+            Result<DepartmentResponse> result = await factory.Service.GetDepartment(1);
+
+            Assert.Equal(ResultStatus.Success, result.Status);
+            Assert.NotNull(result.Value);
+            Assert.Equal(1, result.Value.Id);
+            Assert.Equal("Computer Engineering", result.Value.Name);
+
+            factory.DepartmentRepository.Verify(repository => repository.GetSingleByAsync(It.IsAny<Expression<Func<Department, bool>>>(),
+                It.IsAny<Func<IQueryable<Department>, IOrderedQueryable<Department>>>(),
+                It.IsAny<int?>(),
+                It.IsAny<int?>(),
+                It.IsAny<Func<IQueryable<Department>, IIncludableQueryable<Department, object>>>(),
+                It.IsAny<bool>()), Times.Never);
+
+            factory.Mapper.Verify(mapper => mapper.Map<DepartmentResponse>(It.IsAny<Department>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task GetDepartments_WithCachedDepartments_ShouldReturnCachedResponseWithoutQueryingRepository()
+        {
+            DepartmentServiceFactory factory = new();
+
+            DepartmentRequestParameters request = new()
+            {
+                PageNumber = 1,
+                PageSize = 10
+            };
+
+            PagedResponse<DepartmentResponse> cachedResponse = new()
+            {
+                Items = new List<DepartmentResponse>
+                {
+                    new DepartmentResponse
+                    {
+                        Id = 1,
+                        Name = "Computer Engineering"
+                    }
+                },
+                MetaData = new MetaData
+                {
+                    CurrentPage = 1,
+                    PageSize = 10,
+                    TotalCount = 1,
+                    TotalPages = 1
+                }
+            };
+
+            factory.CacheService.Setup(cacheService => cacheService.GetOrCreate<PagedResponse<DepartmentResponse>>(DepartmentCacheKeys.GetDepartments(request),
+                It.IsAny<Func<CancellationToken, ValueTask<PagedResponse<DepartmentResponse>>>>(),
+                CachePolicies.Department,
+                It.IsAny<CancellationToken>()))
+            .Returns(ValueTask.FromResult(cachedResponse));
+
+            Result<PagedResponse<DepartmentResponse>> result = await factory.Service.GetDepartments(request);
+
+            Assert.Equal(ResultStatus.Success, result.Status);
+            Assert.NotNull(result.Value);
+            Assert.Single(result.Value.Items!);
+            Assert.Equal("Computer Engineering", result.Value.Items!.First().Name);
+
+            factory.DepartmentRepository.Verify(repository => repository.GetPagedItems(It.IsAny<DepartmentRequestParameters>(),
+                It.IsAny<Expression<Func<Department, bool>>>(),
+                It.IsAny<Func<IQueryable<Department>, IIncludableQueryable<Department, object>>>()), Times.Never);
+
+            factory.Mapper.Verify(mapper => mapper.Map<PagedResponse<DepartmentResponse>>(It.IsAny<PagedList<Department>>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task GetDepartmentsByFacultyId_WithCachedDepartments_ShouldReturnCachedDepartmentsWithoutQueryingRepositories()
+        {
+            DepartmentServiceFactory factory = new();
+
+            IEnumerable<DepartmentResponse> cachedResponse = new List<DepartmentResponse>
+            {
+                new DepartmentResponse
+                {
+                    Id = 1,
+                    Name = "Computer Engineering"
+                }
+            };
+
+            factory.CacheService.Setup(cacheService => cacheService.GetOrCreate<IEnumerable<DepartmentResponse>>(DepartmentCacheKeys.GetDepartmentsByFacultyId(1),
+                It.IsAny<Func<CancellationToken, ValueTask<IEnumerable<DepartmentResponse>>>>(),
+                CachePolicies.Department,
+                It.IsAny<CancellationToken>()))
+            .Returns(ValueTask.FromResult(cachedResponse));
+
+            Result<IEnumerable<DepartmentResponse>> result = await factory.Service.GetDepartmentsByFacultyId(1);
+
+            Assert.Equal(ResultStatus.Success, result.Status);
+            Assert.NotNull(result.Value);
+            Assert.Single(result.Value);
+            Assert.Equal("Computer Engineering", result.Value.First().Name);
+
+            factory.FacultyRepository.Verify(repository => repository.GetByIdAsync(It.IsAny<long>()), Times.Never);
+
+            factory.DepartmentRepository.Verify(repository => repository.GetByAsync(It.IsAny<Expression<Func<Department, bool>>>(),
+                It.IsAny<Func<IQueryable<Department>, IOrderedQueryable<Department>>>(),
+                It.IsAny<int?>(),
+                It.IsAny<int?>(),
+                It.IsAny<Func<IQueryable<Department>, IIncludableQueryable<Department, object>>>(),
+                It.IsAny<bool>()), Times.Never);
+
+            factory.Mapper.Verify(mapper => mapper.Map<IEnumerable<DepartmentResponse>>(It.IsAny<IEnumerable<Department>>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task GetDepartmentsByFacultyId_WithCachedPagedDepartments_ShouldReturnCachedResponseWithoutQueryingRepositories()
+        {
+            DepartmentServiceFactory factory = new();
+
+            DepartmentRequestParameters request = new()
+            {
+                PageNumber = 1,
+                PageSize = 10
+            };
+
+            PagedResponse<DepartmentResponse> cachedResponse = new()
+            {
+                Items = new List<DepartmentResponse>
+                {
+                    new DepartmentResponse
+                    {
+                        Id = 1,
+                        Name = "Computer Engineering"
+                    }
+                },
+                MetaData = new MetaData
+                {
+                    CurrentPage = 1,
+                    PageSize = 10,
+                    TotalCount = 1,
+                    TotalPages = 1
+                }
+            };
+
+            factory.CacheService.Setup(cacheService => cacheService.GetOrCreate<PagedResponse<DepartmentResponse>>(DepartmentCacheKeys.GetDepartmentsByFacultyId(1, request),
+                It.IsAny<Func<CancellationToken, ValueTask<PagedResponse<DepartmentResponse>>>>(),
+                CachePolicies.Department,
+                It.IsAny<CancellationToken>()))
+            .Returns(ValueTask.FromResult(cachedResponse));
+
+            Result<PagedResponse<DepartmentResponse>> result = await factory.Service.GetDepartmentsByFacultyId(1, request);
+
+            Assert.Equal(ResultStatus.Success, result.Status);
+            Assert.NotNull(result.Value);
+            Assert.Single(result.Value.Items!);
+            Assert.Equal("Computer Engineering", result.Value.Items!.First().Name);
+
+            factory.FacultyRepository.Verify(repository => repository.GetByIdAsync(It.IsAny<long>()), Times.Never);
+
+            factory.DepartmentRepository.Verify(repository => repository.GetPagedItems(It.IsAny<DepartmentRequestParameters>(),
+                It.IsAny<Expression<Func<Department, bool>>>(),
+                It.IsAny<Func<IQueryable<Department>, IIncludableQueryable<Department, object>>>()), Times.Never);
+
+            factory.Mapper.Verify(mapper => mapper.Map<PagedResponse<DepartmentResponse>>(It.IsAny<PagedList<Department>>()), Times.Never);
         }
     }
 }

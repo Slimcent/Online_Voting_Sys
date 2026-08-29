@@ -4025,6 +4025,116 @@ All tests passed successfully.
 
 ---
 
+## Application Caching
+
+### Goal
+Add a reusable caching layer to reduce repeated database reads without tying the service layer to a specific cache implementation.
+
+### What Changed
+- Added a new `OnlineVoting.Caching` class library to keep caching concerns separate from the rest of the application.
+- Added `ICacheService` as the abstraction used by the service layer.
+- Implemented the cache service with ASP.NET Core `HybridCache`.
+- Added support for:
+  - Hybrid caching
+  - Local-only caching
+  - Distributed-only caching
+  - Cache expiration
+  - Local cache expiration
+  - Cache tags
+  - Cache removal by key
+  - Cache removal by tag
+- Added a `Caching` configuration section in `appsettings.json`.
+- Added Redis-related configuration so distributed caching can be enabled later without changing the service layer.
+- Added shared cache keys, tags, and policies under the Services project.
+- Kept the actual cache implementation out of the business services. The services only depend on `ICacheService`.
+
+### Faculty as the First Implementation
+Faculty operations were used as the first place to apply and test the caching approach.
+
+This allowed the basic flow to be verified before applying the same pattern elsewhere:
+- Cache key generation.
+- Cache hits and cache misses.
+- Caching DTO responses instead of EF Core entities.
+- Caching paginated responses.
+- Caching Faculty responses with and without Departments.
+- Invalidating the cache after successful create, update, activation, and delete operations.
+- Avoiding cache invalidation when a write fails or does not change anything.
+- Making sure repository and mapping calls are skipped when the requested data is already cached.
+
+Once the Faculty implementation and tests were working correctly, the same approach was applied to Department operations.
+
+### Department Caching
+Caching was added to the main Department read operations:
+- Get Department by ID.
+- Get paginated Departments.
+- Get Departments by Faculty.
+- Get paginated Departments by Faculty.
+
+Cache-hit tests were also added to confirm that repository and mapping calls are not made when the response is already available in the cache.
+
+### Cache Invalidation
+Faculty and Department data are related, so updating one can make cached data for the other stale.
+
+- Faculty responses can include Departments.
+- Department responses include Faculty information.
+
+Because of this:
+- Successful Faculty changes invalidate both Faculty and Department caches.
+- Successful Department changes invalidate both Department and Faculty caches.
+
+Invalidation only happens after the database operation succeeds. Validation failures, conflicts, not-found results, and other no-op cases do not clear the cache.
+
+### Cache Failure Handling
+Cache failure handling was added inside `OnlineVoting.Caching` instead of adding `try/catch` blocks throughout the services.
+
+Failures from:
+- `Set`
+- `Remove`
+- `RemoveByTag`
+
+are logged and do not cause an already successful business operation to fail.
+
+If a Department update succeeds in SQL Server but cache invalidation fails, the update still returns successfully and the cache error is logged.
+
+Cancellation is handled differently. If the request is cancelled, `OperationCanceledException` is allowed to propagate instead of being treated as a normal cache failure.
+
+`GetOrCreate` was left without a broad fallback catch because the factory can contain repository or database calls. Catching everything there and 
+
+running the factory again could repeat a database operation or hide the real exception.
+
+### Logging
+The existing `VotingSystem.Logger` project is reused for cache logging.
+
+- `HybridCacheService` now uses `ILoggerMessage`.
+- `ILoggerMessage` was changed from scoped to singleton so it can safely be injected into the singleton cache service.
+- `AddApplicationCaching` uses `TryAddSingleton` so the caching setup can register the logger when needed without replacing an existing registration.
+
+### Current Configuration
+Caching is currently running with HybridCache using the local in-memory cache.
+
+Current setup:
+- Caching enabled.
+- Default cache expiration configured.
+- Default local cache expiration configured.
+- Distributed caching disabled.
+- Redis connection string name reserved for later use.
+
+SQL Server remains the source of truth.
+
+The current flow is:
+
+```
+Application Services
+        ↓
+ICacheService
+        ↓
+HybridCacheService
+        ↓
+HybridCache
+        ├── L1 Memory Cache
+        └── L2 Redis - planned
+```
+
 ---
 
 ---

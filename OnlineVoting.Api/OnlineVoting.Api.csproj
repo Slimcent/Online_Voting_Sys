@@ -44,6 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\OnlineVoting.Caching\OnlineVoting.Caching.csproj" />
     <ProjectReference Include="..\OnlineVoting.Models\OnlineVoting.Models.csproj" />
     <ProjectReference Include="..\OnlineVoting.Services\OnlineVoting.Services.csproj" />
     <ProjectReference Include="..\VotingSystem.Logger\VotingSystem.Logger.csproj" />

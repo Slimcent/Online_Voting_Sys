@@ -15,6 +15,7 @@ using OnlineVoting.Services.Infrastructures;
 using System.Reflection;
 using System.Text.Json.Serialization;
 using VotingSystem.Data.SeedData;
+using OnlineVoting.Caching.Extensions;
 
 
 string environmentFilePath = Path.Combine(Directory.GetCurrentDirectory(), "OnlineVoting.Api", ".env");
@@ -62,6 +63,7 @@ builder.Services.AddControllers(setupAction =>
 builder.Services.ConfigureCors();
 builder.Services.ConfigureIISIntegration();
 builder.Services.ConfigureForwardedHeaders(builder.Configuration);
+builder.Services.AddApplicationCaching(builder.Configuration);
 builder.Services.AddDBConnection(builder.Configuration);
 builder.Services.ConfigureHealthChecks();
 builder.Services.ConfigureRateLimiting();

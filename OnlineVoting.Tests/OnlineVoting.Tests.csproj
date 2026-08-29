@@ -23,6 +23,7 @@
 		<ProjectReference Include="..\OnlineVoting.Models\OnlineVoting.Models.csproj" />
 		<ProjectReference Include="..\OnlineVoting.Services\OnlineVoting.Services.csproj" />
 		<ProjectReference Include="..\VotingSystem.Data\VotingSystem.Data.csproj" />
+		<ProjectReference Include="..\OnlineVoting.Caching\OnlineVoting.Caching.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
