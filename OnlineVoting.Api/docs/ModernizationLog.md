@@ -4316,3 +4316,211 @@ Added integration coverage for:
 The Brotli and Gzip tests also verify that the compressed response can be successfully decompressed.
 
 ---
+
+## Security Headers and Transport Security
+
+### Goal
+Harden the HTTP boundary of the API by adding centralized security headers and configurable transport-security behaviour without introducing 
+
+security logic into controllers or application services.
+
+### Why
+Authentication and authorization protect access to API operations, but they do not control how browsers handle HTTP responses or how HTTPS enforcement is managed.
+
+This change adds protection at the HTTP infrastructure layer for:
+
+- MIME-type sniffing.
+- Clickjacking and framing.
+- Referrer information leakage.
+- Unused browser capabilities.
+- HTTPS enforcement.
+- HSTS.
+- Reverse-proxy deployments where TLS is terminated outside the application.
+
+The implementation is centralized so every applicable response receives the same security behaviour.
+
+### Architecture
+
+```
+Client
+  ↓
+Reverse Proxy / Hosting Layer
+  ↓
+Forwarded Headers
+  ↓
+Security / Transport Layer
+  ├── HSTS
+  ├── Security Headers
+  └── HTTPS Redirection
+  ↓
+Response Compression
+  ↓
+Authentication / Authorization
+  ↓
+Controllers
+  ↓
+Services
+  ↓
+Cache / Database
+```
+
+### Changes
+- Added centralized `SecurityHeadersMiddleware`.
+- Added configurable HSTS support.
+- Added configurable HTTPS redirection.
+- Added startup validation for the HSTS max-age.
+- Added:
+  - `X-Content-Type-Options: nosniff`
+  - `Referrer-Policy: no-referrer`
+  - `X-Frame-Options: DENY`
+  - `Content-Security-Policy`
+  - `Permissions-Policy`
+- Moved HTTPS-redirection ownership out of the previous Development-only condition.
+- Kept `UseForwardedHeaders()` before transport-security middleware.
+- Added integration tests for security headers, HSTS and HTTPS-redirection behavior.
+
+### Design Decisions
+
+#### Centralized Middleware
+Security headers are applied through a dedicated middleware instead of being added in controllers.
+
+This keeps HTTP security consistent across API responses and prevents transport concerns from leaking into business logic.
+
+#### Built-in HSTS Middleware
+ASP.NET Core's built-in `UseHsts()` middleware is used instead of implementing HSTS manually.
+
+The custom middleware is responsible only for the additional response headers, while the framework remains responsible for HSTS behaviour.
+
+#### Deployment-Configurable HTTPS Ownership
+HTTPS redirection and HSTS are configuration-driven instead of being hardcoded.
+
+A production deployment may terminate TLS at:
+
+```
+Nginx
+IIS
+Load Balancer
+Cloud Gateway
+```
+
+or directly in:
+
+```
+ASP.NET Core / Kestrel
+```
+
+The application therefore does not assume which layer owns transport security.
+
+When the hosting layer owns HTTPS enforcement:
+
+```env
+SecurityHeaders__HttpsRedirectionEnabled=false
+SecurityHeaders__Hsts__Enabled=false
+```
+
+When ASP.NET Core owns HTTPS enforcement:
+
+```env
+SecurityHeaders__HttpsRedirectionEnabled=true
+SecurityHeaders__Hsts__Enabled=true
+```
+
+This avoids duplicating redirects or HSTS configuration between the application and reverse proxy.
+
+#### Forwarded Headers First
+The middleware order begins with:
+
+```
+app.UseForwardedHeaders();
+app.UseSecurityHeaders();
+```
+
+This is required for reverse-proxy deployments where the external request may use HTTPS while the proxy communicates with ASP.NET Core over HTTP.
+
+Processing forwarded headers first allows the application to work with the original request scheme before making HTTPS-related decisions.
+
+#### Conservative HSTS Defaults
+The default HSTS configuration is:
+
+```
+"Hsts": {
+  "Enabled": false,
+  "MaxAgeDays": 30,
+  "IncludeSubDomains": false,
+  "Preload": false
+}
+```
+
+A 30-day max age was chosen as a conservative starting point instead of immediately committing production clients to a long-lived HSTS policy.
+
+`IncludeSubDomains` remains disabled because enabling it affects every subdomain.
+
+`Preload` remains disabled because HSTS preload should only be enabled after the complete production domain and HTTPS strategy has been verified.
+
+#### Security Header Selection
+
+`X-Content-Type-Options: nosniff`
+
+Prevents browsers from attempting to reinterpret responses as a different MIME type.
+
+`X-Frame-Options: DENY`
+
+Prevents the application from being embedded in frames and reduces clickjacking exposure.
+
+`Content-Security-Policy`
+
+Uses:
+
+```
+frame-ancestors 'none'; object-src 'none'; base-uri 'none'
+```
+
+The policy is intentionally limited rather than applying an aggressive global CSP that could break Swagger UI.
+
+`Referrer-Policy: no-referrer`
+
+Prevents browser referrer information from being sent unnecessarily.
+
+`Permissions-Policy`
+
+Disables browser capabilities that are not required by the API:
+
+```
+camera
+microphone
+geolocation
+payment
+usb
+```
+
+### Configuration
+
+Default:
+
+```
+"SecurityHeaders": {
+  "HttpsRedirectionEnabled": false,
+  "Hsts": {
+    "Enabled": false,
+    "MaxAgeDays": 30,
+    "IncludeSubDomains": false,
+    "Preload": false
+  }
+}
+```
+
+The defaults do not assume a specific production hosting topology. Deployment-specific settings override them through environment configuration.
+
+### Tests
+Added integration coverage for:
+
+- Security headers being added to responses.
+- HSTS disabled.
+- HSTS enabled.
+- HTTPS redirection disabled.
+- HTTPS redirection enabled.
+- Invalid HSTS max-age configuration failing during startup.
+
+The tests verified actual HTTP behaviour rather than only checking service registration.
+
+---
