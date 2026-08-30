@@ -4707,3 +4707,136 @@ Added integration coverage for:
 The tests verify actual HTTP CORS headers rather than only service registration.
 
 ---
+
+## OpenTelemetry Observability
+
+### Goal
+Added vendor-neutral observability for API traces and metrics while preserving the existing NLog logging pipeline.
+
+### Changes
+- Added configurable OpenTelemetry tracing and metrics.
+- Added ASP.NET Core request tracing.
+- Added ASP.NET Core and .NET runtime metrics.
+- Added configurable parent-based trace sampling.
+- Added OTLP HTTP/protobuf export for traces and metrics.
+- Added OpenTelemetry resource metadata for service name, namespace, version, and environment.
+- Added configuration validation with `ObservabilitySettingsValidator`.
+- Added an OpenTelemetry Collector Docker service.
+- Added Collector memory limiting and batching.
+- Added a local debug exporter for development verification.
+- Excluded `/health` and `/swagger` from request tracing.
+- Preserved NLog as the application logging pipeline.
+- Added `CorrelationId`, `RequestId`, OpenTelemetry `TraceId`, and `SpanId` to the NLog request scope.
+- Added validation for incoming `X-Correlation-ID` values.
+- Added the correlation ID to traces as `app.correlation_id`.
+
+### Architecture
+```text
+OnlineVoting.Api
+    ├── Traces
+    │     └── OTLP HTTP → /v1/traces
+    │
+    ├── Metrics
+    │     └── OTLP HTTP → /v1/metrics
+    │
+    └── NLog
+          ├── CorrelationId
+          ├── RequestId
+          ├── TraceId
+          └── SpanId
+                │
+                └── TraceId matches OpenTelemetry trace
+
+                    ↓
+
+           OpenTelemetry Collector
+                ├── memory_limiter
+                ├── batch
+                └── debug exporter
+```
+
+### Configuration
+Observability is configuration-driven and can be enabled or disabled without changing application code.
+
+The Docker-hosted API exports telemetry to the Collector through the Docker network. A locally running API can export through the Collector's published OTLP HTTP port.
+
+The Collector is not treated as a required application dependency. Loss of telemetry does not prevent the API from operating.
+
+The debug exporter is intended for local development verification and should be replaced by an appropriate observability backend for production.
+
+### Disabling Observability
+Observability can be disabled completely through configuration.
+
+The default application configuration is:
+
+```json
+"Observability": {
+  "Enabled": false,
+  "ServiceName": "OnlineVoting.Api",
+  "ServiceNamespace": "OnlineVoting",
+  "TraceSamplingRatio": 1.0,
+  "OtlpEndpoint": "http://localhost:4318/",
+  "ExcludedTracingPaths": [
+    "/health",
+    "/swagger"
+  ]
+}
+```
+
+When `Observability:Enabled` is `false`, the application does not register the OpenTelemetry tracing and metrics pipelines and does not export telemetry to the Collector.
+
+For a locally running API, either remove the environment override:
+
+```
+Observability__Enabled=true
+```
+
+or explicitly set:
+
+```
+Observability__Enabled=false
+```
+
+For Docker, either remove:
+
+```env
+Observability__Enabled=true
+Observability__OtlpEndpoint=http://online-voting-otel-collector:4318/
+```
+
+from `.env.docker`, allowing the `appsettings.json` default of `false` to apply, or explicitly set:
+
+```
+Observability__Enabled=false
+```
+
+The OpenTelemetry Collector may remain running when observability is disabled. The API simply stops sending traces and metrics to it.
+
+If the Collector is also not needed locally, it can be stopped independently:
+
+```
+docker compose -p online-voting-system -f .\OnlineVoting.Api\docker-compose.yml stop online-voting-otel-collector
+```
+
+It can later be started again with:
+
+```
+docker compose -p online-voting-system -f .\OnlineVoting.Api\docker-compose.yml up -d online-voting-otel-collector
+```
+
+After changing the observability environment configuration, restart the API process or recreate the API container so the new setting is applied.
+
+Disabling observability does not require any code changes.
+
+### Verification
+- Observability configuration tests: 11 passed.
+- Correlation middleware unit tests: 6 passed.
+- Correlation middleware integration tests: 2 passed.
+- Collector health endpoint returned HTTP 200.
+- Real API traces were received by the Collector.
+- ASP.NET Core and .NET runtime metrics were received by the Collector.
+- NLog `TraceId` and `SpanId` matched the corresponding OpenTelemetry trace.
+- `X-Correlation-ID` was preserved in the response, NLog scope, and OpenTelemetry trace as `app.correlation_id`.
+- Full regression suite: 548 passed, 0 failed, 0 skipped.
+
+---

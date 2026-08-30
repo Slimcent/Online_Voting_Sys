@@ -37,6 +37,19 @@
     networks:
       - online-voting-network
 
+  online-voting-otel-collector:
+    image: otel/opentelemetry-collector:0.159.0
+    container_name: online-voting-otel-collector
+    command:
+      - --config=/etc/otelcol/config.yaml
+    volumes:
+      - ./Observability/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4318:4318"
+      - "13133:13133"
+    networks:
+      - online-voting-network
+
   migration-generator:
     image: mcr.microsoft.com/dotnet/sdk:10.0
     container_name: online-voting-migration-generator

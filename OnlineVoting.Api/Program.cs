@@ -65,6 +65,7 @@ builder.Services.ConfigureIISIntegration();
 builder.Services.ConfigureForwardedHeaders(builder.Configuration);
 builder.Services.ConfigureSecurityHeaders(builder.Configuration);
 builder.Services.ConfigureResponseCompression(builder.Configuration);
+builder.Services.ConfigureObservability(builder.Configuration, builder.Environment);
 builder.Services.AddApplicationCaching(builder.Configuration);
 builder.Services.AddDBConnection(builder.Configuration);
 builder.Services.ConfigureHealthChecks();
