@@ -396,5 +396,48 @@ namespace OnlineVoting.Api.Middlewares
 
             return services;
         }
+
+        public static IServiceCollection ConfigureSecurityHeaders(this IServiceCollection services, IConfiguration configuration)
+        {
+            IConfigurationSection section = configuration.GetSection(SecurityHeadersOptions.SectionName);
+
+            services.AddOptions<SecurityHeadersOptions>()
+                .Bind(section)
+                .Validate(options => options.Hsts.MaxAgeDays > 0, "SecurityHeaders:Hsts:MaxAgeDays must be greater than zero.")
+                .ValidateOnStart();
+
+            SecurityHeadersOptions securityHeadersOptions =
+                section.Get<SecurityHeadersOptions>() ?? new SecurityHeadersOptions();
+
+            services.AddHsts(options =>
+            {
+                options.MaxAge = TimeSpan.FromDays(securityHeadersOptions.Hsts.MaxAgeDays);
+                options.IncludeSubDomains = securityHeadersOptions.Hsts.IncludeSubDomains;
+                options.Preload = securityHeadersOptions.Hsts.Preload;
+            });
+
+            return services;
+        }
+
+        public static IApplicationBuilder UseSecurityHeaders(this IApplicationBuilder app)
+        {
+            SecurityHeadersOptions securityHeadersOptions = app.ApplicationServices
+                .GetRequiredService<IOptions<SecurityHeadersOptions>>()
+                .Value;
+
+            if (securityHeadersOptions.Hsts.Enabled)
+            {
+                app.UseHsts();
+            }
+
+            app.UseMiddleware<SecurityHeadersMiddleware>();
+
+            if (securityHeadersOptions.HttpsRedirectionEnabled)
+            {
+                app.UseHttpsRedirection();
+            }
+
+            return app;
+        }
     }
 }
