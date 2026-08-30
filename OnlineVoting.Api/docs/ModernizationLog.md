@@ -4840,3 +4840,36 @@ Disabling observability does not require any code changes.
 - Full regression suite: 548 passed, 0 failed, 0 skipped.
 
 ---
+
+## Redis failure resilience
+
+### Goal
+
+Reduced request latency when distributed caching is enabled but Redis is unavailable.
+
+### Changes
+
+- Added configurable Redis connection and operation timeouts.
+- Reduced Redis connection retries.
+- Configured Redis backlog behavior to fail fast while disconnected.
+- Kept `AbortOnConnectFail` disabled so Redis can reconnect automatically after recovery.
+- Added validation for the new Redis configuration values.
+- Added unit tests for Redis fail-fast configuration.
+
+### Verification
+
+- Cache configuration tests: 9 passed.
+- Full regression suite: 552 passed.
+- Redis healthy:
+  - Faculty endpoint: approximately 39–48 ms.
+- Redis unavailable:
+  - Previous behavior: approximately 15.2–15.3 seconds.
+  - Updated behavior: first request approximately 1.84 seconds.
+  - Subsequent local-cache requests: approximately 30–57 ms.
+- Redis restored while API remained running:
+  - Faculty endpoint returned to approximately 38–48 ms.
+  - No API restart was required.
+
+The distributed cache now degrades much faster when Redis is unavailable while retaining automatic recovery when Redis becomes available again.
+
+---
