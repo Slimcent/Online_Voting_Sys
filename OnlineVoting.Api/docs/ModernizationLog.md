@@ -4524,3 +4524,186 @@ Added integration coverage for:
 The tests verified actual HTTP behaviour rather than only checking service registration.
 
 ---
+
+## CORS Hardening
+
+### Goal
+Replace the unrestricted CORS policy with a configurable, fail-closed policy that only allows explicitly approved browser origins, methods and headers.
+
+### Why
+The previous policy allowed any browser origin, method and header:
+
+```
+.AllowAnyOrigin()
+.AllowAnyMethod()
+.AllowAnyHeader()
+```
+
+That was convenient for development but too permissive for production.
+
+### Architecture
+
+```
+Browser / UI
+  ↓
+Origin header
+  ↓
+Routing
+  ↓
+CORS Policy
+  ├── Origin allowed?
+  ├── Method allowed?
+  └── Headers allowed?
+  ↓
+Authentication / Authorization
+  ↓
+Controllers
+  ↓
+Services
+```
+
+Only browser origins configured by the deployment environment receive CORS permission.
+
+### Changes
+- Replaced `AllowAnyOrigin()` with explicit allowed origins.
+- Replaced `AllowAnyMethod()` with configured HTTP methods.
+- Replaced `AllowAnyHeader()` with configured request headers.
+- Added `CorsSettings` configuration.
+- Added startup validation for CORS configuration.
+- Added configurable preflight cache duration.
+- Added explicit routing before CORS middleware.
+- Kept CORS independent of JWT authentication and authorization.
+- Added integration tests for allowed, blocked, disabled, and invalid CORS configurations.
+
+### Configuration
+
+Default configuration:
+
+```
+"Cors": {
+  "Enabled": false,
+  "AllowedOrigins": [],
+  "AllowedMethods": [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE"
+  ],
+  "AllowedHeaders": [
+    "Accept",
+    "Authorization",
+    "Content-Type",
+    "X-Correlation-ID",
+    "X-Device-Latitude",
+    "X-Device-Longitude",
+    "X-Device-Accuracy",
+    "X-Device-Location-Captured-At"
+  ],
+  "PreflightMaxAgeMinutes": 10
+}
+```
+
+CORS is disabled by default so a deployment must explicitly allow browser origins.
+
+### Design Decisions
+
+#### Explicit Origins
+Allowed UI origins are configured through environment settings instead of being hardcoded.
+
+Example for local development:
+
+```env
+Cors__Enabled=true
+Cors__AllowedOrigins__0=http://localhost:5173
+```
+
+Example for production:
+
+```env
+Cors__Enabled=true
+Cors__AllowedOrigins__0=https://voting.example.com
+```
+
+Multiple browser applications can be configured without changing application code:
+
+```env
+Cors__AllowedOrigins__0=https://vote.example.com
+Cors__AllowedOrigins__1=https://admin.example.com
+```
+
+Origins must contain the scheme, host and port when applicable, and must not contain a trailing slash.
+
+#### Fail-Closed Default
+`Cors:Enabled` defaults to `false`.
+
+This prevents accidental cross-origin browser access when no production UI origin has been configured.
+
+Swagger remains unaffected when served from the same API origin.
+
+#### Explicit Methods and Headers
+The policy only exposes the HTTP methods and request headers currently required by the application.
+
+This avoids silently allowing new browser-access capabilities.
+
+The configured headers include JWT authorization, JSON content, correlation IDs and the existing device-location headers.
+
+#### No CORS Credentials
+CORS credentials were not enabled because the current API authentication flow uses JWT bearer tokens through the `Authorization` header.
+
+Credentialed CORS should only be introduced if a future authentication design requires cookies, HTTP authentication or client certificates.
+
+#### Preflight Caching
+Successful browser preflight responses can be cached for 10 minutes.
+
+This reduces repeated `OPTIONS` requests while keeping policy changes reasonably short-lived.
+
+#### CORS Is Not Authorization
+Blocked origins do not replace authentication or authorization checks.
+
+CORS controls whether browser JavaScript can access a cross-origin response.
+
+JWT and authorization policies remain responsible for protecting API operations from unauthorized users and clients.
+
+### Middleware Order
+
+```
+app.UseRouting();
+
+app.UseCors("CorsPolicy");
+
+app.UseAuthentication();
+app.UseRateLimiter();
+app.UseAuthorization();
+```
+
+Routing runs before CORS so endpoint information is available to the CORS middleware.
+
+CORS runs before authentication and authorization so browser preflight requests can be handled before protected endpoints are evaluated.
+
+### Validation
+Startup validation now rejects invalid configurations, including:
+
+- CORS enabled without any allowed origin.
+- Empty allowed-method configuration when CORS is enabled.
+- Empty allowed-header configuration when CORS is enabled.
+- Invalid HTTP or HTTPS origins.
+- Origins containing a trailing slash.
+- Invalid preflight cache duration.
+
+This prevents common deployment misconfigurations from silently producing incorrect browser behavior.
+
+### Tests
+Added integration coverage for:
+
+- Requests from an allowed origin.
+- Requests from a blocked origin.
+- Allowed preflight requests.
+- Blocked preflight requests.
+- CORS disabled.
+- CORS enabled without an allowed origin.
+- Allowed origin configured with a trailing slash.
+
+The tests verify actual HTTP CORS headers rather than only service registration.
+
+---

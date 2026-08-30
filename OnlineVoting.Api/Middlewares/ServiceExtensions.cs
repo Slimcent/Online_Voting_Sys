@@ -44,12 +44,47 @@ namespace OnlineVoting.Api.Middlewares
 {
     public static class ServiceExtensions
     {
-        public static void ConfigureCors(this IServiceCollection services) => services.AddCors(options =>
+        public static IServiceCollection ConfigureCors(this IServiceCollection services, IConfiguration configuration)
         {
-            options.AddPolicy("CorsPolicy", builder => builder.AllowAnyOrigin()
-                .AllowAnyMethod()
-                .AllowAnyHeader());
-        });
+            IConfigurationSection section = configuration.GetSection(CorsSettings.SectionName);
+
+            services.AddOptions<CorsSettings>().Bind(section)
+                .Validate(options => !options.Enabled || options.AllowedOrigins.Length > 0,
+                    "Cors:AllowedOrigins must contain at least one origin when CORS is enabled.")
+                .Validate(options => options.AllowedOrigins.All(origin =>
+                    Uri.TryCreate(origin, UriKind.Absolute, out Uri? uri)
+                    && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+                    && uri.AbsolutePath == "/"
+                    && string.IsNullOrEmpty(uri.Query)
+                    && string.IsNullOrEmpty(uri.Fragment)
+                    && !origin.EndsWith('/')),
+                    "Cors:AllowedOrigins must contain valid HTTP or HTTPS origins without a trailing slash.")
+                .Validate(options => !options.Enabled || options.AllowedMethods.Length > 0,
+                    "Cors:AllowedMethods must contain at least one method when CORS is enabled.")
+                .Validate(options => !options.Enabled || options.AllowedHeaders.Length > 0,
+                    "Cors:AllowedHeaders must contain at least one header when CORS is enabled.")
+                .Validate(options => options.PreflightMaxAgeMinutes > 0,
+                    "Cors:PreflightMaxAgeMinutes must be greater than zero.")
+                .ValidateOnStart();
+
+            CorsSettings corsSettings = section.Get<CorsSettings>() ?? new CorsSettings();
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("CorsPolicy", policy =>
+                {
+                    if (!corsSettings.Enabled)
+                        return;
+
+                    policy.WithOrigins(corsSettings.AllowedOrigins)
+                        .WithMethods(corsSettings.AllowedMethods)
+                        .WithHeaders(corsSettings.AllowedHeaders)
+                        .SetPreflightMaxAge(TimeSpan.FromMinutes(corsSettings.PreflightMaxAgeMinutes));
+                });
+            });
+
+            return services;
+        }
 
         public static void ConfigureIISIntegration(this IServiceCollection services) => services.Configure<IISOptions>(options =>
         {

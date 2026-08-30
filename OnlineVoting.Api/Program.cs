@@ -60,7 +60,7 @@ builder.Services.AddControllers(setupAction =>
     options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
 });
 
-builder.Services.ConfigureCors();
+builder.Services.ConfigureCors(builder.Configuration);
 builder.Services.ConfigureIISIntegration();
 builder.Services.ConfigureForwardedHeaders(builder.Configuration);
 builder.Services.ConfigureSecurityHeaders(builder.Configuration);
@@ -114,6 +114,7 @@ app.ConfigureStatusCodePages();
 //    app.UseHttpsRedirection();
 //}
 
+app.UseRouting();
 app.UseCors("CorsPolicy");
 
 app.UseAuthentication();
