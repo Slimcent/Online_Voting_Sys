@@ -13,6 +13,7 @@ namespace OnlineVoting.Tests.TestData.Factories
         public Mock<UserManager<User>> UserManager { get; }
         public Mock<IServiceFactory> ServiceFactory { get; }
         public Mock<ILoggerMessage> LoggerMessage { get; }
+        public Mock<IHttpClientFactory> HttpClientFactory { get; }
         public ClaimsService Service { get; }
 
         public ClaimsServiceFactory()
@@ -30,13 +31,23 @@ namespace OnlineVoting.Tests.TestData.Factories
                 null!,
                 null!);
 
+            HttpClientFactory = new Mock<IHttpClientFactory>();
+
+            HttpClient httpClient = new()
+            {
+                BaseAddress = new Uri("https://localhost")
+            };
+
+            HttpClientFactory.Setup(factory => factory.CreateClient(It.IsAny<string>()))
+                .Returns(httpClient);
+
             ServiceFactory = new Mock<IServiceFactory>();
             LoggerMessage = new Mock<ILoggerMessage>();
 
             ServiceFactory.Setup(serviceFactory => serviceFactory.GetService<UserManager<User>>()).Returns(UserManager.Object);
             ServiceFactory.Setup(serviceFactory => serviceFactory.GetService<ILoggerMessage>()).Returns(LoggerMessage.Object);
 
-            Service = new ClaimsService(ServiceFactory.Object);
+            Service = new ClaimsService(ServiceFactory.Object, HttpClientFactory.Object);
         }
     }
 }

@@ -38,6 +38,8 @@ using VotingSystem.Logger;
 using Microsoft.AspNetCore.ResponseCompression;
 using OnlineVoting.Api.HealthChecks;
 using OnlineVoting.Caching.Configuration;
+using Microsoft.Extensions.Http.Resilience;
+using Polly;
 using System.IO.Compression;
 using System.Net;
 
@@ -124,7 +126,36 @@ namespace OnlineVoting.Api.Middlewares
             services.AddHttpClient<IIpGeolocationService, IpGeolocationService>(client =>
             {
                 client.BaseAddress = new Uri("https://ipwho.is/");
-                client.Timeout = TimeSpan.FromSeconds(2);
+                client.Timeout = Timeout.InfiniteTimeSpan;
+            })
+            .AddStandardResilienceHandler(options =>
+            {
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(3);
+
+                options.Retry.MaxRetryAttempts = 2;
+                options.Retry.Delay = TimeSpan.FromMilliseconds(200);
+                options.Retry.BackoffType = DelayBackoffType.Exponential;
+                options.Retry.UseJitter = true;
+                options.Retry.DisableForUnsafeHttpMethods();
+
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(1);
+            });
+
+            services.AddHttpClient(nameof(ClaimsService), client =>
+            {
+                client.Timeout = Timeout.InfiniteTimeSpan;
+            })
+            .AddStandardResilienceHandler(options =>
+            {
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(5);
+
+                options.Retry.MaxRetryAttempts = 2;
+                options.Retry.Delay = TimeSpan.FromMilliseconds(200);
+                options.Retry.BackoffType = DelayBackoffType.Exponential;
+                options.Retry.UseJitter = true;
+                options.Retry.DisableForUnsafeHttpMethods();
+
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(2);
             });
 
             return services;

@@ -4974,3 +4974,64 @@ SQLite is used for database health-check scenarios.
 `AddDistributedMemoryCache()` represents an available distributed cache. A test `IDistributedCache` implementation that throws `InvalidOperationException` represents an unavailable cache.
 
 ---
+
+## Outbound HTTP Resilience
+
+### Goal
+
+Improved reliability of outbound HTTP calls and remove direct `HttpClient` construction.
+
+### Files Changed
+
+- `OnlineVoting.Api/Middlewares/ServiceExtensions.cs`
+- `OnlineVoting.Api/OnlineVoting.Api.csproj`
+- `OnlineVoting.Services/Implementation/IpGeolocationService.cs`
+- `OnlineVoting.Services/Implementation/ClaimsService.cs`
+- `OnlineVoting.Services/OnlineVoting.Services.csproj`
+- `OnlineVoting.Tests/IntegrationTests/Api/ServiceExtension/IpGeolocationResilienceTests.cs`
+- `OnlineVoting.Tests/TestData/Factories/ClaimsServiceFactory.cs`
+- `OnlineVoting.Tests/UnitTests/Services/ClaimsServiceTests.cs`
+
+### Changes
+
+Added `Microsoft.Extensions.Http.Resilience` to the API project and configured the existing typed `HttpClient` for `IpGeolocationService` with:
+
+- total request timeout;
+- per-attempt timeout;
+- two retry attempts;
+- exponential backoff with jitter;
+- retries disabled for unsafe HTTP methods;
+- standard transient HTTP failure handling.
+
+The existing `IpGeolocationService` caching and response handling were preserved.
+
+Added handling for `Polly.Timeout.TimeoutRejectedException` so resilience-pipeline timeouts return `null` instead of escaping the service.
+
+Added `Polly.Core` to `OnlineVoting.Services` because the service handles the Polly timeout exception directly.
+
+Replaced the direct `new HttpClient()` usage in `ClaimsService.GetRouteNames()` with `IHttpClientFactory`.
+
+Registered a named resilient client for `ClaimsService` and preserved the existing Swagger route parsing and logging behaviour.
+
+`HttpResponseMessage` returned by the Swagger request is now disposed with `using`.
+
+SMTP email handling was not changed because it is not an HTTP dependency.
+
+### Tests
+
+Added three IP geolocation resilience tests:
+
+- transient `500` responses are retried and can recover;
+- `400 Bad Request` is not retried;
+- timeout retries are exhausted and the service returns `null`.
+
+The timeout test initially exposed that the resilience pipeline throws `TimeoutRejectedException`. `IpGeolocationService` was updated to handle it.
+
+Added two `ClaimsService.GetRouteNames()` tests:
+
+- successful Swagger response returns operation IDs;
+- failed Swagger response returns an empty list and logs a warning.
+
+Updated `ClaimsServiceFactory` to provide a mocked `IHttpClientFactory`.
+
+---
