@@ -37,6 +37,59 @@
     networks:
       - online-voting-network
 
+  online-voting-tempo:
+    image: grafana/tempo:3.0.2
+    container_name: online-voting-tempo
+    command:
+      - -config.file=/etc/tempo/config.yaml
+    volumes:
+      - ./Observability/tempo.yaml:/etc/tempo/config.yaml:ro
+      - online-voting-tempo-data:/var/tempo
+    ports:
+      - "3200:3200"
+    networks:
+      - online-voting-network
+
+  online-voting-prometheus:
+    image: prom/prometheus:v3.13.2
+    container_name: online-voting-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    volumes:
+      - ./Observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - online-voting-prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - online-voting-network
+
+  online-voting-grafana:
+    image: grafana/grafana:13.2.0
+    container_name: online-voting-grafana
+    volumes:
+      - ./Observability/Grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./Observability/Grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./Observability/Grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - online-voting-grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - online-voting-network
+
+  online-voting-otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.159.0
+    container_name: online-voting-otel-collector
+    command:
+      - --config=/etc/otelcol/config.yaml
+    volumes:
+      - ./Observability/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4318:4318"
+      - "13133:13133"
+    networks:
+      - online-voting-network
+
   migration-generator:
     image: mcr.microsoft.com/dotnet/sdk:10.0
     container_name: online-voting-migration-generator
@@ -104,3 +157,6 @@ networks:
 volumes:
   online-voting-sql-data:
   online-voting-api-publish:
+  online-voting-tempo-data:
+  online-voting-prometheus-data:
+  online-voting-grafana-data:  

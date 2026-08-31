@@ -13,5 +13,11 @@
         public bool DistributedEnabled { get; set; }
 
         public string RedisConnectionStringName { get; set; } = "Redis";
+
+        public TimeSpan RedisConnectTimeout { get; set; } = TimeSpan.FromSeconds(1);
+
+        public TimeSpan RedisOperationTimeout { get; set; } = TimeSpan.FromSeconds(1);
+
+        public int RedisConnectRetry { get; set; } = 1;
     }
 }

@@ -4707,3 +4707,270 @@ Added integration coverage for:
 The tests verify actual HTTP CORS headers rather than only service registration.
 
 ---
+
+## OpenTelemetry Observability
+
+### Goal
+Added vendor-neutral observability for API traces and metrics while preserving the existing NLog logging pipeline.
+
+### Changes
+- Added configurable OpenTelemetry tracing and metrics.
+- Added ASP.NET Core request tracing.
+- Added ASP.NET Core and .NET runtime metrics.
+- Added configurable parent-based trace sampling.
+- Added OTLP HTTP/protobuf export for traces and metrics.
+- Added OpenTelemetry resource metadata for service name, namespace, version, and environment.
+- Added configuration validation with `ObservabilitySettingsValidator`.
+- Added an OpenTelemetry Collector Docker service.
+- Added Collector memory limiting and batching.
+- Added a local debug exporter for development verification.
+- Excluded `/health` and `/swagger` from request tracing.
+- Preserved NLog as the application logging pipeline.
+- Added `CorrelationId`, `RequestId`, OpenTelemetry `TraceId`, and `SpanId` to the NLog request scope.
+- Added validation for incoming `X-Correlation-ID` values.
+- Added the correlation ID to traces as `app.correlation_id`.
+
+### Architecture
+```text
+OnlineVoting.Api
+    ├── Traces
+    │     └── OTLP HTTP → /v1/traces
+    │
+    ├── Metrics
+    │     └── OTLP HTTP → /v1/metrics
+    │
+    └── NLog
+          ├── CorrelationId
+          ├── RequestId
+          ├── TraceId
+          └── SpanId
+                │
+                └── TraceId matches OpenTelemetry trace
+
+                    ↓
+
+           OpenTelemetry Collector
+                ├── memory_limiter
+                ├── batch
+                └── debug exporter
+```
+
+### Configuration
+Observability is configuration-driven and can be enabled or disabled without changing application code.
+
+The Docker-hosted API exports telemetry to the Collector through the Docker network. A locally running API can export through the Collector's published OTLP HTTP port.
+
+The Collector is not treated as a required application dependency. Loss of telemetry does not prevent the API from operating.
+
+The debug exporter is intended for local development verification and should be replaced by an appropriate observability backend for production.
+
+### Disabling Observability
+Observability can be disabled completely through configuration.
+
+The default application configuration is:
+
+```json
+"Observability": {
+  "Enabled": false,
+  "ServiceName": "OnlineVoting.Api",
+  "ServiceNamespace": "OnlineVoting",
+  "TraceSamplingRatio": 1.0,
+  "OtlpEndpoint": "http://localhost:4318/",
+  "ExcludedTracingPaths": [
+    "/health",
+    "/swagger"
+  ]
+}
+```
+
+When `Observability:Enabled` is `false`, the application does not register the OpenTelemetry tracing and metrics pipelines and does not export telemetry to the Collector.
+
+For a locally running API, either remove the environment override:
+
+```
+Observability__Enabled=true
+```
+
+or explicitly set:
+
+```
+Observability__Enabled=false
+```
+
+For Docker, either remove:
+
+```env
+Observability__Enabled=true
+Observability__OtlpEndpoint=http://online-voting-otel-collector:4318/
+```
+
+from `.env.docker`, allowing the `appsettings.json` default of `false` to apply, or explicitly set:
+
+```
+Observability__Enabled=false
+```
+
+The OpenTelemetry Collector may remain running when observability is disabled. The API simply stops sending traces and metrics to it.
+
+If the Collector is also not needed locally, it can be stopped independently:
+
+```
+docker compose -p online-voting-system -f .\OnlineVoting.Api\docker-compose.yml stop online-voting-otel-collector
+```
+
+It can later be started again with:
+
+```
+docker compose -p online-voting-system -f .\OnlineVoting.Api\docker-compose.yml up -d online-voting-otel-collector
+```
+
+After changing the observability environment configuration, restart the API process or recreate the API container so the new setting is applied.
+
+Disabling observability does not require any code changes.
+
+### Verification
+- Observability configuration tests: 11 passed.
+- Correlation middleware unit tests: 6 passed.
+- Correlation middleware integration tests: 2 passed.
+- Collector health endpoint returned HTTP 200.
+- Real API traces were received by the Collector.
+- ASP.NET Core and .NET runtime metrics were received by the Collector.
+- NLog `TraceId` and `SpanId` matched the corresponding OpenTelemetry trace.
+- `X-Correlation-ID` was preserved in the response, NLog scope, and OpenTelemetry trace as `app.correlation_id`.
+- Full regression suite: 548 passed, 0 failed, 0 skipped.
+
+---
+
+## Redis failure resilience
+
+### Goal
+
+Reduced request latency when distributed caching is enabled but Redis is unavailable.
+
+### Changes
+
+- Added configurable Redis connection and operation timeouts.
+- Reduced Redis connection retries.
+- Configured Redis backlog behavior to fail fast while disconnected.
+- Kept `AbortOnConnectFail` disabled so Redis can reconnect automatically after recovery.
+- Added validation for the new Redis configuration values.
+- Added unit tests for Redis fail-fast configuration.
+
+### Verification
+
+- Cache configuration tests: 9 passed.
+- Full regression suite: 552 passed.
+- Redis healthy:
+  - Faculty endpoint: approximately 39–48 ms.
+- Redis unavailable:
+  - Previous behavior: approximately 15.2–15.3 seconds.
+  - Updated behavior: first request approximately 1.84 seconds.
+  - Subsequent local-cache requests: approximately 30–57 ms.
+- Redis restored while API remained running:
+  - Faculty endpoint returned to approximately 38–48 ms.
+  - No API restart was required.
+
+The distributed cache now degrades much faster when Redis is unavailable while retaining automatic recovery when Redis becomes available again.
+
+---
+
+## Health and Readiness Checks
+
+### Goal
+
+Separate application liveness from dependency readiness.
+
+- `/health/live` checks whether the API process is running.
+- `/health/ready` checks required dependencies.
+- SQL Server is always required for readiness.
+- Redis is required only when distributed caching is enabled.
+- Observability services are not readiness dependencies.
+
+### Files Changed
+
+- `OnlineVoting.Api/Program.cs`
+- `OnlineVoting.Api/Middlewares/ServiceExtensions.cs`
+- `OnlineVoting.Api/HealthChecks/RedisHealthCheck.cs`
+- `OnlineVoting.Tests/IntegrationTests/Api/ServiceExtension/HealthCheckTests.cs`
+
+### Changes
+
+Renamed the existing liveness endpoint from:
+
+```
+/health
+```
+
+to:
+
+```
+/health/live
+```
+
+The endpoint still uses:
+
+```
+Predicate = _ => false
+```
+
+so it does not execute dependency checks.
+
+The existing readiness endpoint remains:
+
+```
+/health/ready
+```
+
+and continues to execute checks tagged with `ready`.
+
+Updated `ConfigureHealthChecks` to accept `IConfiguration`:
+
+```
+builder.Services.ConfigureHealthChecks(builder.Configuration);
+```
+
+The existing `VotingDbContext` health check remains registered as the SQL readiness check.
+
+Added `RedisHealthCheck`, which uses the existing `IDistributedCache` registration and performs a lightweight cache read:
+
+```
+await distributedCache.GetAsync(HealthCheckKey, cancellationToken);
+```
+
+Redis is added to readiness only when:
+
+```
+Caching:DistributedEnabled = true
+```
+
+No additional Redis health-check package was added.
+
+### Behaviour
+
+| Scenario | `/health/live` | `/health/ready` |
+| --- | --- | --- |
+| API running, dependencies healthy | 200 | 200 |
+| SQL unavailable | 200 | 503 |
+| Redis disabled | 200 | SQL determines readiness |
+| Redis enabled and unavailable | 200 | 503 |
+| Redis enabled and available | 200 | 200 |
+
+Grafana, Tempo, Prometheus and the OpenTelemetry Collector are not included in readiness because they are not required for the API to serve application requests.
+
+### Tests
+
+Added five integration tests:
+
+- `Live_WhenDatabaseIsUnavailable_ShouldReturnOk`
+- `Ready_WhenDatabaseIsAvailableAndRedisIsDisabled_ShouldReturnOk`
+- `Ready_WhenDatabaseIsUnavailable_ShouldReturnServiceUnavailable`
+- `Ready_WhenRedisIsEnabledAndUnavailable_ShouldReturnServiceUnavailable`
+- `Ready_WhenRedisIsEnabledAndAvailable_ShouldReturnOk`
+
+The tests use the existing `TestServer` setup.
+
+SQLite is used for database health-check scenarios.
+
+`AddDistributedMemoryCache()` represents an available distributed cache. A test `IDistributedCache` implementation that throws `InvalidOperationException` represents an unavailable cache.
+
+---
