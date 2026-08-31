@@ -4873,3 +4873,104 @@ Reduced request latency when distributed caching is enabled but Redis is unavail
 The distributed cache now degrades much faster when Redis is unavailable while retaining automatic recovery when Redis becomes available again.
 
 ---
+
+## Health and Readiness Checks
+
+### Goal
+
+Separate application liveness from dependency readiness.
+
+- `/health/live` checks whether the API process is running.
+- `/health/ready` checks required dependencies.
+- SQL Server is always required for readiness.
+- Redis is required only when distributed caching is enabled.
+- Observability services are not readiness dependencies.
+
+### Files Changed
+
+- `OnlineVoting.Api/Program.cs`
+- `OnlineVoting.Api/Middlewares/ServiceExtensions.cs`
+- `OnlineVoting.Api/HealthChecks/RedisHealthCheck.cs`
+- `OnlineVoting.Tests/IntegrationTests/Api/ServiceExtension/HealthCheckTests.cs`
+
+### Changes
+
+Renamed the existing liveness endpoint from:
+
+```
+/health
+```
+
+to:
+
+```
+/health/live
+```
+
+The endpoint still uses:
+
+```
+Predicate = _ => false
+```
+
+so it does not execute dependency checks.
+
+The existing readiness endpoint remains:
+
+```
+/health/ready
+```
+
+and continues to execute checks tagged with `ready`.
+
+Updated `ConfigureHealthChecks` to accept `IConfiguration`:
+
+```
+builder.Services.ConfigureHealthChecks(builder.Configuration);
+```
+
+The existing `VotingDbContext` health check remains registered as the SQL readiness check.
+
+Added `RedisHealthCheck`, which uses the existing `IDistributedCache` registration and performs a lightweight cache read:
+
+```
+await distributedCache.GetAsync(HealthCheckKey, cancellationToken);
+```
+
+Redis is added to readiness only when:
+
+```
+Caching:DistributedEnabled = true
+```
+
+No additional Redis health-check package was added.
+
+### Behaviour
+
+| Scenario | `/health/live` | `/health/ready` |
+| --- | --- | --- |
+| API running, dependencies healthy | 200 | 200 |
+| SQL unavailable | 200 | 503 |
+| Redis disabled | 200 | SQL determines readiness |
+| Redis enabled and unavailable | 200 | 503 |
+| Redis enabled and available | 200 | 200 |
+
+Grafana, Tempo, Prometheus and the OpenTelemetry Collector are not included in readiness because they are not required for the API to serve application requests.
+
+### Tests
+
+Added five integration tests:
+
+- `Live_WhenDatabaseIsUnavailable_ShouldReturnOk`
+- `Ready_WhenDatabaseIsAvailableAndRedisIsDisabled_ShouldReturnOk`
+- `Ready_WhenDatabaseIsUnavailable_ShouldReturnServiceUnavailable`
+- `Ready_WhenRedisIsEnabledAndUnavailable_ShouldReturnServiceUnavailable`
+- `Ready_WhenRedisIsEnabledAndAvailable_ShouldReturnOk`
+
+The tests use the existing `TestServer` setup.
+
+SQLite is used for database health-check scenarios.
+
+`AddDistributedMemoryCache()` represents an available distributed cache. A test `IDistributedCache` implementation that throws `InvalidOperationException` represents an unavailable cache.
+
+---

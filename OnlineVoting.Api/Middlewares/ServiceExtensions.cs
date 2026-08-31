@@ -36,6 +36,8 @@ using System.Threading.RateLimiting;
 using VotingSystem.Data.Implementation;
 using VotingSystem.Logger;
 using Microsoft.AspNetCore.ResponseCompression;
+using OnlineVoting.Api.HealthChecks;
+using OnlineVoting.Caching.Configuration;
 using System.IO.Compression;
 using System.Net;
 
@@ -297,10 +299,19 @@ namespace OnlineVoting.Api.Middlewares
             });
         }
 
-        public static IServiceCollection ConfigureHealthChecks(this IServiceCollection services)
+        public static IServiceCollection ConfigureHealthChecks(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddHealthChecks().AddDbContextCheck<VotingDbContext>(name: "database", failureStatus: HealthStatus.Unhealthy,
-                tags: new[] { "ready" });
+            IHealthChecksBuilder healthChecksBuilder = services.AddHealthChecks()
+                .AddDbContextCheck<VotingDbContext>(name: "database", failureStatus: HealthStatus.Unhealthy,
+                    tags: new[] { "ready" });
+
+            CacheOptions cacheOptions = configuration.GetSection(CacheOptions.SectionName).Get<CacheOptions>() ?? new CacheOptions();
+
+            if (cacheOptions.DistributedEnabled)
+            {
+                healthChecksBuilder.AddCheck<RedisHealthCheck>(name: "redis", failureStatus: HealthStatus.Unhealthy,
+                    tags: new[] { "ready" });
+            }
 
             return services;
         }
