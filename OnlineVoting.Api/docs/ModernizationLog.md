@@ -5035,3 +5035,57 @@ Added two `ClaimsService.GetRouteNames()` tests:
 Updated `ClaimsServiceFactory` to provide a mocked `IHttpClientFactory`.
 
 ---
+
+## Swagger Production Hardening
+
+### Goal
+
+Prevent Swagger/OpenAPI from being exposed in production unless explicitly enabled.
+
+### Files Changed
+
+- `OnlineVoting.Api/Program.cs`
+- `OnlineVoting.Api/appsettings.json`
+
+### Changes
+
+Added:
+
+```
+"Swagger": {
+  "Enabled": false
+}
+```
+
+Swagger middleware is now enabled when either:
+
+- the application is running in `Development`; or
+- `Swagger:Enabled` is explicitly set to `true`.
+
+```
+bool swaggerEnabled = app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger:Enabled");
+
+if (swaggerEnabled)
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(...);
+}
+```
+
+The existing Swagger configuration, API version endpoints, models configuration and custom stylesheet were preserved.
+
+Production can explicitly enable Swagger with:
+
+```
+Swagger__Enabled=true
+```
+
+### Behaviour
+
+```
+Development                    -> Swagger enabled
+Production                     -> Swagger disabled by default
+Production + Swagger enabled   -> Swagger enabled
+```
+
+---
