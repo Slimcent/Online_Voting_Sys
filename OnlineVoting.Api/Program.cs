@@ -65,9 +65,10 @@ builder.Services.ConfigureIISIntegration();
 builder.Services.ConfigureForwardedHeaders(builder.Configuration);
 builder.Services.ConfigureSecurityHeaders(builder.Configuration);
 builder.Services.ConfigureResponseCompression(builder.Configuration);
+builder.Services.ConfigureObservability(builder.Configuration, builder.Environment);
 builder.Services.AddApplicationCaching(builder.Configuration);
 builder.Services.AddDBConnection(builder.Configuration);
-builder.Services.ConfigureHealthChecks();
+builder.Services.ConfigureHealthChecks(builder.Configuration);
 builder.Services.ConfigureRateLimiting();
 builder.Services.BindConfigurations(builder.Configuration);
 builder.Services.ConfigureJWT();
@@ -125,7 +126,7 @@ app.UseMiddleware<IpGeolocationMiddleware>();
 
 app.MapControllers();
 
-app.MapHealthChecks("/health", new HealthCheckOptions
+app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
     Predicate = _ => false
 }).AllowAnonymous();
