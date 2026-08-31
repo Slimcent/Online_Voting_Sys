@@ -14,11 +14,13 @@ namespace OnlineVoting.Services.Implementation
     {
         private readonly UserManager<User> _userManager;
         private readonly ILoggerMessage _loggerMessage;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public ClaimsService(IServiceFactory serviceFactory)
+        public ClaimsService(IServiceFactory serviceFactory, IHttpClientFactory httpClientFactory)
         {
             _userManager = serviceFactory.GetService<UserManager<User>>();
             _loggerMessage = serviceFactory.GetService<ILoggerMessage>();
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<List<string>> GetRouteNames(string baseUrl)
@@ -27,54 +29,52 @@ namespace OnlineVoting.Services.Implementation
 
             List<string> operationIds = new();
 
-            using (HttpClient client = new())
+            HttpClient client = _httpClientFactory.CreateClient(nameof(ClaimsService));
+            client.BaseAddress = new Uri(baseUrl);
+            client.DefaultRequestHeaders.Accept.Clear();
+
+            using HttpResponseMessage response = await client.GetAsync("/swagger/v1/swagger.json");
+
+            if (response.IsSuccessStatusCode)
             {
-                client.BaseAddress = new Uri($"{baseUrl}");
-                client.DefaultRequestHeaders.Accept.Clear();
+                string content = await response.Content.ReadAsStringAsync();
+                dynamic routePaths = JsonConvert.DeserializeObject<dynamic>(content).paths;
 
-                HttpResponseMessage response = await client.GetAsync("/swagger/v1/swagger.json");
-
-                if (response.IsSuccessStatusCode)
+                foreach (dynamic route in routePaths)
                 {
-                    string content = await response.Content.ReadAsStringAsync();
-                    dynamic routePaths = JsonConvert.DeserializeObject<dynamic>(content).paths;
+                    dynamic operationGet = route.First?.get?.operationId?.ToString() ?? string.Empty;
+                    dynamic operationPost = route.First?.post?.operationId?.ToString() ?? string.Empty;
+                    dynamic operationPut = route.First?.put?.operationId?.ToString() ?? string.Empty;
+                    dynamic operationDelete = route.First?.delete?.operationId?.ToString() ?? string.Empty;
+                    dynamic operationPatch = route.First?.patch?.operationId?.ToString() ?? string.Empty;
 
-                    foreach (dynamic route in routePaths)
+                    if (!string.IsNullOrEmpty(operationGet))
                     {
-                        dynamic operationGet = route.First?.get?.operationId?.ToString() ?? string.Empty;
-                        dynamic operationPost = route.First?.post?.operationId?.ToString() ?? string.Empty;
-                        dynamic operationPut = route.First?.put?.operationId?.ToString() ?? string.Empty;
-                        dynamic operationDelete = route.First?.delete?.operationId?.ToString() ?? string.Empty;
-                        dynamic operationPatch = route.First?.patch?.operationId?.ToString() ?? string.Empty;
-
-                        if (!string.IsNullOrEmpty(operationGet))
-                        {
-                            operationIds.Add(operationGet);
-                        }
-                        if (!string.IsNullOrEmpty(operationPost))
-                        {
-                            operationIds.Add(operationPost);
-                        }
-                        if (!string.IsNullOrEmpty(operationPut))
-                        {
-                            operationIds.Add(operationPut);
-                        }
-                        if (!string.IsNullOrEmpty(operationDelete))
-                        {
-                            operationIds.Add(operationDelete);
-                        }
-                        if (!string.IsNullOrEmpty(operationPatch))
-                        {
-                            operationIds.Add(operationPatch);
-                        }
+                        operationIds.Add(operationGet);
                     }
+                    if (!string.IsNullOrEmpty(operationPost))
+                    {
+                        operationIds.Add(operationPost);
+                    }
+                    if (!string.IsNullOrEmpty(operationPut))
+                    {
+                        operationIds.Add(operationPut);
+                    }
+                    if (!string.IsNullOrEmpty(operationDelete))
+                    {
+                        operationIds.Add(operationDelete);
+                    }
+                    if (!string.IsNullOrEmpty(operationPatch))
+                    {
+                        operationIds.Add(operationPatch);
+                    }
+                }
 
-                    _loggerMessage.LogInfo($"{operationIds.Count} route names found.");
-                }
-                else
-                {
-                    _loggerMessage.LogWarn("Route names request failed because the Swagger document could not be retrieved.");
-                }
+                _loggerMessage.LogInfo($"{operationIds.Count} route names found.");
+            }
+            else
+            {
+                _loggerMessage.LogWarn("Route names request failed because the Swagger document could not be retrieved.");
             }
 
             return operationIds;
