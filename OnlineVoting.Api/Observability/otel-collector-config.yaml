@@ -16,8 +16,13 @@ processors:
     send_batch_max_size: 1024
 
 exporters:
-  debug:
-    verbosity: normal
+  otlp_grpc/tempo:
+    endpoint: online-voting-tempo:4317
+    tls:
+      insecure: true
+
+  prometheus:
+    endpoint: 0.0.0.0:8889
 
 extensions:
   health_check:
@@ -35,7 +40,7 @@ service:
         - memory_limiter
         - batch
       exporters:
-        - debug
+        - otlp_grpc/tempo
 
     metrics:
       receivers:
@@ -44,4 +49,4 @@ service:
         - memory_limiter
         - batch
       exporters:
-        - debug
+        - prometheus
