@@ -5089,3 +5089,51 @@ Production + Swagger enabled   -> Swagger enabled
 ```
 
 ---
+
+## Account Lockout and Failed Login Tracking
+
+### Goal
+
+Protect user accounts against repeated failed login attempts using ASP.NET Core Identity's built-in lockout support.
+
+### Files Changed
+
+- `OnlineVoting.Api/Middlewares/ServiceExtensions.cs`
+- `OnlineVoting.Services/Implementation/UserService.cs`
+- `OnlineVoting.Tests/IntegrationTests/Services/AccountLockoutTests.cs`
+
+### Changes
+
+Configured Identity lockout with:
+
+- 5 failed login attempts
+- 15-minute lockout
+- lockout enabled for users
+
+Login authentication now uses `SignInManager.CheckPasswordSignInAsync` with `lockoutOnFailure: true`.
+
+Failed login attempts are tracked by ASP.NET Identity. Locked accounts continue to receive the generic authentication response:
+
+```
+Invalid email or password.
+```
+
+This avoids exposing account lockout state through the API.
+
+No database migration was required because Identity already provides `AccessFailedCount`, `LockoutEnabled` and `LockoutEnd`.
+
+### Tests
+
+Added integration tests using real `UserManager` and `SignInManager` with SQLite covering:
+
+- failed access count increases
+- account locks after the fifth failed attempt
+- correct password is rejected while locked
+- successful login resets failed attempts
+- expired lockout allows login again
+
+### Result
+
+Repeated failed authentication attempts now temporarily lock accounts while successful authentication resets previous failed attempts.
+
+---
