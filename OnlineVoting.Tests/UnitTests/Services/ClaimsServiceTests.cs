@@ -3,11 +3,14 @@ using Moq;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
-using OnlineVoting.Models.Enums;
 using OnlineVoting.Models.Results;
 using OnlineVoting.Tests.TestData.Data;
 using OnlineVoting.Tests.TestData.Factories;
 using System.Security.Claims;
+using OnlineVoting.Services.Implementation;
+using OnlineVoting.Services.Interfaces;
+using System.Net;
+using System.Text;
 
 namespace OnlineVoting.Tests.UnitTests.Services
 {
@@ -437,6 +440,91 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Assert.Contains(result.Value, claim => claim.ClaimType == "Permission" && claim.ClaimValue == "ViewElection");
 
             factory.UserManager.Verify(userManager => userManager.GetClaimsAsync(user), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetRouteNames_WithSuccessfulSwaggerResponse_ShouldReturnOperationIds()
+        {
+            string responseContent = """
+            {
+                "paths": {
+                    "/api/test": {
+                        "get": {
+                            "operationId": "GetTest"
+                        },
+                        "post": {
+                            "operationId": "CreateTest"
+                        }
+                    }
+                }
+            }
+            """;
+
+            TestHttpMessageHandler messageHandler = new(HttpStatusCode.OK, responseContent);
+
+            HttpClient httpClient = new(messageHandler)
+            {
+                BaseAddress = new Uri("https://localhost")
+            };
+
+            ClaimsServiceFactory factory = new();
+
+            factory.HttpClientFactory.Setup(httpClientFactory => httpClientFactory.CreateClient(nameof(ClaimsService)))
+                .Returns(httpClient);
+
+            List<string> result = await factory.Service.GetRouteNames("https://localhost");
+
+            Assert.Equal(2, result.Count);
+            Assert.Contains("GetTest", result);
+            Assert.Contains("CreateTest", result);
+
+            factory.HttpClientFactory.Verify(httpClientFactory => httpClientFactory.CreateClient(nameof(ClaimsService)), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetRouteNames_WhenSwaggerReturnsFailure_ShouldReturnEmptyList()
+        {
+            TestHttpMessageHandler messageHandler = new(HttpStatusCode.InternalServerError, string.Empty);
+
+            HttpClient httpClient = new(messageHandler)
+            {
+                BaseAddress = new Uri("https://localhost")
+            };
+
+            ClaimsServiceFactory factory = new();
+
+            factory.HttpClientFactory
+                .Setup(httpClientFactory => httpClientFactory.CreateClient(nameof(ClaimsService)))
+                .Returns(httpClient);
+
+            List<string> result = await factory.Service.GetRouteNames("https://localhost");
+
+            Assert.Empty(result);
+
+            factory.LoggerMessage.Verify(logger => logger.LogWarn("Route names request failed because the Swagger document could not be retrieved."),
+                Times.Once);
+        }
+
+        private sealed class TestHttpMessageHandler : HttpMessageHandler
+        {
+            private readonly HttpStatusCode _statusCode;
+            private readonly string _responseContent;
+
+            public TestHttpMessageHandler(HttpStatusCode statusCode, string responseContent)
+            {
+                _statusCode = statusCode;
+                _responseContent = responseContent;
+            }
+
+            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            {
+                HttpResponseMessage response = new(_statusCode)
+                {
+                    Content = new StringContent(_responseContent, Encoding.UTF8, "application/json")
+                };
+
+                return Task.FromResult(response);
+            }
         }
     }
 }

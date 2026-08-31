@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Services.Interfaces;
+using Polly.Timeout;
 using System.Net.Http.Json;
 using System.Text.Json;
 using VotingSystem.Logger;
@@ -50,6 +51,12 @@ namespace OnlineVoting.Services.Implementation
                 return response;
             }
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                _loggerMessage.LogWarn($"IP geolocation lookup timed out for IP {ipAddress}.");
+
+                return null;
+            }
+            catch (TimeoutRejectedException)
             {
                 _loggerMessage.LogWarn($"IP geolocation lookup timed out for IP {ipAddress}.");
 
