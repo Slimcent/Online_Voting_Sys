@@ -52,13 +52,13 @@
         /// <summary>
         /// The property used to order the results.
         /// </summary>
-        /// <example>LastName</example>
+        /// <example>Name</example>
         public string? OrderBy { get; set; }
 
         /// <summary>
         /// The text used to filter the results.
         /// </summary>
-        /// <example>John</example>
+        /// <example>Item</example>
         public string? SearchTerm { get; set; }
     }
 }

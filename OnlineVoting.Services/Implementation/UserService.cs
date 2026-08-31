@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using OnlineVoting.Data.Interfaces;
+using OnlineVoting.Models.Constants;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Request.Email;
 using OnlineVoting.Models.Dtos.Response;
@@ -11,7 +13,6 @@ using OnlineVoting.Services.Extension;
 using OnlineVoting.Services.Infrastructures;
 using OnlineVoting.Services.Interfaces;
 using System.Security.Claims;
-using OnlineVoting.Data.Interfaces;
 using VotingSystem.Logger;
 
 namespace OnlineVoting.Services.Implementation
@@ -88,35 +89,65 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<Result<LoggedInUserResponse>> UserLogin(LoginRequest request)
         {
+            string normalizedEmail = request.Email.Trim().ToLowerInvariant();
+
+            IAuditTrailService auditTrailService = _serviceFactory.GetService<IAuditTrailService>();
+
             _loggerMessage.LogInfo($"Login attempt received for email {request.Email}.");
 
-            User? user = await _userRepo.GetSingleByAsync(user => user.Email == request.Email.ToLower().Trim(),
+            User? user = await _userRepo.GetSingleByAsync(user => user.Email == normalizedEmail ,
                 include: user => user.Include(item => item.UserType));
 
             if (user is null)
             {
                 _loggerMessage.LogWarn($"Login failed because no user exists for email {request.Email}.");
 
-                return Result<LoggedInUserResponse>.Unauthorized("Invalid email or password.");
+                await auditTrailService.RecordAuthenticationEvent(ApplicationConstants.Audit.Events.LoginFailed, ApplicationConstants.Audit.Outcomes.Failure,
+                    ApplicationConstants.Audit.Descriptions.InvalidCredentials, attemptedUsername: normalizedEmail);
+
+                return Result<LoggedInUserResponse>.Unauthorized(ApplicationConstants.Authentication.Messages.InvalidCredentials);
             }
 
             if (!user.Active)
-                return Result<LoggedInUserResponse>.Forbidden("Account is not active. Contact the administrator.");
+            {
+                await auditTrailService.RecordAuthenticationEvent(ApplicationConstants.Audit.Events.LoginFailed, ApplicationConstants.Audit.Outcomes.Denied,
+                    ApplicationConstants.Audit.Descriptions.InactiveAccount, user);
+
+                return Result<LoggedInUserResponse>.Forbidden(ApplicationConstants.Authentication.Messages.InactiveAccount);
+            }
+
+            bool wasLockedOut = await _userManager.IsLockedOutAsync(user);
+                        
+            if (wasLockedOut)
+            {
+                _loggerMessage.LogWarn($"Login rejected because user {user.Id} is temporarily locked out.");
+
+                await auditTrailService.RecordAuthenticationEvent(ApplicationConstants.Audit.Events.LoginRejectedLocked, ApplicationConstants.Audit.Outcomes.Denied,
+                    ApplicationConstants.Audit.Descriptions.LoginRejectedLocked, user);
+
+                return Result<LoggedInUserResponse>.Unauthorized(ApplicationConstants.Authentication.Messages.InvalidCredentials);
+            }
 
             SignInResult signInResult = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
 
             if (signInResult.IsLockedOut)
             {
-                _loggerMessage.LogWarn($"Login rejected because user {user.Id} is temporarily locked out.");
+                _loggerMessage.LogWarn($"Account lockout triggered for user {user.Id}.");
 
-                return Result<LoggedInUserResponse>.Unauthorized("Invalid email or password.");
+                await auditTrailService.RecordAuthenticationEvent(ApplicationConstants.Audit.Events.AccountLocked, ApplicationConstants.Audit.Outcomes.Denied,
+                    ApplicationConstants.Audit.Descriptions.AccountLocked, user);
+
+                return Result<LoggedInUserResponse>.Unauthorized(ApplicationConstants.Authentication.Messages.InvalidCredentials);
             }
 
             if (!signInResult.Succeeded)
             {
                 _loggerMessage.LogWarn($"Login failed because invalid credentials were provided for user {user.Id}.");
 
-                return Result<LoggedInUserResponse>.Unauthorized("Invalid email or password.");
+                await auditTrailService.RecordAuthenticationEvent(ApplicationConstants.Audit.Events.LoginFailed, ApplicationConstants.Audit.Outcomes.Failure, 
+                    ApplicationConstants.Audit.Descriptions.InvalidCredentials, user);
+
+                return Result<LoggedInUserResponse>.Unauthorized(ApplicationConstants.Authentication.Messages.InvalidCredentials);
             }
 
             List<string> allUserRoles = (await _userManager.GetRolesAsync(user)).ToList();
@@ -165,30 +196,15 @@ namespace OnlineVoting.Services.Implementation
 
             string fullName = $"{user.FirstName} {user.LastName}";
 
-            //switch (userType)
-            //{
-            //    case "Official":
-            //    {
-            //        Staff staff = await _staffRepo.GetSingleByAsync(x => x.UserId == user.Id);
-
-            //        fullName = $"{staff?.LastName} {staff?.FirstName}";
-            //        break;
-            //    }
-            //    case "Student":
-            //    {
-            //        Student student = await _studentRepo.GetSingleByAsync(x => x.UserId == user.Id);
-
-            //        fullName = $"{student.LastName} {student.FirstName}";
-            //        break;
-            //    }
-            //}
-
             LoggedInUserResponse response = new()
             {
                 JwtToken = userToken,
                 UserType = user.UserType?.Name,
                 FullName = fullName
             };
+
+            await auditTrailService.RecordAuthenticationEvent(ApplicationConstants.Audit.Events.LoginSucceeded, ApplicationConstants.Audit.Outcomes.Success,
+                ApplicationConstants.Audit.Descriptions.LoginSucceeded, user);
 
             return Result<LoggedInUserResponse>.Success(response);
         }
