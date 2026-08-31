@@ -1,4 +1,5 @@
-﻿using OnlineVoting.Models.Configurations;
+﻿using NLog;
+using OnlineVoting.Models.Configurations;
 using System.Diagnostics;
 using System.Security.Claims;
 using VotingSystem.Logger;
@@ -8,6 +9,7 @@ namespace OnlineVoting.Api.Middlewares
     public class CorrelationIdMiddleware
     {
         public const string CorrelationIdHeaderName = "X-Correlation-ID";
+        public const string CorrelationIdActivityTagName = "app.correlation_id";
         public const string CorrelationIdItemName = RequestContextKeys.CorrelationId;
 
         private readonly RequestDelegate _next;
@@ -21,10 +23,19 @@ namespace OnlineVoting.Api.Middlewares
         {
             string? correlationId = context.Request.Headers[CorrelationIdHeaderName].FirstOrDefault();
 
-            if (string.IsNullOrWhiteSpace(correlationId))
-                correlationId = Guid.NewGuid().ToString();
+            if (string.IsNullOrWhiteSpace(correlationId)
+                || correlationId.Length > 64
+                || correlationId.Any(character => !(char.IsLetterOrDigit(character) || character == '-' || character == '_' || character == '.')))
+            {
+                correlationId = Guid.NewGuid().ToString("N");
+            }
+
+            string requestId = context.TraceIdentifier;
+            string traceId = Activity.Current?.TraceId.ToString() ?? string.Empty;
+            string spanId = Activity.Current?.SpanId.ToString() ?? string.Empty;
 
             context.Items[CorrelationIdItemName] = correlationId;
+            Activity.Current?.SetTag(CorrelationIdActivityTagName, correlationId);
 
             context.Response.OnStarting(() =>
             {
@@ -32,6 +43,11 @@ namespace OnlineVoting.Api.Middlewares
 
                 return Task.CompletedTask;
             });
+
+            using IDisposable correlationIdScope = ScopeContext.PushProperty("CorrelationId", correlationId);
+            using IDisposable requestIdScope = ScopeContext.PushProperty("RequestId", requestId);
+            using IDisposable traceIdScope = ScopeContext.PushProperty("TraceId", traceId);
+            using IDisposable spanIdScope = ScopeContext.PushProperty("SpanId", spanId);
 
             Stopwatch stopwatch = Stopwatch.StartNew();
 
@@ -45,8 +61,7 @@ namespace OnlineVoting.Api.Middlewares
 
                 string user = context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "Anonymous";
 
-                logger.LogInfo($"HTTP request completed. CorrelationId: {correlationId}, TraceId: {context.TraceIdentifier}, "
-                    + $"Method: {context.Request.Method}, Path: {context.Request.Path}, "
+                logger.LogInfo($"HTTP request completed. Method: {context.Request.Method}, Path: {context.Request.Path}, "
                     + $"StatusCode: {context.Response.StatusCode}, ElapsedMilliseconds: {stopwatch.ElapsedMilliseconds}, "
                     + $"User: {user}");
             }
