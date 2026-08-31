@@ -189,6 +189,10 @@ namespace OnlineVoting.Api.Middlewares
                 o.Password.RequiredLength = 6;
                 o.User.RequireUniqueEmail = false;
                 o.SignIn.RequireConfirmedEmail = false;
+
+                o.Lockout.AllowedForNewUsers = true;
+                o.Lockout.MaxFailedAccessAttempts = 5;
+                o.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             })
                 .AddEntityFrameworkStores<VotingDbContext>()
                 .AddDefaultTokenProviders();

@@ -86,24 +86,29 @@ app.UseSecurityHeaders();
 app.UseResponseCompression();
 
 // Configure the HTTP request pipeline.
-app.UseSwagger();
+bool swaggerEnabled = app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger:Enabled");
 
-app.UseSwaggerUI(options =>
+if (swaggerEnabled)
 {
-    IApiVersionDescriptionProvider provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+    app.UseSwagger();
 
-    foreach (ApiVersionDescription description in provider.ApiVersionDescriptions.Reverse())
+    app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
-            $"Online_Voting_Api {description.GroupName}");
-    }
+        IApiVersionDescriptionProvider provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
 
-    options.DefaultModelsExpandDepth(2);
-    options.DefaultModelExpandDepth(3);
-    options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
+        foreach (ApiVersionDescription description in provider.ApiVersionDescriptions.Reverse())
+        {
+            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
+                $"Online_Voting_Api {description.GroupName}");
+        }
 
-    options.InjectStylesheet("/css/swagger-dark-theme.css");
-});
+        options.DefaultModelsExpandDepth(2);
+        options.DefaultModelExpandDepth(3);
+        options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
+
+        options.InjectStylesheet("/css/swagger-dark-theme.css");
+    });
+}
 
 app.UseCorrelationId();
 

@@ -5035,3 +5035,105 @@ Added two `ClaimsService.GetRouteNames()` tests:
 Updated `ClaimsServiceFactory` to provide a mocked `IHttpClientFactory`.
 
 ---
+
+## Swagger Production Hardening
+
+### Goal
+
+Prevent Swagger/OpenAPI from being exposed in production unless explicitly enabled.
+
+### Files Changed
+
+- `OnlineVoting.Api/Program.cs`
+- `OnlineVoting.Api/appsettings.json`
+
+### Changes
+
+Added:
+
+```
+"Swagger": {
+  "Enabled": false
+}
+```
+
+Swagger middleware is now enabled when either:
+
+- the application is running in `Development`; or
+- `Swagger:Enabled` is explicitly set to `true`.
+
+```
+bool swaggerEnabled = app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger:Enabled");
+
+if (swaggerEnabled)
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(...);
+}
+```
+
+The existing Swagger configuration, API version endpoints, models configuration and custom stylesheet were preserved.
+
+Production can explicitly enable Swagger with:
+
+```
+Swagger__Enabled=true
+```
+
+### Behaviour
+
+```
+Development                    -> Swagger enabled
+Production                     -> Swagger disabled by default
+Production + Swagger enabled   -> Swagger enabled
+```
+
+---
+
+## Account Lockout and Failed Login Tracking
+
+### Goal
+
+Protect user accounts against repeated failed login attempts using ASP.NET Core Identity's built-in lockout support.
+
+### Files Changed
+
+- `OnlineVoting.Api/Middlewares/ServiceExtensions.cs`
+- `OnlineVoting.Services/Implementation/UserService.cs`
+- `OnlineVoting.Tests/IntegrationTests/Services/AccountLockoutTests.cs`
+
+### Changes
+
+Configured Identity lockout with:
+
+- 5 failed login attempts
+- 15-minute lockout
+- lockout enabled for users
+
+Login authentication now uses `SignInManager.CheckPasswordSignInAsync` with `lockoutOnFailure: true`.
+
+Failed login attempts are tracked by ASP.NET Identity. Locked accounts continue to receive the generic authentication response:
+
+```
+Invalid email or password.
+```
+
+This avoids exposing account lockout state through the API.
+
+No database migration was required because Identity already provides `AccessFailedCount`, `LockoutEnabled` and `LockoutEnd`.
+
+### Tests
+
+Added integration tests using real `UserManager` and `SignInManager` with SQLite covering:
+
+- failed access count increases
+- account locks after the fifth failed attempt
+- correct password is rejected while locked
+- successful login resets failed attempts
+- expired lockout allows login again
+
+### Result
+
+Repeated failed authentication attempts now temporarily lock accounts while successful authentication resets previous failed attempts.
+
+---

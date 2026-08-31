@@ -12,7 +12,6 @@ using OnlineVoting.Services.Infrastructures;
 using OnlineVoting.Services.Interfaces;
 using System.Security.Claims;
 using OnlineVoting.Data.Interfaces;
-
 using VotingSystem.Logger;
 
 namespace OnlineVoting.Services.Implementation
@@ -20,6 +19,7 @@ namespace OnlineVoting.Services.Implementation
     public class UserService : IUserService
     {
         private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
         private readonly RoleManager<Role> _roleManager;
         private readonly IRepository<User> _userRepo;
         private readonly IRepository<Role> _roleRepo;
@@ -35,6 +35,7 @@ namespace OnlineVoting.Services.Implementation
             _serviceFactory = serviceFactory;
             _unitOfWork = serviceFactory.GetService<IUnitOfWork>();
             _userManager = serviceFactory.GetService<UserManager<User>>();
+            _signInManager = serviceFactory.GetService<SignInManager<User>>();
             _roleManager = serviceFactory.GetService<RoleManager<Role>>();
             _studentRepo = _unitOfWork.GetRepository<Student>();
             _staffRepo = _unitOfWork.GetRepository<Staff>();
@@ -102,9 +103,16 @@ namespace OnlineVoting.Services.Implementation
             if (!user.Active)
                 return Result<LoggedInUserResponse>.Forbidden("Account is not active. Contact the administrator.");
 
-            bool passwordIsValid = await _userManager.CheckPasswordAsync(user, request.Password);
+            SignInResult signInResult = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
 
-            if (!passwordIsValid)
+            if (signInResult.IsLockedOut)
+            {
+                _loggerMessage.LogWarn($"Login rejected because user {user.Id} is temporarily locked out.");
+
+                return Result<LoggedInUserResponse>.Unauthorized("Invalid email or password.");
+            }
+
+            if (!signInResult.Succeeded)
             {
                 _loggerMessage.LogWarn($"Login failed because invalid credentials were provided for user {user.Id}.");
 
