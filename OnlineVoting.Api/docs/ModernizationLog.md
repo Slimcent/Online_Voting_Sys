@@ -5137,3 +5137,32 @@ Added integration tests using real `UserManager` and `SignInManager` with SQLite
 Repeated failed authentication attempts now temporarily lock accounts while successful authentication resets previous failed attempts.
 
 ---
+
+## Authentication Security Audit Logging
+
+### Goal
+Record authentication security events using the existing audit trail infrastructure without introducing a separate login-history table.
+
+### Changes
+- Added reusable application constants for audit events, outcomes, descriptions, entity types, and authentication messages.
+- Added `AuditEventRequest` for explicit audit events.
+- Extended `IAuditTrailService` and `AuditTrailService` to record generic and authentication-specific events.
+- Added authentication audit logging to `UserLogin`.
+- Records successful logins, failed logins, account lockouts, rejected locked accounts, inactive accounts, and unknown-email attempts.
+- Reused existing audit metadata for IP address, user agent, correlation ID, endpoint, and location.
+- Added AutoMapper mapping from `AuditEventRequest` to `AuditTrail`.
+- Added reusable `UserServiceFactory` for login service tests.
+
+### Tests
+- Account lockout tests: 4 passed.
+- Audit trail service tests: 12 passed.
+- User service authentication audit tests: 6 passed.
+- Combined authentication tests: 22 passed.
+- Full regression suite: 578 passed.
+- Full regression suite repeated successfully: 578 passed.
+- Build completed with no warnings.
+
+### Result
+Authentication events are now recorded in the existing audit trail with the appropriate success, failure or denied outcome.
+
+---

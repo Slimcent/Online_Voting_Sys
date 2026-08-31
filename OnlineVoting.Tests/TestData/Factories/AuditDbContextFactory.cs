@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using OnlineVoting.Models.Constants;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Tests.TestData.Contexts;
@@ -37,11 +38,22 @@ namespace OnlineVoting.Tests.TestData.Factories
 
             Context.Database.EnsureCreated();
 
-            Context.AuditOutcomes.Add(new AuditOutcome
-            {
-                Name = "Success",
-                Description = "The operation completed successfully."
-            });
+            Context.AuditOutcomes.AddRange(
+                new AuditOutcome
+                {
+                    Name = ApplicationConstants.Audit.Outcomes.Success,
+                    Description = "The operation completed successfully."
+                },
+                new AuditOutcome
+                {
+                    Name = ApplicationConstants.Audit.Outcomes.Failure,
+                    Description = "The operation failed."
+                },
+                new AuditOutcome
+                {
+                    Name = ApplicationConstants.Audit.Outcomes.Denied,
+                    Description = "The operation was denied."
+                });
 
             Context.SaveChanges();
         }

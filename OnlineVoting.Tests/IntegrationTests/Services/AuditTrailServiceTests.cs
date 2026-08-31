@@ -1,4 +1,6 @@
-﻿using OnlineVoting.Models.Dtos.Request;
+﻿using Microsoft.EntityFrameworkCore;
+using OnlineVoting.Models.Constants;
+using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Pagination;
@@ -185,6 +187,66 @@ namespace OnlineVoting.Tests.IntegrationTests.Services
             Assert.Equal(51.7190, auditTrail.Location.DeviceLatitude);
             Assert.Equal(8.7576, auditTrail.Location.DeviceLongitude);
             Assert.Equal(10.5, auditTrail.Location.DeviceAccuracyMeters);
+        }
+
+        [Theory]
+        [InlineData(ApplicationConstants.Audit.Events.LoginFailed, ApplicationConstants.Audit.Outcomes.Failure)]
+        [InlineData(ApplicationConstants.Audit.Events.AccountLocked, ApplicationConstants.Audit.Outcomes.Denied)]
+        [InlineData(ApplicationConstants.Audit.Events.LoginRejectedLocked, ApplicationConstants.Audit.Outcomes.Denied)]
+        [InlineData(ApplicationConstants.Audit.Events.LoginSucceeded, ApplicationConstants.Audit.Outcomes.Success)]
+        public async Task RecordAuthenticationEvent_WithUser_ShouldPersistAuditTrail(string eventName, string outcome)
+        {
+            using AuditTrailServiceFactory factory = new();
+
+            factory.DbContextFactory.SetRequestMetadata("Login", "POST");
+
+            User user = new()
+            {
+                Id = "user-id",
+                Email = "user@example.com"
+            };
+
+            await factory.Service.RecordAuthenticationEvent(eventName, outcome, "Authentication event.", user);
+
+            AuditTrail auditTrail = await factory.DbContextFactory.Context.AuditTrails
+                .Include(auditTrail => auditTrail.Outcome)
+                .Include(auditTrail => auditTrail.Location)
+                .SingleAsync();
+
+            Assert.Equal(eventName, auditTrail.EventName);
+            Assert.Equal(outcome, auditTrail.Outcome.Name);
+            Assert.Equal(user.Id, auditTrail.ActorUserId);
+            Assert.Equal(user.Email, auditTrail.ActorUsername);
+            Assert.Equal(ApplicationConstants.Audit.EntityTypes.User, auditTrail.EntityType);
+            Assert.Equal(user.Id, auditTrail.EntityId);
+            Assert.Equal("Login", auditTrail.EndpointName);
+            Assert.Equal("POST", auditTrail.HttpMethod);
+            Assert.NotNull(auditTrail.Location);
+        }
+
+        [Fact]
+        public async Task RecordAuthenticationEvent_WithoutUser_ShouldPersistAttemptedUsername()
+        {
+            using AuditTrailServiceFactory factory = new(username: null, userId: null);
+
+            string attemptedUsername = "unknown@example.com";
+
+            await factory.Service.RecordAuthenticationEvent(
+                ApplicationConstants.Audit.Events.LoginFailed,
+                ApplicationConstants.Audit.Outcomes.Failure,
+                ApplicationConstants.Audit.Descriptions.InvalidCredentials,
+                attemptedUsername: attemptedUsername);
+
+            AuditTrail auditTrail = await factory.DbContextFactory.Context.AuditTrails
+                .Include(auditTrail => auditTrail.Outcome)
+                .SingleAsync();
+
+            Assert.Null(auditTrail.ActorUserId);
+            Assert.Equal(attemptedUsername, auditTrail.ActorUsername);
+            Assert.Equal(ApplicationConstants.Audit.Events.LoginFailed, auditTrail.EventName);
+            Assert.Equal(ApplicationConstants.Audit.Outcomes.Failure, auditTrail.Outcome.Name);
+            Assert.Equal(ApplicationConstants.Audit.EntityTypes.User, auditTrail.EntityType);
+            Assert.Null(auditTrail.EntityId);
         }
     }
 }

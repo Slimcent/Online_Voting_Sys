@@ -1,8 +1,9 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging.Abstractions;
+using OnlineVoting.Api.Mapper;
+using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
-using OnlineVoting.Api.Mapper;
 
 namespace OnlineVoting.Tests.UnitTests.Api.Mapper
 {
@@ -133,6 +134,33 @@ namespace OnlineVoting.Tests.UnitTests.Api.Mapper
             Assert.True(response.OldValues["Active"].GetBoolean());
             Assert.Equal("Media Sciences", response.OldValues["Name"].GetString());
             Assert.Null(response.NewValues);
+        }
+
+        [Fact]
+        public void AuditEventRequest_ShouldMapToAuditTrail()
+        {
+            MapperConfiguration configuration = new(config => config.AddProfile<AuditMappingProfile>(), NullLoggerFactory.Instance);
+
+            IMapper mapper = configuration.CreateMapper();
+
+            AuditEventRequest request = new()
+            {
+                EventName = "LoginFailed",
+                ActorUserId = "user-id",
+                ActorUsername = "user@example.com",
+                EntityType = "User",
+                EntityId = "user-id",
+                Description = "Login failed because invalid credentials were provided."
+            };
+
+            AuditTrail auditTrail = mapper.Map<AuditTrail>(request);
+
+            Assert.Equal(request.EventName, auditTrail.EventName);
+            Assert.Equal(request.ActorUserId, auditTrail.ActorUserId);
+            Assert.Equal(request.ActorUsername, auditTrail.ActorUsername);
+            Assert.Equal(request.EntityType, auditTrail.EntityType);
+            Assert.Equal(request.EntityId, auditTrail.EntityId);
+            Assert.Equal(request.Description, auditTrail.Description);
         }
     }
 }
