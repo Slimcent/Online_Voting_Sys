@@ -1,17 +1,18 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using OnlineVoting.Data.Interfaces;
+using OnlineVoting.Models.Constants;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.GlobalMessage;
+using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Extension;
-using OnlineVoting.Services.Infrastructures;
 using OnlineVoting.Services.Interfaces;
 using OnlineVoting.Services.Utilities;
-using OnlineVoting.Data.Interfaces;
-using OnlineVoting.Models.Results;
+using VotingSystem.Logger;
 
 namespace OnlineVoting.Services.Implementation
 {
@@ -21,12 +22,14 @@ namespace OnlineVoting.Services.Implementation
         private readonly RoleManager<Role> _roleManager;
         private readonly IRepository<User> _userRepo;
         private readonly IRepository<Role> _roleRepo;
+        private readonly IRepository<Staff> _staffRepo;
         private readonly IRepository<Student> _studentRepo;
         private readonly IRepository<Contestant> _contestantRepo;
-        private readonly IFileDataExtractorService _fileDataExtractor;
+        private readonly IRepository<RegisteredVoter> _registeredVoterRepo;
         private readonly IMapper _mapper;
         private readonly IServiceFactory _serviceFactory;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ILoggerMessage _loggerMessage;
 
         public StudentService(IServiceFactory serviceFactory)
         {
@@ -36,7 +39,9 @@ namespace OnlineVoting.Services.Implementation
             _roleManager = serviceFactory.GetService<RoleManager<Role>>();
             _studentRepo = _unitOfWork.GetRepository<Student>();
             _contestantRepo = _unitOfWork.GetRepository<Contestant>();
-            _fileDataExtractor = _serviceFactory.GetService<IFileDataExtractorService>();
+            _staffRepo = _unitOfWork.GetRepository<Staff>();
+            _registeredVoterRepo = _unitOfWork.GetRepository<RegisteredVoter>();
+            _loggerMessage = _serviceFactory.GetService<ILoggerMessage>();
             _mapper = _serviceFactory.GetService<IMapper>();
         }
 
@@ -71,43 +76,64 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<Result<Response>> CreateStudent(CreateStudentRequest request)
         {
+            await _unitOfWork.BeginTransactionAsync();
+
             if (request == null)
-                return Result<Response>.ValidationError("Invalid data sent");
-
-            //var regNumberExists = await _studentRepo.GetSingleByAsync(r => r.RegNumber == request.RegNumber);
-            //if (regNumberExists != null)
-            //    throw new ConflictException(request.RegNumber);
-
-            //CreateUserRequest user = new()
-            //{
-            //    Email = request.Email,
-            //    FirstName = request.FirstName,
-            //    Role = request.Role,
-            //};
-
-            CreateUserRequest user = _mapper.Map<CreateUserRequest>(request);
-
-            Result<string> userResult = await _serviceFactory.GetService<IUserService>().CreateUser(user);
-
-            if (!userResult.IsSuccess)
             {
-                return Result<Response>.FromFailure(userResult);
+                _loggerMessage.LogWarn("Student creation rejected because the request was null.");
+
+                return Result<Response>.ValidationError("Invalid data sent");
+            }
+
+            _loggerMessage.LogInfo("Starting student creation.");
+
+            Gender gender = await _unitOfWork.GetRepository<Gender>().GetSingleByAsync(x => x.Id == request.GenderId);
+            if (gender == null)
+            {
+                _loggerMessage.LogWarn($"Student creation failed because the specified gender with ID {request.GenderId} was not found.");
+
+                return Result<Response>.ValidationError("Invalid gender specified");
+            }
+
+            Department department = await _unitOfWork.GetRepository<Department>().GetSingleByAsync(x => x.Id == request.DepartmentId);
+            if (department == null)
+            {
+                _loggerMessage.LogWarn($"Student creation failed because the specified department with ID {request.DepartmentId} was not found.");
+                return Result<Response>.ValidationError("Invalid department specified");
+            }
+
+            UserType userType = await _unitOfWork.GetRepository<UserType>().GetSingleByAsync(x => x.Id == request.UserTypeId);
+            if (userType == null)
+            {
+                _loggerMessage.LogWarn($"Student creation failed because the specified user type with ID {request.UserTypeId} was not found.");
+                return Result<Response>.ValidationError("Invalid user type specified");
             }
 
             Student student = _mapper.Map<Student>(request);
 
-            student.UserId = userResult.Value!;
+            Result<string> userResult = await _serviceFactory.GetService<IUserService>().CreateUser(request, user =>
+            {
+                student.User = user;
+                user.Student = student;
+            });
 
-            await _studentRepo.AddAsync(student);
+            if (!userResult.IsSuccess)
+            {
+                _loggerMessage.LogWarn("Student creation failed during user creation.");
 
-            await _unitOfWork.SaveChangesAsync();
+                return Result<Response>.FromFailure(userResult);
+            }
+
+            _loggerMessage.LogInfo($"Student created successfully for user {userResult.Value}.");
 
             Response response = new Response(true, $"Student with email {request.Email} created successfully");
+
+            await _unitOfWork.CommitTransactionAsync();
 
             return Result<Response>.Created(response);
         }
 
-        public async Task<Models.Dtos.Response.FileStreamResponse> DownloadStudentsList()
+        public async Task<FileStreamResponse> DownloadStudentsList()
         {
             return new List<StudentListDownload>()
             {
@@ -127,45 +153,114 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<Result<string>> UploadStudents(UploadStudentRequest request)
         {
-            //string[] requiredHeaders = new[] {"RegNumber", "FirstName", "LastName", "Email", "PhoneNumber", "Sex"};
-            //string[] nullableFields = new[] {"SN", "PhoneNumber", "Sex"};
-
-            List<Dictionary<string, string>> studentData = _fileDataExtractor.ExtractFromExcel(request.File, null, ignoreFields: request.IgnoreFields);
-            studentData.ValidateFields(request.RequiredFields);
-
-            IEnumerable<Student> studentsToUpload = DictionaryToObjectConverter.DictionaryToObjects<Student>(studentData);
-
-            foreach (Student student in studentsToUpload)
+            if (request == null)
             {
-                User exisitingUser = await _userManager.FindByEmailAsync(student.RegNumber);
+                _loggerMessage.LogWarn("Student bulk upload rejected because the request was null.");
 
-                if (exisitingUser != null)
-                {
-                    continue;
-                }
-
-                //CreateUserRequest user = new()
-                //{
-                //    //Email = student.Email,
-                //    //FirstName = student.FirstName,
-                //    Role = "Student"
-                //};
-
-                CreateUserRequest user = _mapper.Map<CreateUserRequest>(student);
-
-                Result<string> userResult = await _serviceFactory.GetService<IUserService>().CreateUser(user);
-
-                if (!userResult.IsSuccess)
-                {
-                    return Result<string>.FromFailure(userResult);
-                }
-
-                student.UserId = userResult.Value!;
+                return Result<string>.ValidationError("Invalid data sent.");
             }
 
-            await _studentRepo.AddRangeAsync(studentsToUpload);
+            _loggerMessage.LogInfo("Starting student bulk upload.");
 
-            return Result<string>.Success("Students uploaded successfully");
+            ExtractDataFromExcelRequest excelRequest = _mapper.Map<ExtractDataFromExcelRequest>(request);
+
+            (List<Dictionary<string, string>> studentData, string[] errMsgs) = DataExtension.ReadFromExcel(excelRequest, _loggerMessage);
+            if (errMsgs.Any())
+            {
+                string errMSg = string.Join('\n', errMsgs);
+                throw new InvalidOperationException(errMSg);
+            }
+
+            if (!studentData.Any())
+            {
+                _loggerMessage.LogWarn("Student bulk upload rejected because no students were found.");
+
+                return Result<string>.ValidationError("No students were found in the uploaded file.");
+            }
+
+            IEnumerable<Department> departments = await _unitOfWork.GetRepository<Department>().GetAllAsync();
+            Dictionary<string, long> departmentDictionary = departments.ToDictionary(x => x.Name.NormalizeLookupValue(), x => x.Id);
+
+            IEnumerable<Gender> genders = await _unitOfWork.GetRepository<Gender>().GetAllAsync();
+            Dictionary<string, int> genderDictionary = genders.ToDictionary(x => x.Name.NormalizeGender(), x => x.Id);
+
+            studentData.SetDepartmentIds(departmentDictionary);
+            studentData.SetGenderIds(genderDictionary);
+
+            List<CreateStudentRequest> studentsToUpload = DataExtension.DictionaryToObjects<CreateStudentRequest>(studentData).ToList();
+            studentsToUpload.ValidateDepartmentIds(departments, _loggerMessage);
+            studentsToUpload.ValidateGenderIds(genders, _loggerMessage);
+
+            if (!studentsToUpload.Any())
+            {
+                _loggerMessage.LogWarn("Student bulk upload rejected because no students were found.");
+
+                return Result<string>.ValidationError("No students were found in the uploaded file.");
+            }
+
+            string? duplicateRegNumber = studentsToUpload
+                .GroupBy(student => student.RegNumber.Trim(), StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > 1)
+                .Select(group => group.Key)
+                .FirstOrDefault();
+
+            if (duplicateRegNumber != null)
+            {
+                _loggerMessage.LogWarn($"Student bulk upload rejected because registration number {duplicateRegNumber} occurs more than once.");
+
+                return Result<string>.Conflict($"Registration number {duplicateRegNumber} occurs more than once in the upload.");
+            }
+
+            List<string> registrationNumbers = studentsToUpload.Select(student => student.RegNumber.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+            string? existingRegNumber = await _studentRepo.GetQueryable().AsNoTracking()
+                .Where(student => registrationNumbers.Contains(student.RegNumber))
+                .Select(student => student.RegNumber)
+                .FirstOrDefaultAsync();
+
+            if (existingRegNumber != null)
+            {
+                _loggerMessage.LogWarn($"Student bulk upload rejected because registration number {existingRegNumber} already exists.");
+
+                return Result<string>.Conflict($"A student with registration number {existingRegNumber} already exists.");
+            }
+
+            UserType? userType = await _unitOfWork.GetRepository<UserType>()
+                .GetSingleByAsync(userType => userType.Id == ApplicationConstants.UserTypes.StudentUserTypeId);
+
+            if (userType == null)
+            {
+                _loggerMessage.LogWarn("Student bulk upload failed because the Student user type was not found.");
+
+                return Result<string>.ValidationError("Student user type was not found.");
+            }
+
+            foreach (CreateStudentRequest student in studentsToUpload)
+            {
+                student.RoleId = ApplicationConstants.Roles.StudentRoleId;
+                student.UserTypeId = ApplicationConstants.UserTypes.StudentUserTypeId;
+            }
+
+            IUserService userService = _serviceFactory.GetService<IUserService>();
+
+            Result<string> userResult = await userService.CreateUsers(studentsToUpload, (studentRequest, user) =>
+            {
+                Student student = _mapper.Map<Student>(studentRequest);
+
+                student.User = user;
+                user.Student = student;
+            });
+
+            if (!userResult.IsSuccess)
+            {
+                _loggerMessage.LogWarn($"Student bulk upload failed. {userResult.Error}");
+
+                return Result<string>.FromFailure(userResult);
+            }
+
+            _loggerMessage.LogInfo($"Student bulk upload completed successfully. Created {studentsToUpload.Count} students.");
+
+            return Result<string>.Created($"{studentsToUpload.Count} students uploaded successfully.");
         }
 
         public async Task<Response> Vote(VoteRequest request)
@@ -182,6 +277,28 @@ namespace OnlineVoting.Services.Implementation
                 throw new NotFoundException(request.ContestantRegNo);
 
             throw new NotImplementedException();
+        }
+
+        public async Task<int> UpdateInactiveStudents()
+        {
+            _loggerMessage.LogInfo("Starting inactive student update.");
+
+            List<Student> students = await _studentRepo.GetQueryable(x => !x.Active && x.User != null).ToListAsync();
+
+            if (students.Count == 0)
+            {
+                _loggerMessage.LogInfo("No inactive student records were found.");
+
+                return 0;
+            }
+
+            students.ForEach(x => x.Active = true);
+
+            await _unitOfWork.SaveChangesAsync();
+
+            _loggerMessage.LogInfo($"{students.Count} inactive student record(s) updated successfully.");
+
+            return students.Count;
         }
     }
 }
