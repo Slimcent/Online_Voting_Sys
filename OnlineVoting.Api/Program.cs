@@ -1,15 +1,16 @@
 using Asp.Versioning.ApiExplorer;
 using DotNetEnv;
+using Hangfire;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NLog;
 using OnlineVoting.Api.Extensions;
 using OnlineVoting.Api.Filters;
 using OnlineVoting.Api.Middlewares;
-using OnlineVoting.Models.Context;
+using OnlineVoting.BackgroundTasks.Configuration;
+using OnlineVoting.Caching.Extensions;
 using OnlineVoting.Models.Entities.Email;
 using OnlineVoting.Services.Infrastructures;
 using System.Reflection;
@@ -59,10 +60,16 @@ builder.Services.AddControllers(setupAction =>
     options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
 });
 
-builder.Services.ConfigureCors();
+builder.Services.ConfigureCors(builder.Configuration);
 builder.Services.ConfigureIISIntegration();
+builder.Services.ConfigureForwardedHeaders(builder.Configuration);
+builder.Services.ConfigureSecurityHeaders(builder.Configuration);
+builder.Services.ConfigureResponseCompression(builder.Configuration);
+builder.Services.ConfigureObservability(builder.Configuration, builder.Environment);
+builder.Services.AddApplicationCaching(builder.Configuration);
 builder.Services.AddDBConnection(builder.Configuration);
-builder.Services.ConfigureHealthChecks();
+builder.Services.AddBackgroundTasks(builder.Configuration);
+builder.Services.ConfigureHealthChecks(builder.Configuration);
 builder.Services.ConfigureRateLimiting();
 builder.Services.BindConfigurations(builder.Configuration);
 builder.Services.ConfigureJWT();
@@ -72,47 +79,60 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.ConfigureApiVersioning();
 builder.Services.ConfigureSwagger();
 builder.Services.AddAutoMapper(config => { }, Assembly.Load("OnlineVoting.Api"));
+
 var app = builder.Build();
 
+app.UseForwardedHeaders();
+app.UseSecurityHeaders();
+app.UseResponseCompression();
+
 // Configure the HTTP request pipeline.
-app.UseSwagger();
+bool swaggerEnabled = app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger:Enabled");
 
-app.UseSwaggerUI(options =>
+if (swaggerEnabled)
 {
-    IApiVersionDescriptionProvider provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+    app.UseSwagger();
 
-    foreach (ApiVersionDescription description in provider.ApiVersionDescriptions.Reverse())
+    app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
-            $"Online_Voting_Api {description.GroupName}");
-    }
+        IApiVersionDescriptionProvider provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
 
-    options.DefaultModelsExpandDepth(2);
-    options.DefaultModelExpandDepth(3);
-    options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
+        foreach (ApiVersionDescription description in provider.ApiVersionDescriptions.Reverse())
+        {
+            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
+                $"Online_Voting_Api {description.GroupName}");
+        }
 
-    options.InjectStylesheet("/css/swagger-dark-theme.css");
-});
+        options.DefaultModelsExpandDepth(2);
+        options.DefaultModelExpandDepth(3);
+        options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
+
+        options.InjectStylesheet("/css/swagger-dark-theme.css");
+    });
+}
 
 app.UseCorrelationId();
 
 app.ConfigureExceptionHandler();
 app.ConfigureStatusCodePages();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseHttpsRedirection();
+//}
 
+app.UseRouting();
 app.UseCors("CorsPolicy");
 
 app.UseAuthentication();
 app.UseRateLimiter();
 app.UseAuthorization();
 
+app.UseMiddleware<IpGeolocationMiddleware>();
+
 app.MapControllers();
 
-app.MapHealthChecks("/health", new HealthCheckOptions
+app.MapHealthChecks("/health/live", new HealthCheckOptions
 {
     Predicate = _ => false
 }).AllowAnonymous();
@@ -126,6 +146,8 @@ app.UseStaticFiles();
 
 if (app.Environment.IsDevelopment())
 {
+    app.UseHangfireDashboard("/hangfire");
+
     await app.ApplyDatabaseMigrations();
     await SeedApplicationData.EnsurePopulated(app);
 }
@@ -133,5 +155,7 @@ else if (builder.Configuration.GetValue<bool>("Seed:RunOnce"))
 {
     await SeedApplicationData.EnsurePopulated(app);
 }
+
+app.RegisterRecurringJobs();
 
 app.Run();

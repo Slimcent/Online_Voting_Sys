@@ -353,9 +353,17 @@ public class Repository<T> : IRepository<T> where T : class
     public virtual async Task<T> UpdateAsync(T obj, bool tracking = false)
     {
         Update(obj);
-        await SaveAsync();
-        if (!tracking)
-            _dbContext.Entry(obj).State = EntityState.Detached;
+
+        try
+        {
+            await SaveAsync();
+        }
+        finally
+        {
+            if (!tracking)
+                _dbContext.Entry(obj).State = EntityState.Detached;
+        }
+
         return obj;
     }
 

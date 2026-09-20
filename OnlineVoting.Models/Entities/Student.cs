@@ -2,7 +2,7 @@
 
 namespace OnlineVoting.Models.Entities
 {
-    public class Student : ITracker
+    public class Student : ITracker, IAuditable
     {
         public Guid Id { get; set; }
         public string? RegNumber { get; set; }
@@ -14,7 +14,7 @@ namespace OnlineVoting.Models.Entities
         public string? UpdatedBy { get; set; }
         public long DepartmentId { get; set; }
         public int GenderId { get; set; }
-        public bool Active { get; set; }
+        public bool Active { get; set; } = true;
         public virtual User? User { get; set; }
         public virtual Gender Gender { get; set; }
         public virtual RegisteredVoter? RegisteredVoter { get; set; }

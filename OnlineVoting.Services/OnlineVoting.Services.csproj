@@ -15,15 +15,18 @@
         <PackageReference Include="MailKit" Version="4.17.0" />
         <PackageReference Include="Microsoft.AspNetCore.JsonPatch" Version="10.0.10" />
         <PackageReference Include="MimeKit" Version="4.17.0" />
+        <PackageReference Include="Polly.Core" Version="8.7.0" />
         <PackageReference Include="System.Drawing.Common" Version="10.0.10" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.2" />
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\OnlineVoting.Caching\OnlineVoting.Caching.csproj" />
     <ProjectReference Include="..\OnlineVoting.Models\OnlineVoting.Models.csproj" />
     <ProjectReference Include="..\VotingSystem.Data\VotingSystem.Data.csproj" />
     <ProjectReference Include="..\VotingSystem.Logger\VotingSystem.Logger.csproj" />
+    <ProjectReference Include="..\OnlineVoting.BackgroundTasks\OnlineVoting.BackgroundTasks.csproj" />
   </ItemGroup>
 
 </Project>

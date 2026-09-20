@@ -2458,4 +2458,2876 @@ already has a container image available if we later move to a hosting environmen
 
 ---
 
+# Automated Testing
+
+## Overview
+
+Automated tests were added to the project to make it easier to verify changes during the modernization.
+
+Testing was introduced gradually, starting with the models, followed by the services and controllers. Once the tests were stable locally, they were 
+
+added to the CI pipeline so that they run automatically when code is pushed.
+
+The testing work followed this order:
+
+```text
+Models
+  |
+  v
+Services
+  |
+  v
+Controllers
+  |
+  v
+CI
+```
+
+---
+
+## Test Setup
+
+The tests are contained in the `OnlineVoting.Tests` project and use xUnit as the test framework.
+
+Moq is used for mocking dependencies, while Entity Framework Core InMemory and SQLite are available for tests that require database behaviour.
+
+The main test packages are:
+
+```text
+Microsoft.NET.Test.Sdk
+xunit
+xunit.runner.visualstudio
+Moq
+coverlet.collector
+Microsoft.EntityFrameworkCore.InMemory
+Microsoft.EntityFrameworkCore.Sqlite
+SQLitePCLRaw.lib.e_sqlite3
+```
+
+The test project references:
+
+```text
+OnlineVoting.Api
+OnlineVoting.Models
+OnlineVoting.Services
+VotingSystem.Data
+```
+
+The current test structure is:
+
+```text
+OnlineVoting.Tests
+|
++-- UnitTests
+|
++-- IntegrationTests
+|   |
+|   +-- Api
+|   |
+|   +-- Data
+|   |
+|   +-- Database
+|
++-- TestData
+    |
+    +-- Constants
+    |
+    +-- Data
+    |
+    +-- Factories
+    |
+    +-- Fixtures
+```
+
+Shared test data and setup are kept under `TestData` instead of being repeated across test classes.
+
+---
+
+## Model Tests
+
+Testing started with the models.
+
+These tests cover the behaviour of the request, response, entity, pagination and other shared models used by the application.
+
+Starting here made it possible to verify the objects used by the rest of the application before testing the business and API layers.
+
+---
+
+## Service Tests
+
+After the model tests, tests were added and expanded for the service layer.
+
+The service tests cover the application's business logic without going through the controllers.
+
+The tested areas include:
+
+- roles;
+- claims;
+- faculties;
+- departments;
+- email operations;
+- user-related operations.
+
+Both successful operations and relevant failure cases are tested.
+
+The service tests also cover the `Result<T>` pattern introduced during the modernization. Services can return statuses such as:
+
+```text
+Success
+Created
+NoContent
+ValidationError
+NotFound
+Conflict
+Unauthorized
+Forbidden
+```
+
+This allows service behaviour to be tested directly without depending on ASP.NET Core HTTP responses.
+
+---
+
+## Email Service Tests
+
+Tests were added for the main email operations, including:
+
+- account creation;
+- password reset;
+- voter registration.
+
+These tests verify the email data and token generation without sending real emails.
+
+The email service uses:
+
+```text
+OnlineVoting.Api/Template/EmailTemplate.html
+```
+
+The test project copies this template to its output directory so that it is available when the email tests run.
+
+The following configuration was added to `OnlineVoting.Tests.csproj`:
+
+```xml
+<ItemGroup>
+    <None Include="..\OnlineVoting.Api\Template\EmailTemplate.html">
+        <Link>Template\EmailTemplate.html</Link>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <TargetPath>Template\EmailTemplate.html</TargetPath>
+    </None>
+</ItemGroup>
+```
+
+---
+
+## Controller Tests
+
+Controller tests were added after the corresponding services had been tested.
+
+The services are mocked in these tests because the business logic is already covered by the service tests. The controller tests instead check 
+
+that request values are passed correctly to the service and that the returned `Result<T>` is converted into the expected HTTP response.
+
+Controller tests were added for:
+
+```text
+ClaimsController
+DepartmentController
+FacultyController
+RolesController
+```
+
+### ClaimsController
+
+The claims controller tests cover its calls to `IClaimsService` and the handling of the returned results.
+
+The tests were also updated when the controller was changed to inherit from `BaseController`.
+
+### DepartmentController
+
+The department controller tests cover:
+
+```text
+CreateDepartment
+GetDepartments
+GetDepartment
+GetDepartmentsByFacultyId
+GetDepartmentsByFacultyId with pagination
+UpdateDepartment
+ToggleDepartmentActivation
+DeleteDepartment
+```
+
+They verify request bodies, department and faculty IDs, pagination parameters, and the calls made to `IDepartmentService`.
+
+The tests also cover the endpoint names added during the controller cleanup:
+
+```text
+Create-Department
+Get-Departments
+Get-Department
+Get-Departments-By-Faculty
+Get-Paged-Departments-By-Faculty
+Update-Department
+Department-Activation
+Delete-Department
+```
+
+### FacultyController
+
+The faculty controller tests cover:
+
+```text
+CreateFaculty
+GetFaculties
+GetFaculty
+UpdateFaculty
+ToggleFacultyActivation
+DeleteFaculty
+GetFacultiesWithDepartments
+GetFacultyWithDepartments
+```
+
+They verify the values passed to `IFacultyService` and the HTTP results returned by the controller.
+
+The faculty endpoints were also tested after their URL templates and endpoint names were standardised.
+
+### RolesController
+
+The role service was already covered by service tests, so the `RolesController` tests focus on the controller itself.
+
+They verify that the correct `IRolesService` methods are called and that the service results are converted correctly into HTTP responses.
+
+---
+
+## Result Response Handling
+
+The modernized controllers use:
+
+```csharp
+return result.ToActionResult(this);
+```
+
+`ResultActionResultExtensions` handles the conversion from service results to HTTP responses:
+
+```text
+Success         -> 200 OK
+Created         -> 201 Created
+NoContent       -> 204 No Content
+ValidationError -> 400 Bad Request
+Unauthorized    -> 401 Unauthorized
+Forbidden       -> 403 Forbidden
+NotFound        -> 404 Not Found
+Conflict        -> 409 Conflict
+```
+
+This response handling is covered by the controller tests and avoids repeating the same response logic in every controller action.
+
+---
+
+## Local Verification
+
+Tests were run throughout the modernization rather than waiting until all changes were complete.
+
+Relevant test groups were run after each change, followed by the complete test suite once the model, service, and controller tests were in place.
+
+After the tests were passing locally, the next step was to run them automatically through GitHub Actions.
+
+---
+
+# Automated Testing in CI
+
+## CI Test Job
+
+The GitHub Actions workflow was updated to run the test suite automatically.
+
+Build and Test are separate jobs:
+
+```text
+Build ----+
+          |
+          +----> Docker
+          |
+Test -----+
+```
+
+The Build job restores and builds the solution in Release configuration.
+
+The Test job performs its own setup and runs:
+
+```text
+dotnet test Online_Voting_Sys.sln --configuration Release --no-restore
+```
+
+Keeping them separate makes it clear in GitHub Actions whether a failure comes from the build or from the tests.
+
+The Docker job depends on both jobs, so it only continues when Build and Test have succeeded.
+
+---
+
+## CI Triggers
+
+The workflow runs on every push.
+
+Pull requests targeting `development` or `main` also run the workflow.
+
+For feature branch pushes, Build and Test run automatically.
+
+For pull requests to `development` or `main`, the Docker image is also built for verification without being published.
+
+For pushes or merges to `development` and `main`, Docker publishing only continues after Build and Test have passed.
+
+Production deployment remains limited to `main`.
+
+---
+
+## Cross-Platform Email Template Fix
+
+The first CI test run exposed an issue with the email template path.
+
+The email template was previously loaded using:
+
+```
+Directory.GetCurrentDirectory() + "\\Template\\EmailTemplate.html"
+```
+
+This worked on Windows but failed on the Ubuntu runner used by GitHub Actions.
+
+Three email tests failed because the template could not be found:
+
+```
+SendResetPasswordEmail_WithExistingUser_ShouldGenerateTokenAndSendEmail
+SendVoterEmail_ShouldSendEmail
+SendCreateUserEmail_ShouldGenerateTokensAndSendEmail
+```
+
+The template path was changed to:
+
+```
+Path.Combine("Template", "EmailTemplate.html")
+```
+
+and the file is resolved relative to:
+
+```
+AppContext.BaseDirectory
+```
+
+This removed the Windows-specific path and made the template loading work on both Windows and Linux.
+
+---
+
+## CI Verification
+
+After fixing the template path, the complete test suite passed on the Ubuntu GitHub Actions runner:
+
+```
+Failed:   0
+Passed: 419
+Skipped: 0
+Total:  419
+```
+
+The current CI flow is:
+
+```
+Push / Pull Request
+        |
+   +----+----+
+   |         |
+ Build      Test
+   |         |
+   +----+----+
+        |
+      Docker
+        |
+ development/main
+        |
+    Docker Hub
+        |
+    main only
+        |
+      Deploy
+```
+
+Tests are now part of the normal development workflow. A failed build or failed test stops the Docker job and prevents the change from continuing to the later deployment stages.
+
+---
+
+# JWT and Authorization Improvements
+
+The JWT and authorization code was reviewed and cleaned up without changing the existing authentication or permission behaviour.
+
+## Authorization Logging
+
+Logging was added to `CustomAuthorizationHandler` to make authorization decisions easier to trace.
+
+Successful authorization is logged as information, while denied authorization is logged as a warning.
+
+```
+_loggerMessage.LogInfo($"Authorization succeeded for user {userId}. Required claim: {routeClaim}");
+
+_loggerMessage.LogWarn($"Authorization denied for user {userId}. Required claim: {routeClaim}");
+```
+
+The existing lowercase claim comparison was kept because claim values are not always stored with the same casing.
+
+## JWT Cleanup
+
+`JwtAuthenticator` was cleaned up by:
+
+- removing the unused `IdentityOptions`;
+- removing unnecessary `async` usage;
+- replacing `var` with explicit types;
+- marking the optional `expires` and `additionalClaims` parameters as nullable;
+- using UTF-8 for the signing key to match JWT validation.
+
+JWT generation is also logged without writing the token or secret to the logs.
+
+```
+_loggerMessage.LogInfo($"JWT token generated for user {user.Id} with role {role}");
+```
+
+The existing token claims, expiry behaviour, issuer, audience and signing algorithm were not changed.
+
+## Verification
+
+The project was built and the existing tests were run after the changes.
+
+The JWT and authorization behaviour remained unchanged while the implementation became cleaner and easier to trace.
+
+---
+
+# Controller and Endpoint Improvements
+
+The API controllers were reviewed to make their routes, endpoint names, response handling and documentation more consistent.
+
+## Controller Consistency
+
+Controllers being modernized were updated to inherit from `BaseController` so that common API behaviour is handled consistently.
+
+The controllers also use the shared `Result<T>` response handling where applicable:
+
+```
+return result.ToActionResult(this);
+```
+
+This keeps HTTP status handling out of the individual controller actions.
+
+## Route and Endpoint Names
+
+The Faculty and Department endpoints were updated to use clear URL templates instead of relying only on route parameters.
+
+```
+[HttpGet("faculty/{id:long}", Name = "Get-Faculty")]
+
+[HttpGet("department/{id:long}", Name = "Get-Department")]
+
+[HttpGet("departments-by-faculty/{facultyId:long}", Name = "Get-Departments-By-Faculty")]
+
+[HttpGet("paged-departments-by-faculty/{facultyId:long}", Name = "Get-Paged-Departments-By-Faculty")]
+```
+
+Each endpoint also has an explicit `Name`. These names are important because the custom authorization handler uses them when checking the user's claims.
+
+## API Documentation
+
+The Faculty and Department endpoints were connected to the custom Swagger documentation system using `ApiDocumentation`.
+
+Documentation keys were added for the individual operations and mapped to their definitions in:
+
+```
+FacultyDocumentation.cs
+DepartmentDocumentation.cs
+```
+
+Example Usage:
+
+```
+[ApiDocumentation(FacultyDocumentationKeys.GetFaculty)]
+
+[ApiDocumentation(DepartmentDocumentationKeys.GetDepartment)]
+```
+
+The documentation includes the endpoint summary, description, response type and expected error responses.
+
+## Verification
+
+The controller changes were covered by the controller tests added earlier.
+
+The tests passed after the route, endpoint name, `BaseController`, and documentation changes, confirming that the cleanup did not break the existing controller behaviour.
+
+---
+
+## Refresh Token Rotation and Session Revocation
+
+### Overview
+
+Refresh-token support was added so users can renew access tokens without signing in again while still keeping sessions revocable and auditable.
+
+The implementation includes:
+
+- cryptographically secure refresh tokens;
+- SHA-256 hashing before database storage;
+- `HttpOnly` and `Secure` cookies;
+- refresh-token rotation;
+- token-family tracking;
+- absolute family expiry;
+- logout and logout-all support;
+- token reuse detection;
+- optimistic concurrency using `RowVersion`;
+- IP address and user-agent tracking.
+
+The raw refresh token is never stored in the database.
+
+### Token Rotation
+
+Each refresh token is single-use.
+
+When a refresh succeeds:
+
+1. the current refresh token is revoked;
+2. a replacement token is created in the same family;
+3. the old token stores the hash of the replacement;
+4. the database changes are committed inside one transaction;
+5. the new cookie is written only after the transaction commits.
+
+If the refresh operation fails, the transaction is rolled back and the failed request does not create its own replacement token.
+
+### Token Reuse Detection
+
+During testing, a rotated token was initially rejected as a normal revoked token before the reuse-detection logic could run.
+
+Validation was updated so that a revoked token with a `ReplacedByTokenHash` is treated as a reused rotated token.
+
+When reuse is detected, all active tokens in that family are revoked.
+
+Tokens revoked through normal logout are still rejected, but they are not treated as rotation reuse.
+
+### Concurrent Refresh Requests
+
+`RowVersion` is used to protect against two requests trying to rotate the same refresh token at the same time.
+
+The losing request receives a concurrency failure, rolls back its transaction and revokes the active token created by the successful request.
+
+The final concurrent test produced:
+
+```
+Request 1 -> HTTP 200
+Request 2 -> HTTP 401
+```
+
+---
+
+---
+
+# Audit Trail
+
+## Overview
+
+The audit trail was added as a new backend feature to record important operations performed on application data.
+
+The audit trail should answer:
+
+- Who performed the operation?
+- What endpoint/business operation triggered it?
+- What entity was affected?
+- Was the entity created, updated, or deleted?
+- What values changed?
+- Did the operation succeed?
+- What request metadata was associated with the operation?
+- When did the operation occur?
+
+The implementation is centralized so that individual controllers and services do not need to manually create audit records.
+
+---
+
+## Objectives
+
+The audit trail was introduced to:
+
+- provide traceability for important data changes
+- identify the user responsible for an operation
+- record the affected entity and operation type
+- retain previous and new values for relevant changes
+- associate operations with their originating HTTP requests
+- provide a human-readable description of each audited operation
+- support approximate IP-based location information
+- optionally store client-provided device location
+- prevent historical audit records from being modified or deleted
+- provide a protected API for reviewing audit records
+
+---
+
+## Audit Entities
+
+The audit implementation introduced the following entities:
+
+- `AuditTrail`
+- `AuditOutcome`
+- `AuditLocation`
+
+### AuditTrail
+
+`AuditTrail` contains the main information about an audited operation.
+
+Stored information includes:
+
+- audit identifier
+- actor user ID
+- actor username
+- endpoint name
+- event name
+- HTTP method
+- entity type
+- entity ID
+- outcome
+- description
+- old values
+- new values
+- IP address
+- user agent
+- correlation ID
+- creation timestamp
+- optional location information
+
+### AuditOutcome
+
+`AuditOutcome` represents the result of an audited operation.
+
+The following outcomes were seeded:
+
+- `Success`
+- `Failure`
+- `Denied`
+
+The values are resolved by name rather than by hardcoded database IDs.
+
+Successful automatic auditing resolves:
+
+```
+Success
+```
+
+### AuditLocation
+
+`AuditLocation` stores optional location information associated with an audit record.
+
+The relationship is:
+
+```
+AuditTrail 1 ───── 0..1 AuditLocation
+```
+
+`AuditLocation` has its own primary key.
+
+`AuditTrailId` is a unique foreign key referencing the corresponding audit trail.
+
+The relationship therefore allows:
+
+- an audit trail without location information
+- one location record for an audit trail
+- no more than one location record for the same audit trail
+
+---
+
+## Auditable Entities
+
+Automatic persistence auditing is enabled using the `IAuditable` marker interface.
+
+Entities implementing `IAuditable` are inspected by `VotingDbContext` when changes are saved.
+
+This avoids placing audit logic inside individual controllers or services.
+
+The audit infrastructure automatically handles:
+
+- entity creation
+- entity updates
+- entity deletion
+
+Some entities are intentionally excluded from the general automatic audit mechanism.
+
+In particular:
+
+- `Vote`
+- `RefreshToken`
+
+do not implement `IAuditable`.
+
+This prevents sensitive or inappropriate information from being captured through the general entity-change audit mechanism.
+
+---
+
+## Automatic Audit Creation
+
+`VotingDbContext` was extended so that auditable changes are detected automatically during `SaveChanges` and `SaveChangesAsync`.
+
+The general save flow is:
+
+```text
+Business entity changed
+        ↓
+VotingDbContext detects auditable changes
+        ↓
+Prepare pending audit information
+        ↓
+Save business entity
+        ↓
+Resolve generated entity IDs
+        ↓
+Create AuditTrail records
+        ↓
+Save audit records
+        ↓
+Commit transaction
+```
+
+Generated entity IDs are resolved after the initial business save.
+
+This is necessary for entities whose IDs are generated by the database.
+
+
+## Transaction Handling
+
+Automatic auditing is performed within the same transaction as the business change.
+
+If the context does not already have an active transaction, `VotingDbContext` creates one.
+
+The transaction contains:
+
+1. the business entity change
+2. the generated audit record
+
+If either operation fails, the transaction is rolled back.
+
+This prevents a situation where the application successfully changes business data but fails to create the corresponding audit record.
+
+If an existing transaction is already active, the audit implementation uses that transaction instead of creating another one.
+
+The value returned by `SaveChanges` continues to represent the number of affected business records rather than the additional internal audit save.
+
+---
+
+## Audit Events
+
+The automatic audit trail currently records three main entity events:
+
+- `Created`
+- `Updated`
+- `Deleted`
+
+The event name is derived from the entity state.
+
+---
+
+## Tracking-Only Changes
+
+Framework-maintained tracking properties should not create unnecessary audit events.
+
+Properties such as:
+
+- `CreatedAt`
+- `UpdatedAt`
+- `CreatedBy`
+- `UpdatedBy`
+
+are excluded from the entity change snapshots.
+
+If only tracker properties change and no meaningful business property changes, an `Updated` audit record is not created.
+
+This prevents the audit trail from being filled with changes that only represent internal tracking maintenance.
+
+---
+
+## Sensitive Data Exclusion
+
+Sensitive properties are excluded from `OldValues` and `NewValues`.
+
+This prevents the audit trail from becoming another storage location for authentication or security secrets.
+
+Sensitive values such as the following are not intended to be recorded:
+
+- password hashes
+- passwords
+- security stamps
+- authentication tokens
+- refresh-token values
+- voting codes
+- other security-related values
+
+The audit trail should provide traceability without exposing secret information.
+
+---
+
+## Human-Readable Description
+
+Each automatically generated audit record receives a short human-readable description.
+
+Examples:
+
+```
+Faculty 1 was created by super.admin.
+Faculty 1 was updated by super.admin.
+Faculty 2 was deleted by super.admin.
+Department 3 was created by super.admin.
+```
+
+If an authenticated username is unavailable, the operation is described as being performed by the system.
+
+```
+Faculty 1 was created by the system.
+```
+
+The description provides a quick summary of the operation.
+
+The detailed change information remains available through `OldValues` and `NewValues`.
+
+---
+
+## Request Metadata
+
+Audit records also contain metadata from the HTTP request that triggered the operation.
+
+The request metadata includes:
+
+- actor user ID
+- actor username
+- endpoint name
+- HTTP method
+- IP address
+- user agent
+- correlation ID
+
+Request metadata is provided through `IAuditMetadataProvider`.
+
+The implementation uses the current `HttpContext` to retrieve request information without making controllers responsible for audit metadata.
+
+---
+
+## Correlation IDs
+
+The existing correlation ID infrastructure is integrated into the audit trail.
+
+Each relevant request receives a correlation ID.
+
+That correlation ID is also stored with the corresponding audit record.
+
+This allows a request to be traced across:
+
+```text
+HTTP request
+        ↓
+Application logs
+        ↓
+AuditTrail
+```
+
+An administrator or developer can therefore use the same correlation ID to connect an audit entry with the logs produced during the request.
+
+---
+
+# Audit Location
+
+## Overview
+
+Location support was added as optional enrichment for audit records.
+
+Location information is stored in a separate `AuditLocation` entity rather than directly adding all location fields to `AuditTrail`.
+
+An audit record can contain:
+
+- approximate IP-based location
+- optional device/browser location
+- both
+- neither
+
+Location information must never be required for the business operation to succeed.
+
+---
+
+## IP-Based Location
+
+The backend can determine an approximate geographic location from the public client IP address.
+
+The following values may be stored:
+
+- `IpCountry`
+- `IpRegion`
+- `IpCity`
+- `IpLatitude`
+- `IpLongitude`
+
+Example:
+
+```
+{
+  "ipCountry": "Germany",
+  "ipRegion": "North Rhine-Westphalia",
+  "ipCity": "Paderborn",
+  "ipLatitude": 51.7189,
+  "ipLongitude": 8.7575
+}
+```
+
+---
+
+## IP Geolocation Service
+
+IP geolocation is handled through:
+
+```
+IIpGeolocationService
+```
+
+with the current implementation:
+
+```
+IpGeolocationService
+```
+
+The external provider currently used is:
+
+```
+ipwho.is
+```
+
+The frontend does not call the geolocation provider.
+
+The lookup is performed directly by the backend.
+
+The request flow is:
+
+```
+Incoming API request
+        ↓
+IpGeolocationMiddleware
+        ↓
+context.Connection.RemoteIpAddress
+        ↓
+IpGeolocationService
+        ↓
+ipwho.is
+        ↓
+Country / Region / City / Coordinates
+        ↓
+HttpContext.Items
+        ↓
+AuditMetadataProvider
+        ↓
+AuditLocation
+```
+
+---
+
+## IP Geolocation Middleware
+
+`IpGeolocationMiddleware` performs the IP lookup before the request reaches the controller.
+
+Location lookup is limited to mutating API requests.
+
+The middleware currently considers:
+
+- `POST`
+- `PUT`
+- `PATCH`
+- `DELETE`
+
+`GET` requests do not trigger IP geolocation.
+
+This avoids unnecessary external lookups for read-only requests.
+
+The middleware also checks that the request is an API request before attempting the lookup.
+
+---
+
+## Private and Reserved IP Addresses
+
+Private, loopback and reserved addresses are not sent to the external geolocation provider.
+
+Examples include:
+
+```text
+127.0.0.1
+::1
+10.x.x.x
+172.16.x.x - 172.31.x.x
+192.168.x.x
+```
+
+These addresses do not represent a meaningful public geographic location.
+
+This also means that normal local development requests will generally not contain IP geolocation information.
+
+A request from:
+
+```
+127.0.0.1
+```
+
+will still create an audit record, but no IP location lookup will be performed.
+
+---
+
+## IP Geolocation Failure Handling
+
+Location enrichment does not affect the underlying business operation.
+
+If the geolocation provider:
+
+- is unavailable
+- times out
+- returns an unsuccessful response
+- returns invalid JSON
+- cannot resolve the IP address
+
+the service returns no location information and the original request continues.
+
+The audit trail is still created.
+
+This keeps geolocation as optional audit enrichment rather than a dependency for application functionality.
+
+---
+
+## IP Geolocation Timeout
+
+The IP geolocation HTTP client uses a short timeout.
+
+The current timeout is:
+
+```
+2 seconds
+```
+
+This prevents an unavailable external geolocation service from delaying API requests for an extended period.
+
+---
+
+## IP Geolocation Caching
+
+Successful IP geolocation results are cached using the ASP.NET Core in-memory cache.
+
+The cache key is based on the client IP address.
+
+Successful results are currently cached for:
+
+```
+6 hours
+```
+
+This reduces:
+
+- repeated external HTTP calls
+- request latency
+- load on the external provider
+- unnecessary use of provider request limits
+
+---
+
+# Device Location
+
+## Overview
+
+The backend also supports optional device/browser location.
+
+Unlike IP location, the backend cannot independently access a browser or phone GPS sensor.
+
+The browser or client application must first obtain permission from the user and then send the location information with the API request.
+
+Device location is therefore optional client-provided metadata.
+
+---
+
+## Device Location Headers
+
+The backend currently accepts device location through the following HTTP headers:
+
+```text
+X-Device-Latitude
+X-Device-Longitude
+X-Device-Accuracy
+X-Device-Location-Captured-At
+```
+
+When valid coordinates are provided, the following values may be stored:
+
+- `DeviceLatitude`
+- `DeviceLongitude`
+- `DeviceAccuracyMeters`
+- `DeviceLocationCapturedAt`
+
+---
+
+## Device Location Validation
+
+Device coordinates are validated before being accepted.
+
+Latitude must be between:
+
+```
+-90 and 90
+```
+
+Longitude must be between:
+
+```
+-180 and 180
+```
+
+Accuracy must not be negative.
+
+Invalid or missing location values are ignored rather than causing the request to fail.
+
+Date/time values are normalized to UTC where appropriate.
+
+---
+
+## Device Location Request Flow
+
+The client-side flow is:
+
+```
+Browser requests geolocation permission
+        ↓
+navigator.geolocation
+        ↓
+Latitude / Longitude / Accuracy
+        ↓
+Frontend adds location headers
+        ↓
+Existing API request
+        ↓
+AuditMetadataProvider
+        ↓
+AuditLocation
+```
+
+No dedicated device-location endpoint is required.
+
+The device location can be attached to the same request that performs the business operation.
+
+For example:
+
+```
+POST /api/v1/faculties
+```
+
+may contain the device location headers.
+
+The controller does not need to read them.
+
+The audit infrastructure receives the values automatically through `AuditMetadataProvider`.
+
+---
+
+# Reverse Proxy Support
+
+## Forwarded Headers
+
+The application may run behind a reverse proxy.
+
+Without forwarded-header handling, ASP.NET Core may see the reverse proxy's IP address instead of the original client's IP address.
+
+Forwarded-header support was therefore added.
+
+The application processes:
+
+- `X-Forwarded-For`
+- `X-Forwarded-Proto`
+
+before the IP geolocation middleware runs.
+
+The request flow becomes:
+
+```
+Client
+    ↓
+Reverse proxy
+    ↓
+X-Forwarded-For
+    ↓
+UseForwardedHeaders()
+    ↓
+RemoteIpAddress corrected
+    ↓
+IpGeolocationMiddleware
+```
+
+---
+
+## Trusted Proxies
+
+Forwarded headers are accepted only from trusted proxies.
+
+Known proxies can be configured using application configuration.
+
+For example:
+
+```
+ReverseProxy__KnownProxies__0=10.0.0.10
+ReverseProxy__KnownProxies__1=10.0.0.11
+```
+
+These are configuration examples only.
+
+Actual proxy addresses depend on the production deployment environment.
+
+The application does not clear the framework's trusted proxy restrictions to blindly trust every forwarded header.
+
+This prevents clients from spoofing `X-Forwarded-For` and controlling the IP address recorded by the audit system.
+
+---
+
+# Audit Record Protection
+
+## Append-Only Audit History
+
+Audit records are treated as append-only historical information.
+
+After an `AuditTrail` has been created, attempts to:
+
+- modify it
+- delete it
+
+through `VotingDbContext` are rejected.
+
+The same protection applies to `AuditLocation`.
+
+This prevents normal application operations from rewriting historical audit information.
+
+An attempt to modify or delete an audit record results in an `InvalidOperationException`.
+
+```
+Audit trail records cannot be modified or deleted.
+```
+
+This behavior is enforced centrally by `VotingDbContext`.
+
+---
+
+# Audit Trail API
+
+## Endpoint
+
+A protected endpoint was added for retrieving audit records:
+
+```
+GET /api/v1/audit-trails
+```
+
+The controller uses the existing service and Result-pattern architecture.
+
+The controller remains thin:
+
+```
+Request
+    ↓
+AuditTrailService
+    ↓
+Result<PagedResponse<AuditTrailResponse>>
+    ↓
+HTTP response
+```
+
+---
+
+## Audit Filtering
+
+The audit endpoint supports optional filtering by:
+
+- actor user ID
+- actor username
+- endpoint name
+- event name
+- entity type
+- entity ID
+- outcome
+- correlation ID
+- IP address
+- start date
+- end date
+
+Pagination is also supported.
+
+This allows administrators to investigate specific users, operations or entities without retrieving the complete audit history.
+
+---
+
+## Audit Pagination
+
+Audit records are returned through the existing pagination infrastructure.
+
+The response uses:
+
+```
+PagedResponse<AuditTrailResponse>
+```
+
+---
+
+# Audit Response
+
+## Improved Response Mapping
+
+The audit response includes:
+
+- audit ID
+- actor information
+- endpoint information
+- event
+- HTTP method
+- entity information
+- outcome
+- description
+- old values
+- new values
+- IP address
+- user agent
+- correlation ID
+- location
+- creation timestamp
+
+---
+
+## Outcome Mapping
+
+`AuditTrail` stores the relationship to `AuditOutcome`.
+
+The API response exposes only the outcome name.
+
+Example:
+
+```
+{
+  "outcome": "Success"
+}
+```
+
+rather than exposing the complete `AuditOutcome` database entity.
+
+---
+
+## Location Mapping
+
+`AuditLocation` is mapped into a dedicated:
+
+```
+AuditLocationResponse
+```
+
+The audit service explicitly loads:
+
+```
+Outcome
+Location
+```
+
+before the response is mapped.
+
+This ensures location metadata is included when it exists.
+
+---
+
+## Example Audit Response
+
+A typical audit record can be returned as:
+
+```
+{
+  "id": "23e6f088-c24c-4488-8332-8bea2a923d46",
+  "actorUserId": "475d1d1c-4659-4140-b1f0-105e56b27b5d",
+  "actorUsername": "super.admin",
+  "endpointName": "Update-Faculty",
+  "eventName": "Updated",
+  "httpMethod": "PUT",
+  "entityType": "Faculty",
+  "entityId": "1",
+  "outcome": "Success",
+  "description": "Faculty 1 was updated by super.admin.",
+  "oldValues": {
+    "Name": "Media Sciences"
+  },
+  "newValues": {
+    "Name": "Media Technology"
+  },
+  "ipAddress": "93.x.x.x",
+  "userAgent": "Mozilla/5.0",
+  "correlationId": "9be8769f-53de-45f7-923a-7df0e17ae6a2",
+  "location": {
+    "ipCountry": "Germany",
+    "ipRegion": "North Rhine-Westphalia",
+    "ipCity": "Paderborn",
+    "ipLatitude": 51.7189,
+    "ipLongitude": 8.7575,
+    "deviceLatitude": null,
+    "deviceLongitude": null,
+    "deviceAccuracyMeters": null,
+    "deviceLocationCapturedAt": null
+  },
+  "createdAt": "2026-08-28T16:20:00Z"
+}
+```
+
+---
+
+# Database Changes
+
+The audit implementation introduced the following database tables:
+
+```text
+AuditOutcomes
+AuditTrails
+AuditLocations
+```
+
+The `AuditLocations` table contains:
+
+- `Id`
+- `AuditTrailId`
+- `IpCountry`
+- `IpRegion`
+- `IpCity`
+- `IpLatitude`
+- `IpLongitude`
+- `DeviceLatitude`
+- `DeviceLongitude`
+- `DeviceAccuracyMeters`
+- `DeviceLocationCapturedAt`
+
+`AuditTrailId` has a unique index so that a single audit trail cannot have multiple location records.
+
+The relationship uses restricted delete behavior.
+
+---
+
+# Seed Data
+
+Audit outcome seed data was added.
+
+The seeded outcomes are:
+
+```
+Success
+Failure
+Denied
+```
+
+# Testing
+
+Audit-related tests were added across the context, service, mapper, middleware and geolocation layers.
+
+## VotingDbContext Audit Tests
+
+Tests cover:
+
+- creation of an audit trail when an auditable entity is created
+- correct actor metadata
+- endpoint metadata
+- event name
+- HTTP method
+- entity type
+- generated entity ID
+- success outcome
+- IP address
+- user agent
+- correlation ID
+- created entity values
+- detached update old-value retrieval
+- updated values
+- deleted entity old values
+- exclusion of tracker-only changes
+- append-only audit protection
+- IP location persistence
+- device location persistence
+- human-readable descriptions
+
+---
+
+## Audit Architecture Tests
+
+Architecture tests verify that entities that should not participate in automatic entity auditing remain excluded.
+
+In particular:
+
+```
+Vote
+RefreshToken
+```
+
+are verified not to implement `IAuditable`.
+
+---
+
+## AuditTrailService Tests
+
+Integration tests cover:
+
+- retrieving audit records without filters
+- actor filtering
+- entity filtering
+- event filtering
+- outcome filtering
+- correlation ID filtering
+- IP address filtering
+- endpoint filtering
+- date filtering
+- pagination
+- loading associated location information
+
+---
+
+## Audit Mapping Tests
+
+Dedicated mapping tests verify:
+
+- `AuditTrail` to `AuditTrailResponse`
+- outcome name mapping
+- `AuditLocation` to `AuditLocationResponse`
+- IP location mapping
+- device location mapping
+- deserialization of `OldValues`
+- deserialization of `NewValues`
+- created entity null old-values behavior
+- updated entity old/new behavior
+- deleted entity null new-values behavior
+
+---
+
+## IP Geolocation Service Tests
+
+Tests cover:
+
+- successful provider responses
+- unsuccessful provider responses
+- null handling
+- HTTP failure handling
+- caching behavior
+
+---
+
+## IP Geolocation Middleware Tests
+
+Middleware tests cover:
+
+- public IP lookup for mutating requests
+- loopback address skipping
+- private address skipping
+- GET request skipping
+- unsuccessful geolocation lookup
+- continuing the request when no location is available
+- populating request context when location is available
+
+---
+
+## Final Verification
+
+After the audit trail, location support, response improvements and associated tests were completed, the full test suite was executed.
+
+All tests passed successfully.
+
+---
+
+## Application Caching
+
+### Goal
+Add a reusable caching layer to reduce repeated database reads without tying the service layer to a specific cache implementation.
+
+### What Changed
+- Added a new `OnlineVoting.Caching` class library to keep caching concerns separate from the rest of the application.
+- Added `ICacheService` as the abstraction used by the service layer.
+- Implemented the cache service with ASP.NET Core `HybridCache`.
+- Added support for:
+  - Hybrid caching
+  - Local-only caching
+  - Distributed-only caching
+  - Cache expiration
+  - Local cache expiration
+  - Cache tags
+  - Cache removal by key
+  - Cache removal by tag
+- Added a `Caching` configuration section in `appsettings.json`.
+- Added Redis-related configuration so distributed caching can be enabled later without changing the service layer.
+- Added shared cache keys, tags, and policies under the Services project.
+- Kept the actual cache implementation out of the business services. The services only depend on `ICacheService`.
+
+### Faculty as the First Implementation
+Faculty operations were used as the first place to apply and test the caching approach.
+
+This allowed the basic flow to be verified before applying the same pattern elsewhere:
+- Cache key generation.
+- Cache hits and cache misses.
+- Caching DTO responses instead of EF Core entities.
+- Caching paginated responses.
+- Caching Faculty responses with and without Departments.
+- Invalidating the cache after successful create, update, activation, and delete operations.
+- Avoiding cache invalidation when a write fails or does not change anything.
+- Making sure repository and mapping calls are skipped when the requested data is already cached.
+
+Once the Faculty implementation and tests were working correctly, the same approach was applied to Department operations.
+
+### Department Caching
+Caching was added to the main Department read operations:
+- Get Department by ID.
+- Get paginated Departments.
+- Get Departments by Faculty.
+- Get paginated Departments by Faculty.
+
+Cache-hit tests were also added to confirm that repository and mapping calls are not made when the response is already available in the cache.
+
+### Cache Invalidation
+Faculty and Department data are related, so updating one can make cached data for the other stale.
+
+- Faculty responses can include Departments.
+- Department responses include Faculty information.
+
+Because of this:
+- Successful Faculty changes invalidate both Faculty and Department caches.
+- Successful Department changes invalidate both Department and Faculty caches.
+
+Invalidation only happens after the database operation succeeds. Validation failures, conflicts, not-found results, and other no-op cases do not clear the cache.
+
+### Cache Failure Handling
+Cache failure handling was added inside `OnlineVoting.Caching` instead of adding `try/catch` blocks throughout the services.
+
+Failures from:
+- `Set`
+- `Remove`
+- `RemoveByTag`
+
+are logged and do not cause an already successful business operation to fail.
+
+If a Department update succeeds in SQL Server but cache invalidation fails, the update still returns successfully and the cache error is logged.
+
+Cancellation is handled differently. If the request is cancelled, `OperationCanceledException` is allowed to propagate instead of being treated as a normal cache failure.
+
+`GetOrCreate` was left without a broad fallback catch because the factory can contain repository or database calls. Catching everything there and 
+
+running the factory again could repeat a database operation or hide the real exception.
+
+### Logging
+The existing `VotingSystem.Logger` project is reused for cache logging.
+
+- `HybridCacheService` now uses `ILoggerMessage`.
+- `ILoggerMessage` was changed from scoped to singleton so it can safely be injected into the singleton cache service.
+- `AddApplicationCaching` uses `TryAddSingleton` so the caching setup can register the logger when needed without replacing an existing registration.
+
+### Current Configuration
+Caching is currently running with HybridCache using the local in-memory cache.
+
+Current setup:
+- Caching enabled.
+- Default cache expiration configured.
+- Default local cache expiration configured.
+- Distributed caching disabled.
+- Redis connection string name reserved for later use.
+
+SQL Server remains the source of truth.
+
+The current flow is:
+
+```
+Application Services
+        ↓
+ICacheService
+        ↓
+HybridCacheService
+        ↓
+HybridCache
+        ├── L1 Memory Cache
+        └── L2 Redis - planned
+```
+
+### Tests
+
+Tests were added or updated for:
+
+- Cache hits.
+- Cache misses.
+- Cache set operations.
+- Key removal.
+- Tag removal.
+- Disabled caching.
+- Invalid distributed cache configuration.
+- Configuration binding and validation.
+- Faculty caching.
+- Department caching.
+- Paginated caching.
+- Repository and mapper bypass on cache hits.
+- Cache invalidation after successful writes.
+- No invalidation after failed or no-op writes.
+- Faculty and Department cross-cache invalidation.
+- Cache failure handling.
+- Cache failure logging.
+- Cancellation handling.
+- Dependency injection registration.
+
+---
+
+## Redis L2 Caching
+
+### Goal
+Added Redis as the distributed L2 cache for HybridCache and verify that cached data can be shared across application instances.
+
+### What Changed
+- Added Redis to Docker Compose using `redis:7.4-alpine`.
+- Added a Redis health check with `redis-cli ping`.
+- Added Redis connection settings for Docker and local development.
+- Enabled distributed caching through `Caching__DistributedEnabled`.
+- Kept Redis disabled by default in `appsettings.json`.
+- Docker API connects with `online-voting-redis:6379`.
+- Local Visual Studio runs connect with `localhost:6379`.
+
+### Verification
+Faculty caching was used to verify the Redis setup.
+
+The Redis cache was cleared, a Faculty endpoint was called, and the expected cache key was created in Redis.
+
+After restarting the API, the Redis key was still available. `redis-cli MONITOR` confirmed that HybridCache read the cached Faculty response from 
+
+Redis after the local L1 cache had been cleared.
+
+The same behavior was also verified with the API running locally from Visual Studio.
+
+### Tests
+Added Redis integration tests using Testcontainers.
+
+The tests verified that:
+- A value cached by one HybridCache instance can be read by a new instance from Redis.
+- The cache factory is not called when the value already exists in Redis.
+- Tag invalidation marks the Redis value as stale.
+- A new cache instance runs the factory again after the related tag is invalidated.
+
+### Current Setup
+
+```
+Application Services
+        ↓
+ICacheService
+        ↓
+HybridCache
+     ├── L1 Memory
+     └── L2 Redis
+```
+
+---
+
+## Response Compression
+
+### Goal
+Add configurable response compression for API responses while keeping compression concerns outside controllers and services.
+
+### Architecture
+
+```
+Client
+  ↓
+Reverse Proxy / Hosting Layer
+  ↓
+Forwarded Headers
+  ↓
+Response Compression Middleware
+  ↓
+Controllers
+  ↓
+Services
+  ↓
+Cache / Database
+  ↓
+Response Compression Middleware
+  ↓
+Reverse Proxy / Hosting Layer
+  ↓
+Client
+```
+
+Compression is handled at the API infrastructure layer.
+
+### Compression Flow
+
+| Protocol | `EnableForHttps` | Application Compression | Expected Compression Owner |
+|---|---:|---|---|
+| HTTP | `false` | Enabled | ASP.NET Core |
+| HTTP | `true` | Enabled | ASP.NET Core |
+| HTTPS | `false` | Disabled | Reverse proxy / hosting layer |
+| HTTPS | `true` | Enabled | ASP.NET Core |
+
+Production deployments can therefore choose where HTTPS compression is handled without changing application code.
+
+### Changed
+- Added ASP.NET Core response compression.
+- Added Brotli and Gzip providers.
+- Configured both providers with `CompressionLevel.Fastest`.
+- Added `application/problem+json` to supported MIME types.
+- Added `UseResponseCompression()` to the middleware pipeline.
+- Added configurable HTTPS compression through `ResponseCompression:EnableForHttps`.
+- Kept HTTPS application compression disabled by default.
+- Added response compression integration tests.
+
+### Configuration
+
+Default configuration:
+
+```json
+"ResponseCompression": {
+  "EnableForHttps": false
+}
+```
+
+For environments where the reverse proxy or hosting platform handles HTTPS compression:
+
+```env
+ResponseCompression__EnableForHttps=false
+```
+
+For environments where ASP.NET Core must handle HTTPS compression:
+
+```env
+ResponseCompression__EnableForHttps=true
+```
+
+### Middleware Order
+
+```
+app.UseForwardedHeaders();
+app.UseResponseCompression();
+```
+
+Forwarded headers are processed before compression so the original request scheme is available when the application is hosted behind a reverse proxy.
+
+### Compression Providers
+
+Supported providers:
+
+```
+Brotli
+Gzip
+```
+
+The provider is selected from the client's `Accept-Encoding` header. A response is compressed using one provider only.
+
+### Tests
+
+Added integration coverage for:
+
+- Brotli compression.
+- Gzip compression.
+- Requests without compression support.
+- HTTPS compression disabled.
+- HTTPS compression enabled.
+
+The Brotli and Gzip tests also verify that the compressed response can be successfully decompressed.
+
+---
+
+## Security Headers and Transport Security
+
+### Goal
+Harden the HTTP boundary of the API by adding centralized security headers and configurable transport-security behaviour without introducing 
+
+security logic into controllers or application services.
+
+### Why
+Authentication and authorization protect access to API operations, but they do not control how browsers handle HTTP responses or how HTTPS enforcement is managed.
+
+This change adds protection at the HTTP infrastructure layer for:
+
+- MIME-type sniffing.
+- Clickjacking and framing.
+- Referrer information leakage.
+- Unused browser capabilities.
+- HTTPS enforcement.
+- HSTS.
+- Reverse-proxy deployments where TLS is terminated outside the application.
+
+The implementation is centralized so every applicable response receives the same security behaviour.
+
+### Architecture
+
+```
+Client
+  ↓
+Reverse Proxy / Hosting Layer
+  ↓
+Forwarded Headers
+  ↓
+Security / Transport Layer
+  ├── HSTS
+  ├── Security Headers
+  └── HTTPS Redirection
+  ↓
+Response Compression
+  ↓
+Authentication / Authorization
+  ↓
+Controllers
+  ↓
+Services
+  ↓
+Cache / Database
+```
+
+### Changes
+- Added centralized `SecurityHeadersMiddleware`.
+- Added configurable HSTS support.
+- Added configurable HTTPS redirection.
+- Added startup validation for the HSTS max-age.
+- Added:
+  - `X-Content-Type-Options: nosniff`
+  - `Referrer-Policy: no-referrer`
+  - `X-Frame-Options: DENY`
+  - `Content-Security-Policy`
+  - `Permissions-Policy`
+- Moved HTTPS-redirection ownership out of the previous Development-only condition.
+- Kept `UseForwardedHeaders()` before transport-security middleware.
+- Added integration tests for security headers, HSTS and HTTPS-redirection behavior.
+
+### Design Decisions
+
+#### Centralized Middleware
+Security headers are applied through a dedicated middleware instead of being added in controllers.
+
+This keeps HTTP security consistent across API responses and prevents transport concerns from leaking into business logic.
+
+#### Built-in HSTS Middleware
+ASP.NET Core's built-in `UseHsts()` middleware is used instead of implementing HSTS manually.
+
+The custom middleware is responsible only for the additional response headers, while the framework remains responsible for HSTS behaviour.
+
+#### Deployment-Configurable HTTPS Ownership
+HTTPS redirection and HSTS are configuration-driven instead of being hardcoded.
+
+A production deployment may terminate TLS at:
+
+```
+Nginx
+IIS
+Load Balancer
+Cloud Gateway
+```
+
+or directly in:
+
+```
+ASP.NET Core / Kestrel
+```
+
+The application therefore does not assume which layer owns transport security.
+
+When the hosting layer owns HTTPS enforcement:
+
+```env
+SecurityHeaders__HttpsRedirectionEnabled=false
+SecurityHeaders__Hsts__Enabled=false
+```
+
+When ASP.NET Core owns HTTPS enforcement:
+
+```env
+SecurityHeaders__HttpsRedirectionEnabled=true
+SecurityHeaders__Hsts__Enabled=true
+```
+
+This avoids duplicating redirects or HSTS configuration between the application and reverse proxy.
+
+#### Forwarded Headers First
+The middleware order begins with:
+
+```
+app.UseForwardedHeaders();
+app.UseSecurityHeaders();
+```
+
+This is required for reverse-proxy deployments where the external request may use HTTPS while the proxy communicates with ASP.NET Core over HTTP.
+
+Processing forwarded headers first allows the application to work with the original request scheme before making HTTPS-related decisions.
+
+#### Conservative HSTS Defaults
+The default HSTS configuration is:
+
+```
+"Hsts": {
+  "Enabled": false,
+  "MaxAgeDays": 30,
+  "IncludeSubDomains": false,
+  "Preload": false
+}
+```
+
+A 30-day max age was chosen as a conservative starting point instead of immediately committing production clients to a long-lived HSTS policy.
+
+`IncludeSubDomains` remains disabled because enabling it affects every subdomain.
+
+`Preload` remains disabled because HSTS preload should only be enabled after the complete production domain and HTTPS strategy has been verified.
+
+#### Security Header Selection
+
+`X-Content-Type-Options: nosniff`
+
+Prevents browsers from attempting to reinterpret responses as a different MIME type.
+
+`X-Frame-Options: DENY`
+
+Prevents the application from being embedded in frames and reduces clickjacking exposure.
+
+`Content-Security-Policy`
+
+Uses:
+
+```
+frame-ancestors 'none'; object-src 'none'; base-uri 'none'
+```
+
+The policy is intentionally limited rather than applying an aggressive global CSP that could break Swagger UI.
+
+`Referrer-Policy: no-referrer`
+
+Prevents browser referrer information from being sent unnecessarily.
+
+`Permissions-Policy`
+
+Disables browser capabilities that are not required by the API:
+
+```
+camera
+microphone
+geolocation
+payment
+usb
+```
+
+### Configuration
+
+Default:
+
+```
+"SecurityHeaders": {
+  "HttpsRedirectionEnabled": false,
+  "Hsts": {
+    "Enabled": false,
+    "MaxAgeDays": 30,
+    "IncludeSubDomains": false,
+    "Preload": false
+  }
+}
+```
+
+The defaults do not assume a specific production hosting topology. Deployment-specific settings override them through environment configuration.
+
+### Tests
+Added integration coverage for:
+
+- Security headers being added to responses.
+- HSTS disabled.
+- HSTS enabled.
+- HTTPS redirection disabled.
+- HTTPS redirection enabled.
+- Invalid HSTS max-age configuration failing during startup.
+
+The tests verified actual HTTP behaviour rather than only checking service registration.
+
+---
+
+## CORS Hardening
+
+### Goal
+Replace the unrestricted CORS policy with a configurable, fail-closed policy that only allows explicitly approved browser origins, methods and headers.
+
+### Why
+The previous policy allowed any browser origin, method and header:
+
+```
+.AllowAnyOrigin()
+.AllowAnyMethod()
+.AllowAnyHeader()
+```
+
+That was convenient for development but too permissive for production.
+
+### Architecture
+
+```
+Browser / UI
+  ↓
+Origin header
+  ↓
+Routing
+  ↓
+CORS Policy
+  ├── Origin allowed?
+  ├── Method allowed?
+  └── Headers allowed?
+  ↓
+Authentication / Authorization
+  ↓
+Controllers
+  ↓
+Services
+```
+
+Only browser origins configured by the deployment environment receive CORS permission.
+
+### Changes
+- Replaced `AllowAnyOrigin()` with explicit allowed origins.
+- Replaced `AllowAnyMethod()` with configured HTTP methods.
+- Replaced `AllowAnyHeader()` with configured request headers.
+- Added `CorsSettings` configuration.
+- Added startup validation for CORS configuration.
+- Added configurable preflight cache duration.
+- Added explicit routing before CORS middleware.
+- Kept CORS independent of JWT authentication and authorization.
+- Added integration tests for allowed, blocked, disabled, and invalid CORS configurations.
+
+### Configuration
+
+Default configuration:
+
+```
+"Cors": {
+  "Enabled": false,
+  "AllowedOrigins": [],
+  "AllowedMethods": [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE"
+  ],
+  "AllowedHeaders": [
+    "Accept",
+    "Authorization",
+    "Content-Type",
+    "X-Correlation-ID",
+    "X-Device-Latitude",
+    "X-Device-Longitude",
+    "X-Device-Accuracy",
+    "X-Device-Location-Captured-At"
+  ],
+  "PreflightMaxAgeMinutes": 10
+}
+```
+
+CORS is disabled by default so a deployment must explicitly allow browser origins.
+
+### Design Decisions
+
+#### Explicit Origins
+Allowed UI origins are configured through environment settings instead of being hardcoded.
+
+Example for local development:
+
+```env
+Cors__Enabled=true
+Cors__AllowedOrigins__0=http://localhost:5173
+```
+
+Example for production:
+
+```env
+Cors__Enabled=true
+Cors__AllowedOrigins__0=https://voting.example.com
+```
+
+Multiple browser applications can be configured without changing application code:
+
+```env
+Cors__AllowedOrigins__0=https://vote.example.com
+Cors__AllowedOrigins__1=https://admin.example.com
+```
+
+Origins must contain the scheme, host and port when applicable, and must not contain a trailing slash.
+
+#### Fail-Closed Default
+`Cors:Enabled` defaults to `false`.
+
+This prevents accidental cross-origin browser access when no production UI origin has been configured.
+
+Swagger remains unaffected when served from the same API origin.
+
+#### Explicit Methods and Headers
+The policy only exposes the HTTP methods and request headers currently required by the application.
+
+This avoids silently allowing new browser-access capabilities.
+
+The configured headers include JWT authorization, JSON content, correlation IDs and the existing device-location headers.
+
+#### No CORS Credentials
+CORS credentials were not enabled because the current API authentication flow uses JWT bearer tokens through the `Authorization` header.
+
+Credentialed CORS should only be introduced if a future authentication design requires cookies, HTTP authentication or client certificates.
+
+#### Preflight Caching
+Successful browser preflight responses can be cached for 10 minutes.
+
+This reduces repeated `OPTIONS` requests while keeping policy changes reasonably short-lived.
+
+#### CORS Is Not Authorization
+Blocked origins do not replace authentication or authorization checks.
+
+CORS controls whether browser JavaScript can access a cross-origin response.
+
+JWT and authorization policies remain responsible for protecting API operations from unauthorized users and clients.
+
+### Middleware Order
+
+```
+app.UseRouting();
+
+app.UseCors("CorsPolicy");
+
+app.UseAuthentication();
+app.UseRateLimiter();
+app.UseAuthorization();
+```
+
+Routing runs before CORS so endpoint information is available to the CORS middleware.
+
+CORS runs before authentication and authorization so browser preflight requests can be handled before protected endpoints are evaluated.
+
+### Validation
+Startup validation now rejects invalid configurations, including:
+
+- CORS enabled without any allowed origin.
+- Empty allowed-method configuration when CORS is enabled.
+- Empty allowed-header configuration when CORS is enabled.
+- Invalid HTTP or HTTPS origins.
+- Origins containing a trailing slash.
+- Invalid preflight cache duration.
+
+This prevents common deployment misconfigurations from silently producing incorrect browser behavior.
+
+### Tests
+Added integration coverage for:
+
+- Requests from an allowed origin.
+- Requests from a blocked origin.
+- Allowed preflight requests.
+- Blocked preflight requests.
+- CORS disabled.
+- CORS enabled without an allowed origin.
+- Allowed origin configured with a trailing slash.
+
+The tests verify actual HTTP CORS headers rather than only service registration.
+
+---
+
+## OpenTelemetry Observability
+
+### Goal
+Added vendor-neutral observability for API traces and metrics while preserving the existing NLog logging pipeline.
+
+### Changes
+- Added configurable OpenTelemetry tracing and metrics.
+- Added ASP.NET Core request tracing.
+- Added ASP.NET Core and .NET runtime metrics.
+- Added configurable parent-based trace sampling.
+- Added OTLP HTTP/protobuf export for traces and metrics.
+- Added OpenTelemetry resource metadata for service name, namespace, version, and environment.
+- Added configuration validation with `ObservabilitySettingsValidator`.
+- Added an OpenTelemetry Collector Docker service.
+- Added Collector memory limiting and batching.
+- Added a local debug exporter for development verification.
+- Excluded `/health` and `/swagger` from request tracing.
+- Preserved NLog as the application logging pipeline.
+- Added `CorrelationId`, `RequestId`, OpenTelemetry `TraceId`, and `SpanId` to the NLog request scope.
+- Added validation for incoming `X-Correlation-ID` values.
+- Added the correlation ID to traces as `app.correlation_id`.
+
+### Architecture
+```text
+OnlineVoting.Api
+    ├── Traces
+    │     └── OTLP HTTP → /v1/traces
+    │
+    ├── Metrics
+    │     └── OTLP HTTP → /v1/metrics
+    │
+    └── NLog
+          ├── CorrelationId
+          ├── RequestId
+          ├── TraceId
+          └── SpanId
+                │
+                └── TraceId matches OpenTelemetry trace
+
+                    ↓
+
+           OpenTelemetry Collector
+                ├── memory_limiter
+                ├── batch
+                └── debug exporter
+```
+
+### Configuration
+Observability is configuration-driven and can be enabled or disabled without changing application code.
+
+The Docker-hosted API exports telemetry to the Collector through the Docker network. A locally running API can export through the Collector's published OTLP HTTP port.
+
+The Collector is not treated as a required application dependency. Loss of telemetry does not prevent the API from operating.
+
+The debug exporter is intended for local development verification and should be replaced by an appropriate observability backend for production.
+
+### Disabling Observability
+Observability can be disabled completely through configuration.
+
+The default application configuration is:
+
+```json
+"Observability": {
+  "Enabled": false,
+  "ServiceName": "OnlineVoting.Api",
+  "ServiceNamespace": "OnlineVoting",
+  "TraceSamplingRatio": 1.0,
+  "OtlpEndpoint": "http://localhost:4318/",
+  "ExcludedTracingPaths": [
+    "/health",
+    "/swagger"
+  ]
+}
+```
+
+When `Observability:Enabled` is `false`, the application does not register the OpenTelemetry tracing and metrics pipelines and does not export telemetry to the Collector.
+
+For a locally running API, either remove the environment override:
+
+```
+Observability__Enabled=true
+```
+
+or explicitly set:
+
+```
+Observability__Enabled=false
+```
+
+For Docker, either remove:
+
+```env
+Observability__Enabled=true
+Observability__OtlpEndpoint=http://online-voting-otel-collector:4318/
+```
+
+from `.env.docker`, allowing the `appsettings.json` default of `false` to apply, or explicitly set:
+
+```
+Observability__Enabled=false
+```
+
+The OpenTelemetry Collector may remain running when observability is disabled. The API simply stops sending traces and metrics to it.
+
+If the Collector is also not needed locally, it can be stopped independently:
+
+```
+docker compose -p online-voting-system -f .\OnlineVoting.Api\docker-compose.yml stop online-voting-otel-collector
+```
+
+It can later be started again with:
+
+```
+docker compose -p online-voting-system -f .\OnlineVoting.Api\docker-compose.yml up -d online-voting-otel-collector
+```
+
+After changing the observability environment configuration, restart the API process or recreate the API container so the new setting is applied.
+
+Disabling observability does not require any code changes.
+
+### Verification
+- Observability configuration tests: 11 passed.
+- Correlation middleware unit tests: 6 passed.
+- Correlation middleware integration tests: 2 passed.
+- Collector health endpoint returned HTTP 200.
+- Real API traces were received by the Collector.
+- ASP.NET Core and .NET runtime metrics were received by the Collector.
+- NLog `TraceId` and `SpanId` matched the corresponding OpenTelemetry trace.
+- `X-Correlation-ID` was preserved in the response, NLog scope, and OpenTelemetry trace as `app.correlation_id`.
+- Full regression suite: 548 passed, 0 failed, 0 skipped.
+
+---
+
+## Redis failure resilience
+
+### Goal
+
+Reduced request latency when distributed caching is enabled but Redis is unavailable.
+
+### Changes
+
+- Added configurable Redis connection and operation timeouts.
+- Reduced Redis connection retries.
+- Configured Redis backlog behavior to fail fast while disconnected.
+- Kept `AbortOnConnectFail` disabled so Redis can reconnect automatically after recovery.
+- Added validation for the new Redis configuration values.
+- Added unit tests for Redis fail-fast configuration.
+
+### Verification
+
+- Cache configuration tests: 9 passed.
+- Full regression suite: 552 passed.
+- Redis healthy:
+  - Faculty endpoint: approximately 39–48 ms.
+- Redis unavailable:
+  - Previous behavior: approximately 15.2–15.3 seconds.
+  - Updated behavior: first request approximately 1.84 seconds.
+  - Subsequent local-cache requests: approximately 30–57 ms.
+- Redis restored while API remained running:
+  - Faculty endpoint returned to approximately 38–48 ms.
+  - No API restart was required.
+
+The distributed cache now degrades much faster when Redis is unavailable while retaining automatic recovery when Redis becomes available again.
+
+---
+
+## Health and Readiness Checks
+
+### Goal
+
+Separate application liveness from dependency readiness.
+
+- `/health/live` checks whether the API process is running.
+- `/health/ready` checks required dependencies.
+- SQL Server is always required for readiness.
+- Redis is required only when distributed caching is enabled.
+- Observability services are not readiness dependencies.
+
+### Files Changed
+
+- `OnlineVoting.Api/Program.cs`
+- `OnlineVoting.Api/Middlewares/ServiceExtensions.cs`
+- `OnlineVoting.Api/HealthChecks/RedisHealthCheck.cs`
+- `OnlineVoting.Tests/IntegrationTests/Api/ServiceExtension/HealthCheckTests.cs`
+
+### Changes
+
+Renamed the existing liveness endpoint from:
+
+```
+/health
+```
+
+to:
+
+```
+/health/live
+```
+
+The endpoint still uses:
+
+```
+Predicate = _ => false
+```
+
+so it does not execute dependency checks.
+
+The existing readiness endpoint remains:
+
+```
+/health/ready
+```
+
+and continues to execute checks tagged with `ready`.
+
+Updated `ConfigureHealthChecks` to accept `IConfiguration`:
+
+```
+builder.Services.ConfigureHealthChecks(builder.Configuration);
+```
+
+The existing `VotingDbContext` health check remains registered as the SQL readiness check.
+
+Added `RedisHealthCheck`, which uses the existing `IDistributedCache` registration and performs a lightweight cache read:
+
+```
+await distributedCache.GetAsync(HealthCheckKey, cancellationToken);
+```
+
+Redis is added to readiness only when:
+
+```
+Caching:DistributedEnabled = true
+```
+
+No additional Redis health-check package was added.
+
+### Behaviour
+
+| Scenario | `/health/live` | `/health/ready` |
+| --- | --- | --- |
+| API running, dependencies healthy | 200 | 200 |
+| SQL unavailable | 200 | 503 |
+| Redis disabled | 200 | SQL determines readiness |
+| Redis enabled and unavailable | 200 | 503 |
+| Redis enabled and available | 200 | 200 |
+
+Grafana, Tempo, Prometheus and the OpenTelemetry Collector are not included in readiness because they are not required for the API to serve application requests.
+
+### Tests
+
+Added five integration tests:
+
+- `Live_WhenDatabaseIsUnavailable_ShouldReturnOk`
+- `Ready_WhenDatabaseIsAvailableAndRedisIsDisabled_ShouldReturnOk`
+- `Ready_WhenDatabaseIsUnavailable_ShouldReturnServiceUnavailable`
+- `Ready_WhenRedisIsEnabledAndUnavailable_ShouldReturnServiceUnavailable`
+- `Ready_WhenRedisIsEnabledAndAvailable_ShouldReturnOk`
+
+The tests use the existing `TestServer` setup.
+
+SQLite is used for database health-check scenarios.
+
+`AddDistributedMemoryCache()` represents an available distributed cache. A test `IDistributedCache` implementation that throws `InvalidOperationException` represents an unavailable cache.
+
+---
+
+## Outbound HTTP Resilience
+
+### Goal
+
+Improved reliability of outbound HTTP calls and remove direct `HttpClient` construction.
+
+### Files Changed
+
+- `OnlineVoting.Api/Middlewares/ServiceExtensions.cs`
+- `OnlineVoting.Api/OnlineVoting.Api.csproj`
+- `OnlineVoting.Services/Implementation/IpGeolocationService.cs`
+- `OnlineVoting.Services/Implementation/ClaimsService.cs`
+- `OnlineVoting.Services/OnlineVoting.Services.csproj`
+- `OnlineVoting.Tests/IntegrationTests/Api/ServiceExtension/IpGeolocationResilienceTests.cs`
+- `OnlineVoting.Tests/TestData/Factories/ClaimsServiceFactory.cs`
+- `OnlineVoting.Tests/UnitTests/Services/ClaimsServiceTests.cs`
+
+### Changes
+
+Added `Microsoft.Extensions.Http.Resilience` to the API project and configured the existing typed `HttpClient` for `IpGeolocationService` with:
+
+- total request timeout;
+- per-attempt timeout;
+- two retry attempts;
+- exponential backoff with jitter;
+- retries disabled for unsafe HTTP methods;
+- standard transient HTTP failure handling.
+
+The existing `IpGeolocationService` caching and response handling were preserved.
+
+Added handling for `Polly.Timeout.TimeoutRejectedException` so resilience-pipeline timeouts return `null` instead of escaping the service.
+
+Added `Polly.Core` to `OnlineVoting.Services` because the service handles the Polly timeout exception directly.
+
+Replaced the direct `new HttpClient()` usage in `ClaimsService.GetRouteNames()` with `IHttpClientFactory`.
+
+Registered a named resilient client for `ClaimsService` and preserved the existing Swagger route parsing and logging behaviour.
+
+`HttpResponseMessage` returned by the Swagger request is now disposed with `using`.
+
+SMTP email handling was not changed because it is not an HTTP dependency.
+
+### Tests
+
+Added three IP geolocation resilience tests:
+
+- transient `500` responses are retried and can recover;
+- `400 Bad Request` is not retried;
+- timeout retries are exhausted and the service returns `null`.
+
+The timeout test initially exposed that the resilience pipeline throws `TimeoutRejectedException`. `IpGeolocationService` was updated to handle it.
+
+Added two `ClaimsService.GetRouteNames()` tests:
+
+- successful Swagger response returns operation IDs;
+- failed Swagger response returns an empty list and logs a warning.
+
+Updated `ClaimsServiceFactory` to provide a mocked `IHttpClientFactory`.
+
+---
+
+## Swagger Production Hardening
+
+### Goal
+
+Prevent Swagger/OpenAPI from being exposed in production unless explicitly enabled.
+
+### Files Changed
+
+- `OnlineVoting.Api/Program.cs`
+- `OnlineVoting.Api/appsettings.json`
+
+### Changes
+
+Added:
+
+```
+"Swagger": {
+  "Enabled": false
+}
+```
+
+Swagger middleware is now enabled when either:
+
+- the application is running in `Development`; or
+- `Swagger:Enabled` is explicitly set to `true`.
+
+```
+bool swaggerEnabled = app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger:Enabled");
+
+if (swaggerEnabled)
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(...);
+}
+```
+
+The existing Swagger configuration, API version endpoints, models configuration and custom stylesheet were preserved.
+
+Production can explicitly enable Swagger with:
+
+```
+Swagger__Enabled=true
+```
+
+### Behaviour
+
+```
+Development                    -> Swagger enabled
+Production                     -> Swagger disabled by default
+Production + Swagger enabled   -> Swagger enabled
+```
+
+---
+
+## Account Lockout and Failed Login Tracking
+
+### Goal
+
+Protect user accounts against repeated failed login attempts using ASP.NET Core Identity's built-in lockout support.
+
+### Files Changed
+
+- `OnlineVoting.Api/Middlewares/ServiceExtensions.cs`
+- `OnlineVoting.Services/Implementation/UserService.cs`
+- `OnlineVoting.Tests/IntegrationTests/Services/AccountLockoutTests.cs`
+
+### Changes
+
+Configured Identity lockout with:
+
+- 5 failed login attempts
+- 15-minute lockout
+- lockout enabled for users
+
+Login authentication now uses `SignInManager.CheckPasswordSignInAsync` with `lockoutOnFailure: true`.
+
+Failed login attempts are tracked by ASP.NET Identity. Locked accounts continue to receive the generic authentication response:
+
+```
+Invalid email or password.
+```
+
+This avoids exposing account lockout state through the API.
+
+No database migration was required because Identity already provides `AccessFailedCount`, `LockoutEnabled` and `LockoutEnd`.
+
+### Tests
+
+Added integration tests using real `UserManager` and `SignInManager` with SQLite covering:
+
+- failed access count increases
+- account locks after the fifth failed attempt
+- correct password is rejected while locked
+- successful login resets failed attempts
+- expired lockout allows login again
+
+### Result
+
+Repeated failed authentication attempts now temporarily lock accounts while successful authentication resets previous failed attempts.
+
+---
+
+## Authentication Security Audit Logging
+
+### Goal
+Record authentication security events using the existing audit trail infrastructure without introducing a separate login-history table.
+
+### Changes
+- Added reusable application constants for audit events, outcomes, descriptions, entity types, and authentication messages.
+- Added `AuditEventRequest` for explicit audit events.
+- Extended `IAuditTrailService` and `AuditTrailService` to record generic and authentication-specific events.
+- Added authentication audit logging to `UserLogin`.
+- Records successful logins, failed logins, account lockouts, rejected locked accounts, inactive accounts, and unknown-email attempts.
+- Reused existing audit metadata for IP address, user agent, correlation ID, endpoint, and location.
+- Added AutoMapper mapping from `AuditEventRequest` to `AuditTrail`.
+- Added reusable `UserServiceFactory` for login service tests.
+
+### Tests
+- Account lockout tests: 4 passed.
+- Audit trail service tests: 12 passed.
+- User service authentication audit tests: 6 passed.
+- Combined authentication tests: 22 passed.
+- Full regression suite: 578 passed.
+- Full regression suite repeated successfully: 578 passed.
+- Build completed with no warnings.
+
+### Result
+Authentication events are now recorded in the existing audit trail with the appropriate success, failure or denied outcome.
+
+---
+
+## Background Tasks and Email Queue
+
+### Goal
+
+Move recurring maintenance work and non-critical email sending out of the main request flow.
+
+The main business operation should complete independently of background processing. If queueing or email delivery fails, a successful user creation, 
+bulk user creation or voter registration should remain successful.
+
+---
+
+### Architecture
+
+Application services do not depend directly on Hangfire.
+
+```
+Application Service
+        |
+        v
+IBackgroundTaskQueue
+        |
+        v
+BackgroundTaskQueue
+        |
+        v
+Hangfire
+        |
+        v
+Background Task
+        |
+        v
+Application Service
+```
+
+`OnlineVoting.BackgroundTasks` contains the reusable Hangfire infrastructure, while the actual background jobs remain in `OnlineVoting.Services`.
+
+This keeps Hangfire as an infrastructure concern and keeps business logic inside the existing services.
+
+---
+
+### What Changed
+
+#### Background Task Infrastructure
+
+Added:
+
+- `IBackgroundTask`
+- `IBackgroundTask<TRequest>`
+- `IBackgroundTaskQueue`
+- `BackgroundTaskQueue`
+- `Enqueue`
+- `EnqueueRange`
+
+Hangfire uses SQL Server storage and has automatic retries configured.
+
+---
+
+#### Recurring Jobs
+
+Added recurring jobs for:
+
+- updating inactive students;
+- deleting old unconfirmed users.
+
+The unconfirmed-user cleanup uses a configurable retention period:
+
+```
+"UnconfirmedUserRetentionDays": 5
+```
+
+The background tasks delegate to service methods instead of containing the business logic themselves.
+
+---
+
+#### Create User Email
+
+Single-user creation now queues the create-user email instead of waiting for SMTP.
+
+```
+Create user
+    |
+    v
+Generate tokens
+    |
+    v
+Queue SendCreateUserEmailTask
+    |
+    v
+Return result
+```
+
+Queue failures are logged and do not change the successful user-creation result.
+
+---
+
+#### Bulk User Email
+
+Bulk user creation now queues email requests after the users have been created.
+
+```
+Create users
+    |
+    v
+Persist users
+    |
+    v
+Map to CreateUserEmailRequest
+    |
+    v
+EnqueueRange
+```
+
+Token generation for bulk-created users is handled later by the email service when the background job runs.
+
+This avoids generating tokens inside the main bulk creation loop.
+
+---
+
+#### Voter Email
+
+Voter registration now saves the voter before queueing the email.
+
+```
+Create voter
+    |
+    v
+Persist voter
+    |
+    v
+Queue SendVoterEmailTask
+    |
+    v
+Return success
+```
+
+If queueing fails, the error is logged but the voter registration remains successful.
+
+---
+
+### Email Retry Behaviour
+
+Background email jobs throw when SMTP sending fails.
+
+This allows Hangfire to retry failed email jobs using the configured retry policy instead of treating the job as successful.
+
+---
+
+### Design Decisions
+
+The following rules were kept throughout the implementation:
+
+- application services do not call Hangfire directly;
+- background tasks only coordinate work;
+- business logic remains in services;
+- background failures do not undo completed business operations;
+- lightweight request models are used instead of passing entities to Hangfire;
+- existing service and repository patterns were preserved.
+
+Password-reset and change-email operations remain synchronous because their results are part of the current request flow.
+
+---
+
+
 ---

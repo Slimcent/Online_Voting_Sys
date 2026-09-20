@@ -2,7 +2,7 @@
 
 namespace OnlineVoting.Models.Entities
 {
-    public class UserType : ITracker
+    public class UserType : ITracker, IAuditable
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;

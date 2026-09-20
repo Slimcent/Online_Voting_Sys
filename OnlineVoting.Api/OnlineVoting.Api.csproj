@@ -37,16 +37,30 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.9.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.24.1-preview.1" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.18.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.18.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.18.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.18.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="10.2.3" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\OnlineVoting.Caching\OnlineVoting.Caching.csproj" />
     <ProjectReference Include="..\OnlineVoting.Models\OnlineVoting.Models.csproj" />
     <ProjectReference Include="..\OnlineVoting.Services\OnlineVoting.Services.csproj" />
     <ProjectReference Include="..\VotingSystem.Logger\VotingSystem.Logger.csproj" />
+    <ProjectReference Include="..\OnlineVoting.BackgroundTasks\OnlineVoting.BackgroundTasks.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+	  <Content Update="wwwroot\html\**\*">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		  <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+	  </Content>
   </ItemGroup>
 
 </Project>

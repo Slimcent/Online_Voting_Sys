@@ -47,7 +47,7 @@
     {
         public string Name { get; set; }
     }
-
+        
     public class Seed
     {
         public IEnumerable<string> Roles { get; set; }

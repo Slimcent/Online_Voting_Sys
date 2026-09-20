@@ -8,6 +8,10 @@ using OnlineVoting.Models.Pagination;
 using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Interfaces;
 using VotingSystem.Logger;
+using OnlineVoting.Caching.Interfaces;
+using OnlineVoting.Services.Caching.Keys;
+using OnlineVoting.Services.Caching.Policies;
+using OnlineVoting.Services.Caching.Tags;
 
 namespace OnlineVoting.Services.Implementation
 {
@@ -19,6 +23,7 @@ namespace OnlineVoting.Services.Implementation
         private readonly IServiceFactory _serviceFactory;
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILoggerMessage _loggerMessage;
+        private readonly ICacheService _cacheService;
 
         public DepartmentService(IServiceFactory serviceFactory)
         {
@@ -28,6 +33,7 @@ namespace OnlineVoting.Services.Implementation
             _facultyRepo = _unitOfWork.GetRepository<Faculty>();
             _mapper = _serviceFactory.GetService<IMapper>();
             _loggerMessage = _serviceFactory.GetService<ILoggerMessage>();
+            _cacheService = _serviceFactory.GetService<ICacheService>();
         }
 
         public async Task<Result<string>> CreateDepartment(CreateDepartmentRequest request)
@@ -77,6 +83,8 @@ namespace OnlineVoting.Services.Implementation
                 department.Name = departmentNameToAdd;
 
                 await _deptRepo.AddAsync(department);
+                await _cacheService.RemoveByTag(CacheTags.Department);
+                await _cacheService.RemoveByTag(CacheTags.Faculty);
 
                 _loggerMessage.LogInfo($"Department {department.Name} created successfully.");
 
@@ -115,6 +123,8 @@ namespace OnlineVoting.Services.Implementation
                 department.FacultyId = request.FacultyId;
 
             await _deptRepo.AddRangeAsync(departments);
+            await _cacheService.RemoveByTag(CacheTags.Department);
+            await _cacheService.RemoveByTag(CacheTags.Faculty);
 
             _loggerMessage.LogInfo($"{departments.Count} departments created successfully.");
 
@@ -125,14 +135,23 @@ namespace OnlineVoting.Services.Implementation
         {
             _loggerMessage.LogInfo($"Department list request received for page {request.PageNumber}.");
 
-            PagedList<Department> departments = string.IsNullOrWhiteSpace(request.SearchTerm)
-                ? await _deptRepo.GetPagedItems(request, include: query => query.Include(department => department.Faculty))
-                : await _deptRepo.GetPagedItems(request, department => department.Name.Contains(request.SearchTerm.Trim()),
-                    include: query => query.Include(department => department.Faculty));
+            string cacheKey = DepartmentCacheKeys.GetDepartments(request);
 
-            PagedResponse<DepartmentResponse> response = _mapper.Map<PagedResponse<DepartmentResponse>>(departments);
+            Func<CancellationToken, ValueTask<PagedResponse<DepartmentResponse>>> cacheFactory = async _ =>
+            {
+                PagedList<Department> departments = string.IsNullOrWhiteSpace(request.SearchTerm)
+                    ? await _deptRepo.GetPagedItems(request, include: query => query.Include(department => department.Faculty))
+                    : await _deptRepo.GetPagedItems(request, department => department.Name.Contains(request.SearchTerm.Trim()),
+                        include: query => query.Include(department => department.Faculty));
 
-            _loggerMessage.LogInfo($"{departments.MetaData.TotalCount} departments found.");
+                PagedResponse<DepartmentResponse> response = _mapper.Map<PagedResponse<DepartmentResponse>>(departments);
+
+                _loggerMessage.LogInfo($"{departments.MetaData.TotalCount} departments found.");
+
+                return response;
+            };
+
+            PagedResponse<DepartmentResponse> response = await _cacheService.GetOrCreate(cacheKey, cacheFactory, CachePolicies.Department);
 
             return Result<PagedResponse<DepartmentResponse>>.Success(response);
         }
@@ -141,17 +160,27 @@ namespace OnlineVoting.Services.Implementation
         {
             _loggerMessage.LogInfo($"Department request received for id {id}.");
 
-            Department? department = await _deptRepo.GetSingleByAsync(x => x.Id == id,
-                include: query => query.Include(x => x.Faculty));
+            string cacheKey = DepartmentCacheKeys.GetDepartment(id);
 
-            if (department is null)
+            Func<CancellationToken, ValueTask<DepartmentResponse?>> cacheFactory = async _ =>
+            {
+                Department? department = await _deptRepo.GetSingleByAsync(x => x.Id == id,
+                    include: query => query.Include(x => x.Faculty));
+
+                if (department is null)
+                    return null;
+
+                return _mapper.Map<DepartmentResponse>(department);
+            };
+
+            DepartmentResponse? response = await _cacheService.GetOrCreate(cacheKey, cacheFactory, CachePolicies.Department);
+
+            if (response is null)
             {
                 _loggerMessage.LogWarn($"Department with id {id} was not found.");
 
                 return Result<DepartmentResponse>.NotFound($"Department with id {id} was not found.");
             }
-
-            DepartmentResponse response = _mapper.Map<DepartmentResponse>(department);
 
             return Result<DepartmentResponse>.Success(response);
         }
@@ -160,22 +189,34 @@ namespace OnlineVoting.Services.Implementation
         {
             _loggerMessage.LogInfo($"Department list request received for faculty id {facultyId}.");
 
-            Faculty? faculty = await _facultyRepo.GetByIdAsync(facultyId);
+            string cacheKey = DepartmentCacheKeys.GetDepartmentsByFacultyId(facultyId);
 
-            if (faculty is null)
+            Func<CancellationToken, ValueTask<IEnumerable<DepartmentResponse>?>> cacheFactory = async _ =>
+            {
+                Faculty? faculty = await _facultyRepo.GetByIdAsync(facultyId);
+
+                if (faculty is null)
+                    return null;
+
+                IEnumerable<Department> departments = await _deptRepo.GetByAsync(department => department.FacultyId == facultyId,
+                    orderBy: query => query.OrderBy(department => department.Name),
+                    include: query => query.Include(department => department.Faculty));
+
+                IEnumerable<DepartmentResponse> response = _mapper.Map<IEnumerable<DepartmentResponse>>(departments);
+
+                _loggerMessage.LogInfo($"{response.Count()} departments found for faculty id {facultyId}.");
+
+                return response;
+            };
+
+            IEnumerable<DepartmentResponse>? response = await _cacheService.GetOrCreate(cacheKey, cacheFactory, CachePolicies.Department);
+
+            if (response is null)
             {
                 _loggerMessage.LogWarn($"Department list request failed because faculty with id {facultyId} was not found.");
 
                 return Result<IEnumerable<DepartmentResponse>>.NotFound($"Faculty with id {facultyId} was not found.");
             }
-
-            IEnumerable<Department> departments = await _deptRepo.GetByAsync(department => department.FacultyId == facultyId,
-                orderBy: query => query.OrderBy(department => department.Name),
-                include: query => query.Include(department => department.Faculty));
-
-            IEnumerable<DepartmentResponse> response = _mapper.Map<IEnumerable<DepartmentResponse>>(departments);
-
-            _loggerMessage.LogInfo($"{response.Count()} departments found for faculty id {facultyId}.");
 
             return Result<IEnumerable<DepartmentResponse>>.Success(response);
         }
@@ -184,25 +225,37 @@ namespace OnlineVoting.Services.Implementation
         {
             _loggerMessage.LogInfo($"Paginated department list request received for faculty id {facultyId} and page {request.PageNumber}.");
 
-            Faculty? faculty = await _facultyRepo.GetByIdAsync(facultyId);
+            string cacheKey = DepartmentCacheKeys.GetDepartmentsByFacultyId(facultyId, request);
 
-            if (faculty is null)
+            Func<CancellationToken, ValueTask<PagedResponse<DepartmentResponse>?>> cacheFactory = async _ =>
+            {
+                Faculty? faculty = await _facultyRepo.GetByIdAsync(facultyId);
+
+                if (faculty is null)
+                    return null;
+
+                PagedList<Department> departments = string.IsNullOrWhiteSpace(request.SearchTerm)
+                    ? await _deptRepo.GetPagedItems(request, department => department.FacultyId == facultyId,
+                        include: query => query.Include(department => department.Faculty))
+                    : await _deptRepo.GetPagedItems(request, department => department.FacultyId == facultyId &&
+                        department.Name.Contains(request.SearchTerm.Trim()),
+                        include: query => query.Include(department => department.Faculty));
+
+                PagedResponse<DepartmentResponse> response = _mapper.Map<PagedResponse<DepartmentResponse>>(departments);
+
+                _loggerMessage.LogInfo($"{departments.MetaData.TotalCount} departments found for faculty id {facultyId}.");
+
+                return response;
+            };
+
+            PagedResponse<DepartmentResponse>? response = await _cacheService.GetOrCreate(cacheKey, cacheFactory, CachePolicies.Department);
+
+            if (response is null)
             {
                 _loggerMessage.LogWarn($"Paginated department list request failed because faculty with id {facultyId} was not found.");
 
                 return Result<PagedResponse<DepartmentResponse>>.NotFound($"Faculty with id {facultyId} was not found.");
             }
-
-            PagedList<Department> departments = string.IsNullOrWhiteSpace(request.SearchTerm)
-                ? await _deptRepo.GetPagedItems(request, department => department.FacultyId == facultyId,
-                    include: query => query.Include(department => department.Faculty))
-                : await _deptRepo.GetPagedItems(request, department => department.FacultyId == facultyId &&
-                    department.Name.Contains(request.SearchTerm.Trim()),
-                    include: query => query.Include(department => department.Faculty));
-
-            PagedResponse<DepartmentResponse> response = _mapper.Map<PagedResponse<DepartmentResponse>>(departments);
-
-            _loggerMessage.LogInfo($"{departments.MetaData.TotalCount} departments found for faculty id {facultyId}.");
 
             return Result<PagedResponse<DepartmentResponse>>.Success(response);
         }
@@ -251,6 +304,8 @@ namespace OnlineVoting.Services.Implementation
             department.FacultyId = request.FacultyId;
 
             await _deptRepo.UpdateAsync(department);
+            await _cacheService.RemoveByTag(CacheTags.Department);
+            await _cacheService.RemoveByTag(CacheTags.Faculty);
 
             _loggerMessage.LogInfo($"Department with id {id} updated successfully.");
 
@@ -273,6 +328,8 @@ namespace OnlineVoting.Services.Implementation
             department.Active = !department.Active;
 
             await _deptRepo.UpdateAsync(department);
+            await _cacheService.RemoveByTag(CacheTags.Department);
+            await _cacheService.RemoveByTag(CacheTags.Faculty);
 
             string status = department.Active ? "activated" : "deactivated";
 
@@ -295,6 +352,8 @@ namespace OnlineVoting.Services.Implementation
             }
 
             await _deptRepo.DeleteAsync(department);
+            await _cacheService.RemoveByTag(CacheTags.Department);
+            await _cacheService.RemoveByTag(CacheTags.Faculty);
 
             _loggerMessage.LogInfo($"Department with id {id} deleted successfully.");
 

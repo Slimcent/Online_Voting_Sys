@@ -1,33 +1,32 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.IdentityModel.Tokens;
 using OnlineVoting.Models.Dtos.Response.Jwt;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Services.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using VotingSystem.Logger;
 
 namespace OnlineVoting.Services.Infrastructures.Authorization.Jwt
 {
     public class JwtAuthenticator : IJwtAuthenticator
     {
         private readonly JwtSettings _jwtSettings;
+        private readonly ILoggerMessage _loggerMessage;
 
-        public JwtAuthenticator(JwtSettings jwtSettings)
+        public JwtAuthenticator(JwtSettings jwtSettings, ILoggerMessage loggerMessage)
         {
             _jwtSettings = jwtSettings;
+            _loggerMessage = loggerMessage;
         }
 
-        public async Task<JwtToken> GenerateJwtToken(User user, string role, string expires = null,
-            List<Claim> additionalClaims = null)
+        public Task<JwtToken> GenerateJwtToken(User user, string role, string? expires = null, List<Claim>? additionalClaims = null)
         {
             JwtSecurityTokenHandler jwtTokenHandler = new();
 
-            var key = Encoding.ASCII.GetBytes(_jwtSettings.Secret);
+            byte[] key = Encoding.UTF8.GetBytes(_jwtSettings.Secret!);
 
-            IdentityOptions _options = new();
-
-            var claims = new List<Claim>
+            List<Claim> claims = new()
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id),
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
@@ -42,7 +41,7 @@ namespace OnlineVoting.Services.Infrastructures.Authorization.Jwt
                 claims.AddRange(additionalClaims);
             }
 
-            var tokenDescriptor = new SecurityTokenDescriptor
+            SecurityTokenDescriptor tokenDescriptor = new()
             {
                 Subject = new ClaimsIdentity(claims),
                 Expires = string.IsNullOrWhiteSpace(expires)
@@ -56,16 +55,20 @@ namespace OnlineVoting.Services.Infrastructures.Authorization.Jwt
                 Audience = _jwtSettings.Audience
             };
 
-            var token = jwtTokenHandler.CreateToken(tokenDescriptor);
-            var jwtToken = jwtTokenHandler.WriteToken(token);
+            SecurityToken token = jwtTokenHandler.CreateToken(tokenDescriptor);
+            string jwtToken = jwtTokenHandler.WriteToken(token);
 
-            return new JwtToken()
+            JwtToken result = new()
             {
                 Token = jwtToken,
                 IssuedAt = DateTime.UtcNow,
                 Issuer = tokenDescriptor.Issuer,
                 Expires = tokenDescriptor.Expires
             };
+
+            _loggerMessage.LogInfo($"JWT token generated for user {user.Id} with role {role}");
+
+            return Task.FromResult(result);
         }
     }
 }

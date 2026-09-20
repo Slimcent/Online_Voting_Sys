@@ -6,6 +6,9 @@ using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Enums;
 using OnlineVoting.Models.Pagination;
 using OnlineVoting.Models.Results;
+using OnlineVoting.Services.Caching.Keys;
+using OnlineVoting.Services.Caching.Policies;
+using OnlineVoting.Services.Caching.Tags;
 using OnlineVoting.Tests.TestData.Data;
 using OnlineVoting.Tests.TestData.Factories;
 using System.Linq.Expressions;
@@ -102,6 +105,8 @@ namespace OnlineVoting.Tests.UnitTests.Services
 
             factory.Mapper.Verify(mapper => mapper.Map<Faculty>(request), Times.Once);
             factory.FacultyRepository.Verify(repository => repository.AddAsync(faculty, false), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Faculty, It.IsAny<CancellationToken>()), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Department, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -537,6 +542,8 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Assert.Equal("Updated Engineering", faculty.Name);
 
             factory.FacultyRepository.Verify(repository => repository.UpdateAsync(faculty, false), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Faculty, It.IsAny<CancellationToken>()), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Department, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -577,6 +584,8 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Assert.False(faculty.Active);
 
             factory.FacultyRepository.Verify(repository => repository.UpdateAsync(faculty, false), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Faculty, It.IsAny<CancellationToken>()), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Department, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -601,6 +610,8 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Assert.True(faculty.Active);
 
             factory.FacultyRepository.Verify(repository => repository.UpdateAsync(faculty, false), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Faculty, It.IsAny<CancellationToken>()), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Department, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -639,6 +650,192 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Assert.Equal("Faculty deleted successfully.", result.Value);
 
             factory.FacultyRepository.Verify(repository => repository.DeleteAsync(faculty, false), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Faculty, It.IsAny<CancellationToken>()), Times.Once);
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Department, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetFaculty_WithCachedFaculty_ShouldReturnCachedFacultyWithoutQueryingRepository()
+        {
+            FacultyServiceFactory factory = new();
+
+            FacultyResponse cachedResponse = FacultyTestData.CreateFacultyResponse(1, "Engineering");
+
+            factory.CacheService.Setup(cacheService => cacheService.GetOrCreate<FacultyResponse?>(
+                    FacultyCacheKeys.GetFaculty(1),
+                    It.IsAny<Func<CancellationToken, ValueTask<FacultyResponse?>>>(),
+                    CachePolicies.Faculty,
+                    It.IsAny<CancellationToken>()))
+                .Returns(ValueTask.FromResult<FacultyResponse?>(cachedResponse));
+
+            Result<FacultyResponse> result = await factory.Service.GetFaculty(1);
+
+            Assert.Equal(ResultStatus.Success, result.Status);
+            Assert.NotNull(result.Value);
+            Assert.Equal(1, result.Value.Id);
+            Assert.Equal("Engineering", result.Value.Name);
+
+            factory.FacultyRepository.Verify(repository => repository.GetByIdAsync(It.IsAny<long>()), Times.Never);
+            factory.Mapper.Verify(mapper => mapper.Map<FacultyResponse>(It.IsAny<Faculty>()), Times.Never);
+
+            factory.CacheService.Verify(cacheService => cacheService.GetOrCreate<FacultyResponse?>(FacultyCacheKeys.GetFaculty(1),
+                It.IsAny<Func<CancellationToken, ValueTask<FacultyResponse?>>>(),
+                CachePolicies.Faculty,
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetFaculties_WithCachedFaculties_ShouldReturnCachedResponseWithoutQueryingRepository()
+        {
+            FacultyServiceFactory factory = new();
+
+            FacultyRequestParameters request = new()
+            {
+                PageNumber = 1,
+                PageSize = 10
+            };
+
+            PagedResponse<FacultyResponse> cachedResponse = new()
+            {
+                Items = new List<FacultyResponse>
+                {
+                    FacultyTestData.CreateFacultyResponse(1, "Engineering")
+                },
+                MetaData = new MetaData
+                {
+                    CurrentPage = 1,
+                    PageSize = 10,
+                    TotalCount = 1,
+                    TotalPages = 1
+                }
+            };
+
+            factory.CacheService.Setup(cacheService => cacheService.GetOrCreate<PagedResponse<FacultyResponse>>(FacultyCacheKeys.GetFaculties(request),
+                It.IsAny<Func<CancellationToken, ValueTask<PagedResponse<FacultyResponse>>>>(),
+                CachePolicies.Faculty,
+                It.IsAny<CancellationToken>()))
+            .Returns(ValueTask.FromResult(cachedResponse));
+
+            Result<PagedResponse<FacultyResponse>> result = await factory.Service.GetFaculties(request);
+
+            Assert.Equal(ResultStatus.Success, result.Status);
+            Assert.NotNull(result.Value);
+            Assert.Single(result.Value.Items!);
+            Assert.Equal("Engineering", result.Value.Items!.First().Name);
+
+            factory.FacultyRepository.Verify(repository => repository.GetPagedItems(It.IsAny<FacultyRequestParameters>(), null, null), Times.Never);
+
+            factory.Mapper.Verify(mapper => mapper.Map<PagedResponse<FacultyResponse>>(It.IsAny<PagedList<Faculty>>()), Times.Never);
+
+            factory.CacheService.Verify(cacheService => cacheService.GetOrCreate<PagedResponse<FacultyResponse>>( FacultyCacheKeys.GetFaculties(request),
+                It.IsAny<Func<CancellationToken, ValueTask<PagedResponse<FacultyResponse>>>>(),
+                CachePolicies.Faculty,
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetFacultyWithDepartments_WithCachedFaculty_ShouldReturnCachedFacultyWithoutQueryingRepository()
+        {
+            FacultyServiceFactory factory = new();
+
+            FacultyResponse cachedResponse = FacultyTestData.CreateFacultyResponse(1, "Engineering");
+
+            factory.CacheService.Setup(cacheService => cacheService.GetOrCreate<FacultyResponse?>(
+                    FacultyCacheKeys.GetFacultyWithDepartments(1),
+                    It.IsAny<Func<CancellationToken, ValueTask<FacultyResponse?>>>(),
+                    CachePolicies.Faculty,
+                    It.IsAny<CancellationToken>()))
+                .Returns(ValueTask.FromResult<FacultyResponse?>(cachedResponse));
+
+            Result<FacultyResponse> result = await factory.Service.GetFacultyWithDepartments(1);
+
+            Assert.Equal(ResultStatus.Success, result.Status);
+            Assert.NotNull(result.Value);
+            Assert.Equal(1, result.Value.Id);
+            Assert.Equal("Engineering", result.Value.Name);
+
+            factory.FacultyRepository.Verify(repository => repository.GetSingleByAsync(It.IsAny<Expression<Func<Faculty, bool>>>(),
+                It.IsAny<Func<IQueryable<Faculty>, IOrderedQueryable<Faculty>>>(),
+                It.IsAny<int?>(),
+                It.IsAny<int?>(),
+                It.IsAny<Func<IQueryable<Faculty>, IIncludableQueryable<Faculty, object>>>(),
+                It.IsAny<bool>()), Times.Never);
+
+            factory.Mapper.Verify(mapper => mapper.Map<FacultyResponse>(It.IsAny<Faculty>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task GetFacultiesWithDepartments_WithCachedFaculties_ShouldReturnCachedResponseWithoutQueryingRepository()
+        {
+            FacultyServiceFactory factory = new();
+
+            FacultyRequestParameters request = new()
+            {
+                PageNumber = 1,
+                PageSize = 10
+            };
+
+            PagedResponse<FacultyResponse> cachedResponse = new()
+            {
+                Items = new List<FacultyResponse>
+                {
+                    FacultyTestData.CreateFacultyResponse(1, "Engineering")
+                },
+                MetaData = new MetaData
+                {
+                    CurrentPage = 1,
+                    PageSize = 10,
+                    TotalCount = 1,
+                    TotalPages = 1
+                }
+            };
+
+            factory.CacheService.Setup(cacheService => cacheService.GetOrCreate<PagedResponse<FacultyResponse>>(
+                FacultyCacheKeys.GetFacultiesWithDepartments(request),
+                It.IsAny<Func<CancellationToken, ValueTask<PagedResponse<FacultyResponse>>>>(),
+                CachePolicies.Faculty,
+                It.IsAny<CancellationToken>()))
+            .Returns(ValueTask.FromResult(cachedResponse));
+
+            Result<PagedResponse<FacultyResponse>> result = await factory.Service.GetFacultiesWithDepartments(request);
+
+            Assert.Equal(ResultStatus.Success, result.Status);
+            Assert.NotNull(result.Value);
+            Assert.Single(result.Value.Items!);
+            Assert.Equal("Engineering", result.Value.Items!.First().Name);
+
+            factory.FacultyRepository.Verify(repository => repository.GetPagedItems(It.IsAny<FacultyRequestParameters>(),
+                It.IsAny<Expression<Func<Faculty, bool>>>(),
+                It.IsAny<Func<IQueryable<Faculty>, IIncludableQueryable<Faculty, object>>>()), Times.Never);
+
+            factory.Mapper.Verify(mapper => mapper.Map<PagedResponse<FacultyResponse>>(It.IsAny<PagedList<Faculty>>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task UpdateFaculty_WhenSuccessful_ShouldInvalidateFacultyCache()
+        {
+            FacultyServiceFactory factory = new();
+
+            Faculty faculty = FacultyTestData.CreateFaculty("Engineering");
+            faculty.Id = 1;
+
+            CreateWithNameRequest request = new()
+            {
+                Name = "Technology"
+            };
+
+            factory.FacultyRepository.Setup(repository => repository.GetByIdAsync(1L))
+                .ReturnsAsync(faculty);
+
+            factory.FacultyRepository.Setup(repository => repository.AnyAsync(
+                It.IsAny<Expression<Func<Faculty, bool>>>()))
+            .ReturnsAsync(false);
+
+            Result<string> result = await factory.Service.UpdateFaculty(1, request);
+
+            Assert.Equal(ResultStatus.Success, result.Status);
+
+            factory.CacheService.Verify(cacheService => cacheService.RemoveByTag(CacheTags.Faculty, It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }

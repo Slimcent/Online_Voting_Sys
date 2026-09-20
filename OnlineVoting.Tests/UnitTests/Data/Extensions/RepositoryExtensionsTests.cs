@@ -1,8 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
-using OnlineVoting.Models.Interfaces;
 using OnlineVoting.Models.Pagination;
+using OnlineVoting.Tests.TestData.Data;
+using OnlineVoting.Tests.TestData.Factories;
 using VotingSystem.Data.Extensions;
 
 namespace OnlineVoting.Tests.UnitTests.Data.Extensions
@@ -12,9 +13,11 @@ namespace OnlineVoting.Tests.UnitTests.Data.Extensions
         [Fact]
         public async Task Sort_Ascending_ShouldReturnItemsInAscendingOrder()
         {
-            await using VotingDbContext context = CreateContext();
+            using AuditDbContextFactory factory = new();
 
-            await SeedFaculties(context);
+            VotingDbContext context = factory.Context;
+
+            await FacultyTestData.SeedFaculties(context);
 
             List<Faculty> faculties = await context.Faculties
                 .Sort("Name")
@@ -28,9 +31,11 @@ namespace OnlineVoting.Tests.UnitTests.Data.Extensions
         [Fact]
         public async Task Sort_Descending_ShouldReturnItemsInDescendingOrder()
         {
-            await using VotingDbContext context = CreateContext();
+            using AuditDbContextFactory factory = new();
 
-            await SeedFaculties(context);
+            VotingDbContext context = factory.Context;
+
+            await FacultyTestData.SeedFaculties(context);
 
             List<Faculty> faculties = await context.Faculties
                 .Sort("Name desc")
@@ -44,9 +49,11 @@ namespace OnlineVoting.Tests.UnitTests.Data.Extensions
         [Fact]
         public async Task Sort_EmptyOrderBy_ShouldReturnOriginalOrder()
         {
-            await using VotingDbContext context = CreateContext();
+            using AuditDbContextFactory factory = new();
 
-            await SeedFaculties(context);
+            VotingDbContext context = factory.Context;
+
+            await FacultyTestData.SeedFaculties(context);
 
             List<Faculty> faculties = await context.Faculties
                 .Sort(string.Empty)
@@ -60,9 +67,11 @@ namespace OnlineVoting.Tests.UnitTests.Data.Extensions
         [Fact]
         public async Task Sort_InvalidProperty_ShouldReturnOriginalOrder()
         {
-            await using VotingDbContext context = CreateContext();
+            using AuditDbContextFactory factory = new();
 
-            await SeedFaculties(context);
+            VotingDbContext context = factory.Context;
+
+            await FacultyTestData.SeedFaculties(context);
 
             List<Faculty> faculties = await context.Faculties
                 .Sort("InvalidProperty")
@@ -76,9 +85,11 @@ namespace OnlineVoting.Tests.UnitTests.Data.Extensions
         [Fact]
         public async Task GetPagedItems_FirstPage_ShouldReturnRequestedItemsAndMetadata()
         {
-            await using VotingDbContext context = CreateContext();
+            using AuditDbContextFactory factory = new();
 
-            await SeedFaculties(context);
+            VotingDbContext context = factory.Context;
+
+            await FacultyTestData.SeedFaculties(context);
 
             TestRequestParameters parameters = new()
             {
@@ -103,9 +114,11 @@ namespace OnlineVoting.Tests.UnitTests.Data.Extensions
         [Fact]
         public async Task GetPagedItems_SecondPage_ShouldReturnRemainingItems()
         {
-            await using VotingDbContext context = CreateContext();
+            using AuditDbContextFactory factory = new();
 
-            await SeedFaculties(context);
+            VotingDbContext context = factory.Context;
+
+            await FacultyTestData.SeedFaculties(context);
 
             TestRequestParameters parameters = new()
             {
@@ -125,9 +138,11 @@ namespace OnlineVoting.Tests.UnitTests.Data.Extensions
         [Fact]
         public async Task GetPagedItems_WithSearchExpression_ShouldReturnFilteredItems()
         {
-            await using VotingDbContext context = CreateContext();
+            using AuditDbContextFactory factory = new();
 
-            await SeedFaculties(context);
+            VotingDbContext context = factory.Context;
+
+            await FacultyTestData.SeedFaculties(context);
 
             TestRequestParameters parameters = new()
             {
@@ -148,9 +163,11 @@ namespace OnlineVoting.Tests.UnitTests.Data.Extensions
         [Fact]
         public async Task GetPagedItems_WithSearchAndSorting_ShouldApplyBoth()
         {
-            await using VotingDbContext context = CreateContext();
+            using AuditDbContextFactory factory = new();
 
-            await SeedFaculties(context);
+            VotingDbContext context = factory.Context;
+
+            await FacultyTestData.SeedFaculties(context);
 
             TestRequestParameters parameters = new()
             {
@@ -169,9 +186,11 @@ namespace OnlineVoting.Tests.UnitTests.Data.Extensions
         [Fact]
         public async Task GetPagedItems_NoMatchingItems_ShouldReturnEmptyPage()
         {
-            await using VotingDbContext context = CreateContext();
+            using AuditDbContextFactory factory = new();
 
-            await SeedFaculties(context);
+            VotingDbContext context = factory.Context;
+
+            await FacultyTestData.SeedFaculties(context);
 
             TestRequestParameters parameters = new()
             {
@@ -186,47 +205,8 @@ namespace OnlineVoting.Tests.UnitTests.Data.Extensions
             Assert.Equal(0, result.MetaData.TotalPages);
         }
 
-        private static VotingDbContext CreateContext()
-        {
-            DbContextOptions<VotingDbContext> options = new DbContextOptionsBuilder<VotingDbContext>()
-                .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                .Options;
-
-            return new VotingDbContext(options, new TestCurrentUserContext());
-        }
-
-        private static async Task SeedFaculties(VotingDbContext context)
-        {
-            List<Faculty> faculties = new()
-            {
-                new Faculty
-                {
-                    Name = "Engineering",
-                    Active = true
-                },
-                new Faculty
-                {
-                    Name = "Arts",
-                    Active = false
-                },
-                new Faculty
-                {
-                    Name = "Science",
-                    Active = true
-                }
-            };
-
-            await context.Faculties.AddRangeAsync(faculties);
-            await context.SaveChangesAsync(true);
-        }
-
         private sealed class TestRequestParameters : RequestParameters
         {
-        }
-
-        private sealed class TestCurrentUserContext : ICurrentUserContext
-        {
-            public string? Username => "testuser";
         }
     }
 }

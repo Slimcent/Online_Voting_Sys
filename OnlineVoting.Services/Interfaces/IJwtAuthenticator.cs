@@ -6,6 +6,6 @@ namespace OnlineVoting.Services.Interfaces
 {
     public interface IJwtAuthenticator
     {
-        Task<JwtToken> GenerateJwtToken(User user, string role, string expires = null, List<Claim> additionalClaims = null);
+        Task<JwtToken> GenerateJwtToken(User user, string role, string? expires = null, List<Claim>? additionalClaims = null);
     }
 }

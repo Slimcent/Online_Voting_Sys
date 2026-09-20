@@ -2,7 +2,7 @@
 
 namespace OnlineVoting.Models.Entities
 {
-    public class Contestant : ITracker
+    public class Contestant : ITracker, IAuditable
     {
         public Guid Id { get; set; }
         public Guid StudentId { get; set; }

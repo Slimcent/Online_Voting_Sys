@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace OnlineVoting.Models.Entities
 {
-    public class Staff : ITracker
+    public class Staff : ITracker, IAuditable
     {
         [Key]
         public Guid Id { get; set; }

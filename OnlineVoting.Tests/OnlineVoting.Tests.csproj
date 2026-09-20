@@ -9,10 +9,12 @@
 
 	<ItemGroup>
 		<PackageReference Include="coverlet.collector" Version="6.0.4" />
+		<PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.10" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.10" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.10" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
 		<PackageReference Include="Moq" Version="4.20.72" />
+		<PackageReference Include="Testcontainers.Redis" Version="4.14.0" />
 		<PackageReference Include="xunit" Version="2.9.3" />
 		<PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
 		<PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.13" />
@@ -23,6 +25,8 @@
 		<ProjectReference Include="..\OnlineVoting.Models\OnlineVoting.Models.csproj" />
 		<ProjectReference Include="..\OnlineVoting.Services\OnlineVoting.Services.csproj" />
 		<ProjectReference Include="..\VotingSystem.Data\VotingSystem.Data.csproj" />
+		<ProjectReference Include="..\OnlineVoting.Caching\OnlineVoting.Caching.csproj" />
+		<ProjectReference Include="..\OnlineVoting.BackgroundTasks\OnlineVoting.BackgroundTasks.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -30,16 +34,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="IntegrationTests\Api\" />
 		<Folder Include="IntegrationTests\Database\" />
 		<Folder Include="TestData\Fixtures\" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="..\OnlineVoting.Api\Template\EmailTemplate.html">
-			<Link>Template\EmailTemplate.html</Link>
+		<None Include="..\OnlineVoting.Api\wwwroot\html\EmailTemplate.html">
+			<Link>wwwroot\html\EmailTemplate.html</Link>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-			<TargetPath>Template\EmailTemplate.html</TargetPath>
+			<TargetPath>wwwroot\html\EmailTemplate.html</TargetPath>
 		</None>
 	</ItemGroup>
 

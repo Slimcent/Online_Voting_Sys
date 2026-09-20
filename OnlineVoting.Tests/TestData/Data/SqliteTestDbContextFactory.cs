@@ -1,7 +1,8 @@
 ﻿using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Context;
-using OnlineVoting.Models.Interfaces;
+using OnlineVoting.Models.Entities;
+using OnlineVoting.Tests.TestData.Contexts;
 
 namespace OnlineVoting.Tests.TestData.Data
 {
@@ -17,9 +18,14 @@ namespace OnlineVoting.Tests.TestData.Data
                 .UseSqlite(connection)
                 .Options;
 
-            VotingDbContext context = new(options, new TestCurrentUserContext());
+            TestCurrentUserContext currentUserContext = new();
+            TestAuditMetadataProvider auditMetadataProvider = new();
+
+            VotingDbContext context = new(options, currentUserContext, auditMetadataProvider);
 
             await context.Database.EnsureCreatedAsync();
+
+            await SeedAuditOutcomes(context);
 
             return (connection, context);
         }
@@ -30,12 +36,26 @@ namespace OnlineVoting.Tests.TestData.Data
                 .UseSqlite(connection)
                 .Options;
 
-            return new VotingDbContext(options, new TestCurrentUserContext());
+            TestCurrentUserContext currentUserContext = new();
+            TestAuditMetadataProvider auditMetadataProvider = new();
+
+            return new VotingDbContext(options, currentUserContext, auditMetadataProvider);
         }
 
-        private sealed class TestCurrentUserContext : ICurrentUserContext
+        private static async Task SeedAuditOutcomes(VotingDbContext context)
         {
-            public string? Username => "testuser";
+            bool successOutcomeExists = await context.AuditOutcomes.AnyAsync(auditOutcome => auditOutcome.Name == "Success");
+
+            if (successOutcomeExists)
+                return;
+
+            await context.AuditOutcomes.AddAsync(new AuditOutcome
+            {
+                Name = "Success",
+                Description = "The operation completed successfully."
+            });
+
+            await context.SaveChangesAsync(true);
         }
     }
 }

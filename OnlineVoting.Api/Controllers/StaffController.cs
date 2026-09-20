@@ -99,12 +99,12 @@ namespace OnlineVoting.Api.Controllers
 
             return result.ToActionResult(this);
         }
-
+                
         [HttpPost("create-staff", Name = "Create-Staff")]
         [ApiDocumentation(StaffDocumentationKeys.CreateStaff)]
-        public async Task<IActionResult> CreateStaff([FromQuery] CreateStaffRequest model)
+        public async Task<IActionResult> CreateStaff([FromBody] CreateStaffRequest request)
         {
-            Result<string> result = await _staffService.CreateStaff(model);
+            Result<string> result = await _staffService.CreateStaff(request);
 
             return result.ToActionResult(this);
         }

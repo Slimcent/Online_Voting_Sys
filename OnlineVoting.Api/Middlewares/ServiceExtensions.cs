@@ -4,35 +4,46 @@ using DinkToPdf.Contracts;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using OnlineVoting.Api.Configurations;
 using OnlineVoting.Api.Documentation.Filters;
 using OnlineVoting.Api.Filters;
+using OnlineVoting.Api.HealthChecks;
+using OnlineVoting.BackgroundTasks.Implementation;
+using OnlineVoting.BackgroundTasks.Interfaces;
+using OnlineVoting.Caching.Configuration;
+using OnlineVoting.Data.Interfaces;
 using OnlineVoting.Models.Configurations;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
-using OnlineVoting.Models.Entities.Configurations;
 using OnlineVoting.Models.Interfaces;
 using OnlineVoting.Models.Validators.Request;
+using OnlineVoting.Services.BackgroundTasks;
 using OnlineVoting.Services.Implementation;
 using OnlineVoting.Services.Infrastructures;
+using OnlineVoting.Services.Infrastructures.Auditing;
 using OnlineVoting.Services.Infrastructures.Authorization;
 using OnlineVoting.Services.Infrastructures.Authorization.Jwt;
 using OnlineVoting.Services.Interfaces;
+using Polly;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.IO.Compression;
+using System.Net;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
 using VotingSystem.Data.Implementation;
-using OnlineVoting.Data.Interfaces;
 using VotingSystem.Logger;
 
 
@@ -40,19 +51,54 @@ namespace OnlineVoting.Api.Middlewares
 {
     public static class ServiceExtensions
     {
-        public static void ConfigureCors(this IServiceCollection services) => services.AddCors(options =>
+        public static IServiceCollection ConfigureCors(this IServiceCollection services, IConfiguration configuration)
         {
-            options.AddPolicy("CorsPolicy", builder => builder.AllowAnyOrigin()
-                .AllowAnyMethod()
-                .AllowAnyHeader());
-        });
+            IConfigurationSection section = configuration.GetSection(CorsSettings.SectionName);
+
+            services.AddOptions<CorsSettings>().Bind(section)
+                .Validate(options => !options.Enabled || options.AllowedOrigins.Length > 0,
+                    "Cors:AllowedOrigins must contain at least one origin when CORS is enabled.")
+                .Validate(options => options.AllowedOrigins.All(origin =>
+                    Uri.TryCreate(origin, UriKind.Absolute, out Uri? uri)
+                    && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+                    && uri.AbsolutePath == "/"
+                    && string.IsNullOrEmpty(uri.Query)
+                    && string.IsNullOrEmpty(uri.Fragment)
+                    && !origin.EndsWith('/')),
+                    "Cors:AllowedOrigins must contain valid HTTP or HTTPS origins without a trailing slash.")
+                .Validate(options => !options.Enabled || options.AllowedMethods.Length > 0,
+                    "Cors:AllowedMethods must contain at least one method when CORS is enabled.")
+                .Validate(options => !options.Enabled || options.AllowedHeaders.Length > 0,
+                    "Cors:AllowedHeaders must contain at least one header when CORS is enabled.")
+                .Validate(options => options.PreflightMaxAgeMinutes > 0,
+                    "Cors:PreflightMaxAgeMinutes must be greater than zero.")
+                .ValidateOnStart();
+
+            CorsSettings corsSettings = section.Get<CorsSettings>() ?? new CorsSettings();
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("CorsPolicy", policy =>
+                {
+                    if (!corsSettings.Enabled)
+                        return;
+
+                    policy.WithOrigins(corsSettings.AllowedOrigins)
+                        .WithMethods(corsSettings.AllowedMethods)
+                        .WithHeaders(corsSettings.AllowedHeaders)
+                        .SetPreflightMaxAge(TimeSpan.FromMinutes(corsSettings.PreflightMaxAgeMinutes));
+                });
+            });
+
+            return services;
+        }
 
         public static void ConfigureIISIntegration(this IServiceCollection services) => services.Configure<IISOptions>(options =>
         {
         });
 
         public static void ConfigureLoggerService(this IServiceCollection services) =>
-            services.AddScoped<ILoggerMessage, VotingSystem.Logger.LoggerMessage>();
+            services.AddSingleton<ILoggerMessage, VotingSystem.Logger.LoggerMessage>();
 
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
@@ -69,12 +115,55 @@ namespace OnlineVoting.Api.Middlewares
             services.AddScoped<IVoterService, VoterService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IStaffService, StaffService>();
-            services.AddScoped<IFileDataExtractorService, FileDataExtractorService>();
             services.AddScoped<DbContext, VotingDbContext>();
             services.AddScoped<IServiceFactory, ServiceFactory>();
             services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
             services.AddHttpContextAccessor();
             services.AddScoped<ICurrentUserContext, CurrentUserContext>();
+            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+            services.AddScoped<IAuditMetadataProvider, AuditMetadataProvider>();
+            services.AddScoped<IAuditTrailService, AuditTrailService>();
+            services.AddScoped<SendCreateUserEmailTask>();
+            services.AddScoped<ProcessStudentUploadTask>();
+            services.AddScoped<UpdateInactiveStudentsTask>();
+            services.AddScoped<DeleteUnconfirmedUsersTask>();
+            services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+            services.AddMemoryCache();
+
+            services.AddHttpClient<IIpGeolocationService, IpGeolocationService>(client =>
+            {
+                client.BaseAddress = new Uri("https://ipwho.is/");
+                client.Timeout = Timeout.InfiniteTimeSpan;
+            })
+            .AddStandardResilienceHandler(options =>
+            {
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(3);
+
+                options.Retry.MaxRetryAttempts = 2;
+                options.Retry.Delay = TimeSpan.FromMilliseconds(200);
+                options.Retry.BackoffType = DelayBackoffType.Exponential;
+                options.Retry.UseJitter = true;
+                options.Retry.DisableForUnsafeHttpMethods();
+
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(1);
+            });
+
+            services.AddHttpClient(nameof(ClaimsService), client =>
+            {
+                client.Timeout = Timeout.InfiniteTimeSpan;
+            })
+            .AddStandardResilienceHandler(options =>
+            {
+                options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(5);
+
+                options.Retry.MaxRetryAttempts = 2;
+                options.Retry.Delay = TimeSpan.FromMilliseconds(200);
+                options.Retry.BackoffType = DelayBackoffType.Exponential;
+                options.Retry.UseJitter = true;
+                options.Retry.DisableForUnsafeHttpMethods();
+
+                options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(2);
+            });
 
             return services;
         }
@@ -107,6 +196,10 @@ namespace OnlineVoting.Api.Middlewares
                 o.Password.RequiredLength = 6;
                 o.User.RequireUniqueEmail = false;
                 o.SignIn.RequireConfirmedEmail = false;
+
+                o.Lockout.AllowedForNewUsers = true;
+                o.Lockout.MaxFailedAccessAttempts = 5;
+                o.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
             })
                 .AddEntityFrameworkStores<VotingDbContext>()
                 .AddDefaultTokenProviders();
@@ -173,6 +266,10 @@ namespace OnlineVoting.Api.Middlewares
 
                 options.OperationFilter<ApiDocumentationOperationFilter>();
                 options.SupportNonNullableReferenceTypes();
+
+                // Custom operation filter to add the "X-Device-Location" header parameter to all API endpoints.
+                // This middleware was only added just to test X-Device-Location on swagger.
+                //options.OperationFilter<DeviceLocationHeaderOperationFilter>(); 
 
                 options.AddSecurityDefinition(
                     "Bearer",
@@ -244,10 +341,19 @@ namespace OnlineVoting.Api.Middlewares
             });
         }
 
-        public static IServiceCollection ConfigureHealthChecks(this IServiceCollection services)
+        public static IServiceCollection ConfigureHealthChecks(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddHealthChecks().AddDbContextCheck<VotingDbContext>(name: "database", failureStatus: HealthStatus.Unhealthy,
-                tags: new[] { "ready" });
+            IHealthChecksBuilder healthChecksBuilder = services.AddHealthChecks()
+                .AddDbContextCheck<VotingDbContext>(name: "database", failureStatus: HealthStatus.Unhealthy,
+                    tags: new[] { "ready" });
+
+            CacheOptions cacheOptions = configuration.GetSection(CacheOptions.SectionName).Get<CacheOptions>() ?? new CacheOptions();
+
+            if (cacheOptions.DistributedEnabled)
+            {
+                healthChecksBuilder.AddCheck<RedisHealthCheck>(name: "redis", failureStatus: HealthStatus.Unhealthy,
+                    tags: new[] { "ready" });
+            }
 
             return services;
         }
@@ -327,6 +433,99 @@ namespace OnlineVoting.Api.Middlewares
                 throw new InvalidOperationException("No database migrations were found.");
 
             await context.Database.MigrateAsync();
+        }
+
+        public static void ConfigureForwardedHeaders(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+                    | ForwardedHeaders.XForwardedProto;
+
+                IEnumerable<IConfigurationSection> knownProxySections =
+                    configuration.GetSection("ReverseProxy:KnownProxies").GetChildren();
+
+                foreach (IConfigurationSection knownProxySection in knownProxySections)
+                {
+                    string? knownProxy = knownProxySection.Value;
+
+                    if (IPAddress.TryParse(knownProxy, out IPAddress? ipAddress))
+                        options.KnownProxies.Add(ipAddress);
+                }
+            });
+        }
+
+        public static IServiceCollection ConfigureResponseCompression(this IServiceCollection services, IConfiguration configuration)
+        {
+            bool enableForHttps = configuration.GetValue<bool>("ResponseCompression:EnableForHttps");
+
+            services.AddResponseCompression(options =>
+            {
+                options.EnableForHttps = enableForHttps;
+
+                options.Providers.Add<BrotliCompressionProvider>();
+                options.Providers.Add<GzipCompressionProvider>();
+
+                options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+                [
+                    "application/problem+json"
+                ]);
+            });
+
+            services.Configure<BrotliCompressionProviderOptions>(options =>
+            {
+                options.Level = CompressionLevel.Fastest;
+            });
+
+            services.Configure<GzipCompressionProviderOptions>(options =>
+            {
+                options.Level = CompressionLevel.Fastest;
+            });
+
+            return services;
+        }
+
+        public static IServiceCollection ConfigureSecurityHeaders(this IServiceCollection services, IConfiguration configuration)
+        {
+            IConfigurationSection section = configuration.GetSection(SecurityHeadersOptions.SectionName);
+
+            services.AddOptions<SecurityHeadersOptions>()
+                .Bind(section)
+                .Validate(options => options.Hsts.MaxAgeDays > 0, "SecurityHeaders:Hsts:MaxAgeDays must be greater than zero.")
+                .ValidateOnStart();
+
+            SecurityHeadersOptions securityHeadersOptions =
+                section.Get<SecurityHeadersOptions>() ?? new SecurityHeadersOptions();
+
+            services.AddHsts(options =>
+            {
+                options.MaxAge = TimeSpan.FromDays(securityHeadersOptions.Hsts.MaxAgeDays);
+                options.IncludeSubDomains = securityHeadersOptions.Hsts.IncludeSubDomains;
+                options.Preload = securityHeadersOptions.Hsts.Preload;
+            });
+
+            return services;
+        }
+
+        public static IApplicationBuilder UseSecurityHeaders(this IApplicationBuilder app)
+        {
+            SecurityHeadersOptions securityHeadersOptions = app.ApplicationServices
+                .GetRequiredService<IOptions<SecurityHeadersOptions>>()
+                .Value;
+
+            if (securityHeadersOptions.Hsts.Enabled)
+            {
+                app.UseHsts();
+            }
+
+            app.UseMiddleware<SecurityHeadersMiddleware>();
+
+            if (securityHeadersOptions.HttpsRedirectionEnabled)
+            {
+                app.UseHttpsRedirection();
+            }
+
+            return app;
         }
     }
 }

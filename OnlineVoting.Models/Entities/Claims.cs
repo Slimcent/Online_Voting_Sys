@@ -1,6 +1,8 @@
-﻿namespace OnlineVoting.Models.Entities
+﻿using OnlineVoting.Models.Interfaces;
+
+namespace OnlineVoting.Models.Entities
 {
-    public class Claims
+    public class Claims : IAuditable
     {
         public long Id { get; set; }
         public string? Claim { get; set; }

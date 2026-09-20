@@ -10,9 +10,8 @@ namespace OnlineVoting.Api.Mapper
         public MappingProfile()
         {
             CreateMap<CreateUserRequest, User>()
-                //.ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"))
-                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
-                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email));
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.Email))
+                .ForMember(dest => dest.UserType, option => option.Ignore());
 
             CreateMap<CreateStudentRequest, Student>();
 
@@ -27,9 +26,6 @@ namespace OnlineVoting.Api.Mapper
             // Role
             CreateMap<CreateRoleRequest, Role>();
             CreateMap<Role, RoleResponse>();
-
-            // Create staff
-            CreateMap<CreateStaffRequest, CreateUserRequest>();
 
             // Update Staff by Patch
             CreateMap<UpdateStaffRequest, Staff>()
@@ -53,8 +49,6 @@ namespace OnlineVoting.Api.Mapper
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.Staff.PhoneNumber))
                 .ForMember(dest => dest.Address, opt => opt.MapFrom(src =>
                 $"{src.Staff.Address.PlotNo} {src.Staff.Address.StreetName} {src.Staff.Address.State} {src.Staff.Address.Nationality}"));
-
-            CreateMap<CreateStudentRequest, CreateUserRequest>();
 
             CreateMap<CreateStudentRequest, CreateUserRequest>();
         }

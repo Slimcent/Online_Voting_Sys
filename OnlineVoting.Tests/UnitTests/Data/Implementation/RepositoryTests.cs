@@ -1161,8 +1161,7 @@ namespace OnlineVoting.Tests.UnitTests.Data.Implementation
 
             await FacultyTestData.SeedFaculties(context);
 
-            Faculty? result = await repository.LastAsync(
-                faculty => faculty.Name == "Medicine");
+            Faculty? result = await repository.LastAsync(faculty => faculty.Name == "Medicine", query => query.OrderBy(faculty => faculty.Name));
 
             Assert.Null(result);
         }

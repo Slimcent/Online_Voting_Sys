@@ -1,12 +1,15 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using OnlineVoting.BackgroundTasks.Interfaces;
+using OnlineVoting.Data.Interfaces;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Request.Email;
 using OnlineVoting.Models.Entities;
+using OnlineVoting.Services.BackgroundTasks;
 using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Extension;
 using OnlineVoting.Services.Interfaces;
-using OnlineVoting.Data.Interfaces;
+using VotingSystem.Logger;
 
 
 namespace OnlineVoting.Services.Implementation
@@ -18,6 +21,7 @@ namespace OnlineVoting.Services.Implementation
         private readonly IMapper _mapper;
         private readonly IServiceFactory _serviceFactory;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ILoggerMessage _loggerMessage;
 
         public VoterService(IServiceFactory serviceFactory)
         {
@@ -26,6 +30,7 @@ namespace OnlineVoting.Services.Implementation
             _mapper = _serviceFactory.GetService<IMapper>();
             _studentRepo = _unitOfWork.GetRepository<Student>();
             _registeredVoterRepo = _unitOfWork.GetRepository<RegisteredVoter>();
+            _loggerMessage = _serviceFactory.GetService<ILoggerMessage>();
         }
 
         public async Task<string> CreateVoter(CreateVoterRequest request)
@@ -51,7 +56,7 @@ namespace OnlineVoting.Services.Implementation
                 DepartmentId = checkIfStudentExists.DepartmentId,
             };
 
-            _registeredVoterRepo.Add(registerVoter);
+            await _registeredVoterRepo.AddAsync(registerVoter);
 
             VoterEmailDto emailDto = new()
             {
@@ -60,9 +65,14 @@ namespace OnlineVoting.Services.Implementation
                 FirstName = checkIfStudentExists.User.FirstName,
             };
 
-            await _serviceFactory.GetService<IEmailService>().SendVoterEmail(emailDto);
-
-            await _unitOfWork.SaveChangesAsync();
+            try
+            {
+                _serviceFactory.GetService<IBackgroundTaskQueue>().Enqueue<SendVoterEmailTask, VoterEmailDto>(emailDto);
+            }
+            catch (Exception exception)
+            {
+                _loggerMessage.LogError($"Voter email could not be queued for student {checkIfStudentExists.Id}. {exception.Message}");
+            }
 
             return "Voter registration was successful";
         }
