@@ -5166,3 +5166,168 @@ Record authentication security events using the existing audit trail infrastruct
 Authentication events are now recorded in the existing audit trail with the appropriate success, failure or denied outcome.
 
 ---
+
+## Background Tasks and Email Queue
+
+### Goal
+
+Move recurring maintenance work and non-critical email sending out of the main request flow.
+
+The main business operation should complete independently of background processing. If queueing or email delivery fails, a successful user creation, 
+bulk user creation or voter registration should remain successful.
+
+---
+
+### Architecture
+
+Application services do not depend directly on Hangfire.
+
+```
+Application Service
+        |
+        v
+IBackgroundTaskQueue
+        |
+        v
+BackgroundTaskQueue
+        |
+        v
+Hangfire
+        |
+        v
+Background Task
+        |
+        v
+Application Service
+```
+
+`OnlineVoting.BackgroundTasks` contains the reusable Hangfire infrastructure, while the actual background jobs remain in `OnlineVoting.Services`.
+
+This keeps Hangfire as an infrastructure concern and keeps business logic inside the existing services.
+
+---
+
+### What Changed
+
+#### Background Task Infrastructure
+
+Added:
+
+- `IBackgroundTask`
+- `IBackgroundTask<TRequest>`
+- `IBackgroundTaskQueue`
+- `BackgroundTaskQueue`
+- `Enqueue`
+- `EnqueueRange`
+
+Hangfire uses SQL Server storage and has automatic retries configured.
+
+---
+
+#### Recurring Jobs
+
+Added recurring jobs for:
+
+- updating inactive students;
+- deleting old unconfirmed users.
+
+The unconfirmed-user cleanup uses a configurable retention period:
+
+```
+"UnconfirmedUserRetentionDays": 5
+```
+
+The background tasks delegate to service methods instead of containing the business logic themselves.
+
+---
+
+#### Create User Email
+
+Single-user creation now queues the create-user email instead of waiting for SMTP.
+
+```
+Create user
+    |
+    v
+Generate tokens
+    |
+    v
+Queue SendCreateUserEmailTask
+    |
+    v
+Return result
+```
+
+Queue failures are logged and do not change the successful user-creation result.
+
+---
+
+#### Bulk User Email
+
+Bulk user creation now queues email requests after the users have been created.
+
+```
+Create users
+    |
+    v
+Persist users
+    |
+    v
+Map to CreateUserEmailRequest
+    |
+    v
+EnqueueRange
+```
+
+Token generation for bulk-created users is handled later by the email service when the background job runs.
+
+This avoids generating tokens inside the main bulk creation loop.
+
+---
+
+#### Voter Email
+
+Voter registration now saves the voter before queueing the email.
+
+```
+Create voter
+    |
+    v
+Persist voter
+    |
+    v
+Queue SendVoterEmailTask
+    |
+    v
+Return success
+```
+
+If queueing fails, the error is logged but the voter registration remains successful.
+
+---
+
+### Email Retry Behaviour
+
+Background email jobs throw when SMTP sending fails.
+
+This allows Hangfire to retry failed email jobs using the configured retry policy instead of treating the job as successful.
+
+---
+
+### Design Decisions
+
+The following rules were kept throughout the implementation:
+
+- application services do not call Hangfire directly;
+- background tasks only coordinate work;
+- business logic remains in services;
+- background failures do not undo completed business operations;
+- lightweight request models are used instead of passing entities to Hangfire;
+- existing service and repository patterns were preserved.
+
+Password-reset and change-email operations remain synchronous because their results are part of the current request flow.
+
+---
+
+
+---

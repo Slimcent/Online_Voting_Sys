@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using OnlineVoting.Api.Middlewares;
-using Microsoft.Extensions.Options;
 using System.Net;
 
 namespace OnlineVoting.Tests.IntegrationTests.Api.ServiceExtension

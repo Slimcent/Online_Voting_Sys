@@ -18,9 +18,12 @@ namespace OnlineVoting.Tests.UnitTests.Models.Dtos.Request
                     "RegNumber",
                     "FirstName",
                     "LastName",
-                    "Email"
+                    "Email",
+                    "PhoneNumber",
+                    "Gender",
+                    "Department"
                 },
-                request.RequiredFields);
+                request.RequiredColumns);
         }
 
         [Fact]
@@ -30,13 +33,6 @@ namespace OnlineVoting.Tests.UnitTests.Models.Dtos.Request
             {
                 File = null!
             };
-
-            Assert.Equal(
-                new[]
-                {
-                    "SN"
-                },
-                request.IgnoreFields);
         }
     }
 }

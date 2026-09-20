@@ -8,11 +8,11 @@ namespace OnlineVoting.Models.Validators.Request
     {
         public AddUserToRoleRequestValidator()
         {
-            RuleFor(request => request.Name)
-                .SetValidator(new NameValidator());
-
             RuleFor(request => request.Email)
                 .SetValidator(new EmailValidator());
+            RuleFor(request => request.RoleId)
+                .NotEmpty()
+                .WithMessage("Role ID cannot be empty.");
         }
     }
 }

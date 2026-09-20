@@ -181,16 +181,16 @@ namespace OnlineVoting.Tests.UnitTests.Services
         {
             RolesServiceFactory factory = new();
 
-            AddUserToRoleRequest request = RoleTestData.CreateAddUserToRoleRequest("user@example.com", " Admin ");
+            AddUserToRoleRequest request = RoleTestData.CreateAddUserToRoleRequest("user@example.com", " role-id ");
             User user = RoleTestData.CreateUser();
 
             factory.UserManager.Setup(userManager => userManager.FindByNameAsync("user@example.com")).ReturnsAsync(user);
-            factory.RoleManager.Setup(roleManager => roleManager.FindByNameAsync("Admin")).ReturnsAsync((Role?)null);
+            factory.RoleManager.Setup(roleManager => roleManager.FindByIdAsync("role-id")).ReturnsAsync((Role?)null);
 
             Result<string> result = await factory.Service.AddUserToRole(request);
 
             Assert.Equal(ResultStatus.NotFound, result.Status);
-            Assert.Equal("Role with name  Admin  does not exist", result.Error);
+            Assert.Equal("Role with ID role-id does not exist", result.Error);
 
             factory.UserManager.Verify(userManager => userManager.IsInRoleAsync(It.IsAny<User>(), It.IsAny<string>()), Times.Never);
         }
@@ -200,12 +200,12 @@ namespace OnlineVoting.Tests.UnitTests.Services
         {
             RolesServiceFactory factory = new();
 
-            AddUserToRoleRequest request = RoleTestData.CreateAddUserToRoleRequest();
+            AddUserToRoleRequest request = RoleTestData.CreateAddUserToRoleRequest("user@example.com", "role-id");
             User user = RoleTestData.CreateUser();
-            Role role = RoleTestData.CreateRole();
+            Role role = RoleTestData.CreateRole("Admin");
 
             factory.UserManager.Setup(userManager => userManager.FindByNameAsync("user@example.com")).ReturnsAsync(user);
-            factory.RoleManager.Setup(roleManager => roleManager.FindByNameAsync("Admin")).ReturnsAsync(role);
+            factory.RoleManager.Setup(roleManager => roleManager.FindByIdAsync("role-id")).ReturnsAsync(role);
             factory.UserManager.Setup(userManager => userManager.IsInRoleAsync(user, "Admin")).ReturnsAsync(true);
 
             Result<string> result = await factory.Service.AddUserToRole(request);
@@ -221,9 +221,9 @@ namespace OnlineVoting.Tests.UnitTests.Services
         {
             RolesServiceFactory factory = new();
 
-            AddUserToRoleRequest request = RoleTestData.CreateAddUserToRoleRequest();
+            AddUserToRoleRequest request = RoleTestData.CreateAddUserToRoleRequest("user@example.com", "role-id");
             User user = RoleTestData.CreateUser();
-            Role role = RoleTestData.CreateRole();
+            Role role = RoleTestData.CreateRole("Admin");
 
             IdentityError error = new()
             {
@@ -231,7 +231,7 @@ namespace OnlineVoting.Tests.UnitTests.Services
             };
 
             factory.UserManager.Setup(userManager => userManager.FindByNameAsync("user@example.com")).ReturnsAsync(user);
-            factory.RoleManager.Setup(roleManager => roleManager.FindByNameAsync("Admin")).ReturnsAsync(role);
+            factory.RoleManager.Setup(roleManager => roleManager.FindByIdAsync("role-id")).ReturnsAsync(role);
             factory.UserManager.Setup(userManager => userManager.IsInRoleAsync(user, "Admin")).ReturnsAsync(false);
             factory.UserManager.Setup(userManager => userManager.AddToRoleAsync(user, "Admin")).ReturnsAsync(IdentityResult.Failed(error));
 
@@ -246,12 +246,12 @@ namespace OnlineVoting.Tests.UnitTests.Services
         {
             RolesServiceFactory factory = new();
 
-            AddUserToRoleRequest request = RoleTestData.CreateAddUserToRoleRequest();
+            AddUserToRoleRequest request = RoleTestData.CreateAddUserToRoleRequest("user@example.com", "role-id");
             User user = RoleTestData.CreateUser();
-            Role role = RoleTestData.CreateRole();
+            Role role = RoleTestData.CreateRole("Admin");
 
             factory.UserManager.Setup(userManager => userManager.FindByNameAsync("user@example.com")).ReturnsAsync(user);
-            factory.RoleManager.Setup(roleManager => roleManager.FindByNameAsync("Admin")).ReturnsAsync(role);
+            factory.RoleManager.Setup(roleManager => roleManager.FindByIdAsync("role-id")).ReturnsAsync(role);
             factory.UserManager.Setup(userManager => userManager.IsInRoleAsync(user, "Admin")).ReturnsAsync(false);
             factory.UserManager.Setup(userManager => userManager.AddToRoleAsync(user, "Admin")).ReturnsAsync(IdentityResult.Success);
 
@@ -320,10 +320,12 @@ namespace OnlineVoting.Tests.UnitTests.Services
         {
             RolesServiceFactory factory = new();
 
-            AddUserToRoleRequest request = RoleTestData.CreateAddUserToRoleRequest();
+            AddUserToRoleRequest request = RoleTestData.CreateAddUserToRoleRequest("user@example.com", "role-id");
             User user = RoleTestData.CreateUser();
+            Role role = RoleTestData.CreateRole("Admin");
 
             factory.UserManager.Setup(userManager => userManager.FindByNameAsync("user@example.com")).ReturnsAsync(user);
+            factory.RoleManager.Setup(roleManager => roleManager.FindByIdAsync("role-id")).ReturnsAsync(role);
             factory.UserManager.Setup(userManager => userManager.GetRolesAsync(user)).ReturnsAsync(new List<string> { "Student" });
 
             Result<string> result = await factory.Service.RemoveUserFromRole(request);
@@ -339,8 +341,9 @@ namespace OnlineVoting.Tests.UnitTests.Services
         {
             RolesServiceFactory factory = new();
 
-            AddUserToRoleRequest request = RoleTestData.CreateAddUserToRoleRequest();
+            AddUserToRoleRequest request = RoleTestData.CreateAddUserToRoleRequest("user@example.com", "role-id");
             User user = RoleTestData.CreateUser();
+            Role role = RoleTestData.CreateRole("Admin");
 
             IdentityError error = new()
             {
@@ -350,6 +353,7 @@ namespace OnlineVoting.Tests.UnitTests.Services
             factory.UserManager.Setup(userManager => userManager.FindByNameAsync("user@example.com")).ReturnsAsync(user);
             factory.UserManager.Setup(userManager => userManager.GetRolesAsync(user)).ReturnsAsync(new List<string> { "Admin" });
             factory.UserManager.Setup(userManager => userManager.RemoveFromRoleAsync(user, "Admin")).ReturnsAsync(IdentityResult.Failed(error));
+            factory.RoleManager.Setup(roleManager => roleManager.FindByIdAsync("role-id")).ReturnsAsync(role);
 
             Result<string> result = await factory.Service.RemoveUserFromRole(request);
 
@@ -362,8 +366,12 @@ namespace OnlineVoting.Tests.UnitTests.Services
         {
             RolesServiceFactory factory = new();
 
-            AddUserToRoleRequest request = RoleTestData.CreateAddUserToRoleRequest("user@example.com", "admin");
+            AddUserToRoleRequest request = RoleTestData.CreateAddUserToRoleRequest("user@example.com", "role-id");
             User user = RoleTestData.CreateUser();
+
+            Role role = RoleTestData.CreateRole("Admin");
+
+            factory.RoleManager.Setup(roleManager => roleManager.FindByIdAsync("role-id")).ReturnsAsync(role);
 
             factory.UserManager.Setup(userManager => userManager.FindByNameAsync("user@example.com")).ReturnsAsync(user);
             factory.UserManager.Setup(userManager => userManager.GetRolesAsync(user)).ReturnsAsync(new List<string> { "Admin" });
@@ -372,7 +380,7 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Result<string> result = await factory.Service.RemoveUserFromRole(request);
 
             Assert.Equal(ResultStatus.Success, result.Status);
-            Assert.Equal("user@example.com removed from role admin successfully", result.Value);
+            Assert.Equal("user@example.com removed from role Admin successfully", result.Value);
 
             factory.UserManager.Verify(userManager => userManager.RemoveFromRoleAsync(user, "Admin"), Times.Once);
         }

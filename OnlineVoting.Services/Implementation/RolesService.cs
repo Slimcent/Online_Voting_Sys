@@ -6,7 +6,9 @@ using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Pagination;
 using OnlineVoting.Models.Results;
+using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Interfaces;
+using Org.BouncyCastle.Asn1.Ocsp;
 using VotingSystem.Logger;
 
 namespace OnlineVoting.Services.Implementation
@@ -30,6 +32,16 @@ namespace OnlineVoting.Services.Implementation
             _roleRepo = _unitOfWork.GetRepository<Role>();
             _mapper = _serviceFactory.GetService<IMapper>();
             _loggerMessage = _serviceFactory.GetService<ILoggerMessage>();
+        }
+
+        public async Task ValidateRoleById(string roleId)
+        {
+            if (string.IsNullOrWhiteSpace(roleId))
+                throw new InvalidDataException("Role ID cannot be empty.");
+
+            Role role = await _roleManager.FindByIdAsync(roleId);
+            if (role == null)
+                throw new NotFoundException($"Role with ID {roleId} does not exist.");
         }
 
         public async Task<Result<string>> CreateRole(CreateRoleRequest request)
@@ -116,13 +128,19 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<Result<string>> AddUserToRole(AddUserToRoleRequest request)
         {
-            _loggerMessage.LogInfo($"Add user to role request received for email {request.Email} and role {request.Name}.");
+            _loggerMessage.LogInfo($"Add user to role request received for email {request.Email} and role {request.RoleId}.");
 
             string email = request.Email.Trim();
-            string roleName = request.Name.Trim();
+            string roleId = request.RoleId.Trim();
+
+            if(string.IsNullOrWhiteSpace(request.RoleId))
+            {
+                _loggerMessage.LogWarn($"Add user to role failed because the role ID was empty.");
+
+                return Result<string>.ValidationError("Role ID cannot be empty.");
+            }
 
             User user = await _userManager.FindByNameAsync(email);
-
             if (user == null)
             {
                 _loggerMessage.LogWarn($"Add user to role failed because user with email {email} was not found.");
@@ -130,13 +148,12 @@ namespace OnlineVoting.Services.Implementation
                 return Result<string>.NotFound($"User with email {request.Email} does not exist");
             }
 
-            Role role = await _roleManager.FindByNameAsync(roleName);
-
+            Role role = await _roleManager.FindByIdAsync(roleId);
             if (role == null)
             {
-                _loggerMessage.LogWarn($"Add user to role failed because role {roleName} was not found.");
+                _loggerMessage.LogWarn($"Add user to role failed because role with ID {request.RoleId} was not found.");
 
-                return Result<string>.NotFound($"Role with name {request.Name} does not exist");
+                return Result<string>.NotFound($"Role with ID {roleId} does not exist");
             }
 
             bool userIsInRole = await _userManager.IsInRoleAsync(user, role.Name);
@@ -145,7 +162,7 @@ namespace OnlineVoting.Services.Implementation
             {
                 _loggerMessage.LogWarn($"User {user.Id} is already in role {role.Name}.");
 
-                return Result<string>.Conflict($"{request.Email} is already in the role {request.Name}");
+                return Result<string>.Conflict($"{request.Email} is already in the role {role.Name}");
             }
 
             IdentityResult result = await _userManager.AddToRoleAsync(user, role.Name);
@@ -161,7 +178,7 @@ namespace OnlineVoting.Services.Implementation
 
             _loggerMessage.LogInfo($"User {user.Id} added to role {role.Name} successfully.");
 
-            return Result<string>.Success($"{request.Email} has been added to the role {request.Name} successfully");
+            return Result<string>.Success($"{request.Email} has been added to the role {role.Name} successfully");
         }
 
         public async Task<Result<IList<string>>> GetUserRoles(string userName)
@@ -188,12 +205,19 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<Result<string>> RemoveUserFromRole(AddUserToRoleRequest request)
         {
-            _loggerMessage.LogInfo($"Remove user from role request received for email {request.Email} and role {request.Name}.");
+            _loggerMessage.LogInfo($"Remove user from role request received for email {request.Email} and role {request.RoleId}.");
 
             string email = request.Email.Trim();
+            string roleId = request.RoleId.Trim();
+
+            if (string.IsNullOrWhiteSpace(request.RoleId))
+            {
+                _loggerMessage.LogWarn($"Add user to role failed because the role ID was empty.");
+
+                return Result<string>.ValidationError("Role ID cannot be empty.");
+            }
 
             User user = await _userManager.FindByNameAsync(email);
-
             if (user == null)
             {
                 _loggerMessage.LogWarn($"Remove user from role failed because user with email {email} was not found.");
@@ -201,14 +225,22 @@ namespace OnlineVoting.Services.Implementation
                 return Result<string>.NotFound($"User with email {request.Email} does not exist");
             }
 
+            Role role = await _roleManager.FindByIdAsync(roleId);
+            if (role == null)
+            {
+                _loggerMessage.LogWarn($"Remove user from role failed because role with ID {roleId} was not found.");
+                return Result<string>.NotFound($"Role with ID {roleId} does not exist");
+            }
+
+
             IList<string> userRoles = await _userManager.GetRolesAsync(user);
-            string roleToRemove = userRoles.FirstOrDefault(role => role.Equals(request.Name.Trim(), StringComparison.InvariantCultureIgnoreCase));
+            string roleToRemove = userRoles.FirstOrDefault(x => x.Equals(role.Name.Trim(), StringComparison.InvariantCultureIgnoreCase));
 
             if (roleToRemove == null)
             {
-                _loggerMessage.LogWarn($"Remove user from role failed because user {user.Id} is not in role {request.Name}.");
+                _loggerMessage.LogWarn($"Remove user from role failed because user {user.Id} is not in role {roleId}.");
 
-                return Result<string>.NotFound($"User is not in the {request.Name} role");
+                return Result<string>.NotFound($"User is not in the {role.Name} role");
             }
 
             IdentityResult result = await _userManager.RemoveFromRoleAsync(user, roleToRemove);
@@ -224,7 +256,7 @@ namespace OnlineVoting.Services.Implementation
 
             _loggerMessage.LogInfo($"User {user.Id} removed from role {roleToRemove} successfully.");
 
-            return Result<string>.Success($"{request.Email} removed from role {request.Name} successfully");
+            return Result<string>.Success($"{request.Email} removed from role {role.Name} successfully");
         }
 
         public async Task<Result<string>> DeleteRole(CreateRoleRequest request)

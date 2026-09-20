@@ -26,7 +26,7 @@
         /// <summary>
         /// The user's telephone number.
         /// </summary>
-        /// <example>+491234567890</example>
+        /// <example>08034567890</example>
         public required string PhoneNumber { get; set; }
 
         /// <summary>
@@ -39,12 +39,12 @@
         /// The identifier of the user type.
         /// </summary>
         /// <example>2</example>
-        public required int UserType { get; set; }
+        public required int UserTypeId { get; set; }
 
         /// <summary>
         /// The role assigned to the user.
         /// </summary>
         /// <example>Student</example>
-        public required string Role { get; set; }
+        public required string RoleId { get; set; }
     }
 }

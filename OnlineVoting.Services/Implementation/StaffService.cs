@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
+using OnlineVoting.Data.Interfaces;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
@@ -9,7 +10,7 @@ using OnlineVoting.Models.Extensions;
 using OnlineVoting.Models.Pagination;
 using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Interfaces;
-using OnlineVoting.Data.Interfaces;
+using VotingSystem.Logger;
 
 namespace OnlineVoting.Services.Implementation
 {
@@ -23,6 +24,7 @@ namespace OnlineVoting.Services.Implementation
         private readonly IUnitOfWork _unitOfWork;
         private readonly string userId;
         private readonly IHttpContextAccessor _contextAccessor;
+        private readonly ILoggerMessage _loggerMessage;
 
         public StaffService(IServiceFactory serviceFactory)
         {
@@ -31,37 +33,57 @@ namespace OnlineVoting.Services.Implementation
             _staffRepo = _unitOfWork.GetRepository<Staff>();
             _addressRepo = _unitOfWork.GetRepository<Address>();
             _userRepo = _unitOfWork.GetRepository<User>();
-            _mapper = _serviceFactory.GetService<IMapper>();
+            _loggerMessage = _serviceFactory.GetService<ILoggerMessage>();
             _contextAccessor = _serviceFactory.GetService<IHttpContextAccessor>();
             userId = _contextAccessor.HttpContext.User.GetUserId();
+            _mapper = _serviceFactory.GetService<IMapper>();
         }
 
         public async Task<Result<string>> CreateStaff(CreateStaffRequest request)
         {
-            //CreateUserRequest user = new()
-            //{
-            //   
-            //    FirstName = request.FirstName,
-            //    Role = request.Role,
-            //};
-            CreateUserRequest user = _mapper.Map<CreateUserRequest>(request);
-
-            Result<string> userIdResult = await _serviceFactory.GetService<IUserService>().CreateUser(user);
-            if (!userIdResult.IsSuccess)
-                return Result<string>.FromFailure(userIdResult);
-
-            Staff staff = new()
+            if (request == null)
             {
-                UserId = userIdResult.Value!,
-                PhoneNumber = request.PhoneNumber,
-                LastName = request.LastName,
-                FirstName = request.FirstName,
-                GenderId = request.GenderId
-            };
+                _loggerMessage.LogWarn("Staff creation rejected because the request was null.");
 
-            await _staffRepo.AddAsync(staff);
+                return Result<string>.ValidationError("Invalid data sent.");
+            }
 
-            await CreateStaffAddress(staff);
+            _loggerMessage.LogInfo("Starting staff creation.");
+
+            Gender gender = await _unitOfWork.GetRepository<Gender>().GetSingleByAsync(x => x.Id == request.GenderId);
+
+            if (gender == null)
+            {
+                _loggerMessage.LogWarn($"Staff creation failed because the specified gender with ID {request.GenderId} was not found.");
+
+                return Result<string>.ValidationError("Invalid gender specified.");
+            }
+
+            UserType userType = await _unitOfWork.GetRepository<UserType>().GetSingleByAsync(x => x.Id == request.UserTypeId);
+
+            if (userType == null)
+            {
+                _loggerMessage.LogWarn($"Staff creation failed because the specified user type with ID {request.UserTypeId} was not found.");
+
+                return Result<string>.ValidationError("Invalid user type specified.");
+            }
+
+            Staff staff = _mapper.Map<Staff>(request);
+
+            Result<string> userResult = await _serviceFactory.GetService<IUserService>().CreateUser(request, user =>
+            {
+                staff.User = user;
+                user.Staff = staff;
+            });
+
+            if (!userResult.IsSuccess)
+            {
+                _loggerMessage.LogWarn("Staff creation failed during user creation.");
+
+                return Result<string>.FromFailure(userResult);
+            }
+
+            _loggerMessage.LogInfo($"Staff created successfully for user {userResult.Value}.");
 
             return Result<string>.Created($"Staff with email {request.Email} was created successfully");
         }

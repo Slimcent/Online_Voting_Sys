@@ -34,6 +34,18 @@
             }
         }
 
+        public static class Roles
+        {
+            public const string StudentRoleId = "e0bddae0-4027-4415-aeb0-458753b9a636";
+            public const string SuperAdminRoleId = "cbdc547b-31ae-4406-97e6-e597a98028f2";
+        }
+
+        public static class UserTypes
+        {
+            public const int StudentUserTypeId = 3;
+            public const int OfficialUserTypeId = 4;
+        }
+
         public static class Authentication
         {
             public static class Messages

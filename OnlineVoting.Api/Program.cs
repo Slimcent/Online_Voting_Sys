@@ -1,21 +1,21 @@
 using Asp.Versioning.ApiExplorer;
 using DotNetEnv;
+using Hangfire;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using NLog;
 using OnlineVoting.Api.Extensions;
 using OnlineVoting.Api.Filters;
 using OnlineVoting.Api.Middlewares;
-using OnlineVoting.Models.Context;
+using OnlineVoting.BackgroundTasks.Configuration;
+using OnlineVoting.Caching.Extensions;
 using OnlineVoting.Models.Entities.Email;
 using OnlineVoting.Services.Infrastructures;
 using System.Reflection;
 using System.Text.Json.Serialization;
 using VotingSystem.Data.SeedData;
-using OnlineVoting.Caching.Extensions;
 
 
 string environmentFilePath = Path.Combine(Directory.GetCurrentDirectory(), "OnlineVoting.Api", ".env");
@@ -68,6 +68,7 @@ builder.Services.ConfigureResponseCompression(builder.Configuration);
 builder.Services.ConfigureObservability(builder.Configuration, builder.Environment);
 builder.Services.AddApplicationCaching(builder.Configuration);
 builder.Services.AddDBConnection(builder.Configuration);
+builder.Services.AddBackgroundTasks(builder.Configuration);
 builder.Services.ConfigureHealthChecks(builder.Configuration);
 builder.Services.ConfigureRateLimiting();
 builder.Services.BindConfigurations(builder.Configuration);
@@ -145,6 +146,8 @@ app.UseStaticFiles();
 
 if (app.Environment.IsDevelopment())
 {
+    app.UseHangfireDashboard("/hangfire");
+
     await app.ApplyDatabaseMigrations();
     await SeedApplicationData.EnsurePopulated(app);
 }
@@ -152,5 +155,7 @@ else if (builder.Configuration.GetValue<bool>("Seed:RunOnce"))
 {
     await SeedApplicationData.EnsurePopulated(app);
 }
+
+app.RegisterRecurringJobs();
 
 app.Run();

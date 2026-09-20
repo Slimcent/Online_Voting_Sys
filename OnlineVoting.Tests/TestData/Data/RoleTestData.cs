@@ -34,12 +34,12 @@ namespace OnlineVoting.Tests.TestData.Data
             };
         }
 
-        public static AddUserToRoleRequest CreateAddUserToRoleRequest(string email = "user@example.com", string name = "Admin")
+        public static AddUserToRoleRequest CreateAddUserToRoleRequest(string email = "user@example.com", string roleId = "Admin")
         {
             return new AddUserToRoleRequest
             {
                 Email = email,
-                Name = name
+                RoleId = roleId
             };
         }
 

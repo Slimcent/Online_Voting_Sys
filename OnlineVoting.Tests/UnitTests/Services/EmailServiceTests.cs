@@ -62,29 +62,22 @@ namespace OnlineVoting.Tests.UnitTests.Services
         }
 
         [Fact]
-        public async Task SendCreateUserEmail_ShouldGenerateTokensAndSendEmail()
+        public async Task SendCreateUserEmail_WithValidRequest_ShouldSendEmail()
         {
             EmailServiceFactory factory = new();
 
-            User user = ClaimsTestData.CreateUser();
-            user.FirstName = "Vincent";
-
-            UserMailDto request = new()
+            CreateUserEmailRequest request = new()
             {
-                User = user,
-                FirstName = "Vincent"
+                FirstName = "Vincent",
+                Email = "vincent@example.com",
+                EmailConfirmationToken = "email-confirmation-token",
+                ResetPasswordToken = "reset-password-token"
             };
-
-            factory.UserManager.Setup(userManager => userManager.GenerateEmailConfirmationTokenAsync(user)).ReturnsAsync("email-confirmation-token");
-            factory.UserManager.Setup(userManager => userManager.GeneratePasswordResetTokenAsync(user)).ReturnsAsync("reset-password-token");
 
             await factory.Service.SendCreateUserEmail(request);
 
             Assert.Equal(1, factory.Service.SendCount);
             Assert.NotNull(factory.Service.EmailData);
-
-            factory.UserManager.Verify(userManager => userManager.GenerateEmailConfirmationTokenAsync(user), Times.Once);
-            factory.UserManager.Verify(userManager => userManager.GeneratePasswordResetTokenAsync(user), Times.Once);
         }
 
         [Fact]

@@ -1,5 +1,6 @@
 ﻿using MimeKit;
 using OnlineVoting.Models.Dtos.Request.Email;
+using OnlineVoting.Models.Enums;
 using OnlineVoting.Services.Infrastructures;
 
 namespace OnlineVoting.Services.Extension
@@ -34,8 +35,8 @@ namespace OnlineVoting.Services.Extension
 
             string url = $"{request.AppUrl}";
 
-            string filePath = Path.Combine("Template", "EmailTemplate.html");
-            string MailText = GetFilePath(filePath);
+            string templatePath = EmailTemplatePath.Default.GetStringValue();
+            string MailText = GetFilePath(templatePath);
 
             MailText = MailText.Replace("[Header]", $"Hello {request.ToName}")
                 .Replace("[Body]", $"Your voting registration was successful and your voting code is {request.VotingCode}.\n" +
@@ -70,8 +71,8 @@ namespace OnlineVoting.Services.Extension
 
             emailMessage.Date = DateTime.Now;
 
-            string filePath = Path.Combine("Template", "EmailTemplate.html");
-            string MailText = GetFilePath(filePath);
+            string templatePath = EmailTemplatePath.Default.GetStringValue();
+            string MailText = GetFilePath(templatePath);
 
             string encodedUsername = MessageEncoder.EncodeString(request.ToEmail);
             string encodedEmailConfirmationToken = MessageEncoder.EncodeString(request.EmailConfirmationToken);
@@ -112,8 +113,8 @@ namespace OnlineVoting.Services.Extension
 
             emailMessage.Date = DateTime.Now;
 
-            string filePath = Path.Combine("Template", "EmailTemplate.html");
-            string MailText = GetFilePath(filePath);
+            string templatePath = EmailTemplatePath.Default.GetStringValue();
+            string MailText = GetFilePath(templatePath);
 
             string encodedToken = MessageEncoder.EncodeString(request.ResetPasswordToken);
             string encodedEmail = MessageEncoder.EncodeString(request.ToEmail);
@@ -152,8 +153,8 @@ namespace OnlineVoting.Services.Extension
 
             emailMessage.Date = DateTime.Now;
 
-            string filePath = Path.Combine("Template", "EmailTemplate.html");
-            string MailText = GetFilePath(filePath);
+            string templatePath = EmailTemplatePath.Default.GetStringValue();
+            string MailText = GetFilePath(templatePath);
 
             string encodedChangeEmailToken = MessageEncoder.EncodeString(request.ChangeEmailToken);
             string encodedNewEmail = MessageEncoder.EncodeString(request.NewEmail);

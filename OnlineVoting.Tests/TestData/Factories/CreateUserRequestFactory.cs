@@ -14,8 +14,8 @@ namespace OnlineVoting.Tests.TestData.Factories
                 Email = TestValues.ValidEmail,
                 PhoneNumber = TestValues.ValidPhoneNumber,
                 GenderId = TestValues.ValidGenderId,
-                UserType = TestValues.ValidUserType,
-                Role = TestValues.ValidRole
+                UserTypeId = TestValues.ValidUserType,
+                RoleId = TestValues.ValidRoleId
             };
         }
     }

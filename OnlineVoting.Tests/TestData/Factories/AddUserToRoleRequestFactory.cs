@@ -9,7 +9,7 @@ namespace OnlineVoting.Tests.TestData.Factories
         {
             return new AddUserToRoleRequest
             {
-                Name = TestValues.ValidName,
+                RoleId = TestValues.ValidRoleId,
                 Email = TestValues.ValidEmail
             };
         }

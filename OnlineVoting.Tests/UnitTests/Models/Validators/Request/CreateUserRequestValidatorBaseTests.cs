@@ -83,22 +83,22 @@ namespace OnlineVoting.Tests.UnitTests.Models.Validators.Request
         public async Task Validate_InvalidUserType_ShouldHaveUserTypeValidationError(int userType)
         {
             CreateUserRequest request = CreateUserRequestFactory.CreateValid();
-            request.UserType = userType;
+            request.UserTypeId = userType;
 
             TestValidationResult<CreateUserRequest> result = await _validator.TestValidateAsync(request);
 
-            result.ShouldHaveValidationErrorFor(value => value.UserType).WithErrorMessage("User type is required.");
+            result.ShouldHaveValidationErrorFor(value => value.UserTypeId).WithErrorMessage("User type is required.");
         }
 
         [Fact]
         public async Task Validate_EmptyRole_ShouldHaveRoleValidationError()
         {
             CreateUserRequest request = CreateUserRequestFactory.CreateValid();
-            request.Role = string.Empty;
+            request.RoleId = string.Empty;
 
             TestValidationResult<CreateUserRequest> result = await _validator.TestValidateAsync(request);
 
-            result.ShouldHaveValidationErrorFor(value => value.Role).WithErrorMessage("Role cannot be empty.");
+            result.ShouldHaveValidationErrorFor(value => value.RoleId).WithErrorMessage("Role cannot be empty.");
         }
 
         private sealed class TestCreateUserRequestValidator : CreateUserRequestValidatorBase<CreateUserRequest>

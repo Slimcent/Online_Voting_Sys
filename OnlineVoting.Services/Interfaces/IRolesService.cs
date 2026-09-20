@@ -7,6 +7,7 @@ namespace OnlineVoting.Services.Interfaces
 {
     public interface IRolesService
     {
+        Task ValidateRoleById(string roleId);
         Task<Result<string>> CreateRole(CreateRoleRequest request);
         Task<Result<string>> EditRole(string id, CreateRoleRequest request);
         Task<Result<string>> DeleteRole(CreateRoleRequest request);

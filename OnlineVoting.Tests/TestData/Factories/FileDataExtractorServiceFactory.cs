@@ -9,14 +9,11 @@ namespace OnlineVoting.Tests.TestData.Factories
     {
         public Mock<IConverter> Converter { get; }
         public Mock<ILoggerMessage> LoggerMessage { get; }
-        public FileDataExtractorService Service { get; }
-
+        
         public FileDataExtractorServiceFactory()
         {
             Converter = new Mock<IConverter>();
             LoggerMessage = new Mock<ILoggerMessage>();
-
-            Service = new FileDataExtractorService(Converter.Object, LoggerMessage.Object);
         }
     }
 }

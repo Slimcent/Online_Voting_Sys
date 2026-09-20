@@ -27,6 +27,7 @@ namespace OnlineVoting.Api.Controllers
             _studentService = studentService;
         }
 
+        [AllowAnonymous]
         [ApiDocumentation(StudentDocumentationKeys.CreateStudent)]
         [HttpPost("create-student", Name = "Create-Students")]
         public async Task<IActionResult> CreateStudent([FromBody] CreateStudentRequest request)
@@ -46,6 +47,7 @@ namespace OnlineVoting.Api.Controllers
             return File(excelSheet.FileStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelSheet.FileName);
         }
 
+        [AllowAnonymous]
         [ApiDocumentation(StudentDocumentationKeys.UploadStudents)]
         [HttpPost("upload-students", Name = "Upload-Students")]
         public async Task<IActionResult> UploadStudents([FromForm] UploadStudentRequest students)

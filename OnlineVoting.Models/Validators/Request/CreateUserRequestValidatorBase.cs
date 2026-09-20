@@ -23,11 +23,11 @@ namespace OnlineVoting.Models.Validators.Shared
                 .GreaterThan(0)
                 .WithMessage("Gender is required.");
 
-            RuleFor(request => request.UserType)
+            RuleFor(request => request.UserTypeId)
                 .GreaterThan(0)
                 .WithMessage("User type is required.");
 
-            RuleFor(request => request.Role)
+            RuleFor(request => request.RoleId)
                 .NotEmpty()
                 .WithMessage("Role cannot be empty.");
         }

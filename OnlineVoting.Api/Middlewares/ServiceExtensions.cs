@@ -8,40 +8,43 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using OnlineVoting.Api.Configurations;
 using OnlineVoting.Api.Documentation.Filters;
 using OnlineVoting.Api.Filters;
+using OnlineVoting.Api.HealthChecks;
+using OnlineVoting.BackgroundTasks.Implementation;
+using OnlineVoting.BackgroundTasks.Interfaces;
+using OnlineVoting.Caching.Configuration;
 using OnlineVoting.Data.Interfaces;
 using OnlineVoting.Models.Configurations;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Interfaces;
 using OnlineVoting.Models.Validators.Request;
+using OnlineVoting.Services.BackgroundTasks;
 using OnlineVoting.Services.Implementation;
 using OnlineVoting.Services.Infrastructures;
 using OnlineVoting.Services.Infrastructures.Auditing;
 using OnlineVoting.Services.Infrastructures.Authorization;
 using OnlineVoting.Services.Infrastructures.Authorization.Jwt;
 using OnlineVoting.Services.Interfaces;
+using Polly;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.IO.Compression;
+using System.Net;
 using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.RateLimiting;
 using VotingSystem.Data.Implementation;
 using VotingSystem.Logger;
-using Microsoft.AspNetCore.ResponseCompression;
-using OnlineVoting.Api.HealthChecks;
-using OnlineVoting.Caching.Configuration;
-using Microsoft.Extensions.Http.Resilience;
-using Polly;
-using System.IO.Compression;
-using System.Net;
 
 
 namespace OnlineVoting.Api.Middlewares
@@ -112,7 +115,6 @@ namespace OnlineVoting.Api.Middlewares
             services.AddScoped<IVoterService, VoterService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IStaffService, StaffService>();
-            services.AddScoped<IFileDataExtractorService, FileDataExtractorService>();
             services.AddScoped<DbContext, VotingDbContext>();
             services.AddScoped<IServiceFactory, ServiceFactory>();
             services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
@@ -121,6 +123,11 @@ namespace OnlineVoting.Api.Middlewares
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
             services.AddScoped<IAuditMetadataProvider, AuditMetadataProvider>();
             services.AddScoped<IAuditTrailService, AuditTrailService>();
+            services.AddScoped<SendCreateUserEmailTask>();
+            services.AddScoped<ProcessStudentUploadTask>();
+            services.AddScoped<UpdateInactiveStudentsTask>();
+            services.AddScoped<DeleteUnconfirmedUsersTask>();
+            services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
             services.AddMemoryCache();
 
             services.AddHttpClient<IIpGeolocationService, IpGeolocationService>(client =>

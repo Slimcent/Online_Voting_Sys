@@ -10,25 +10,21 @@ namespace OnlineVoting.Models.Dtos.Request
     {
         public UploadStudentRequest()
         {
-            RequiredFields = new[]
+            RequiredColumns = new[]
             {
                 "RegNumber",
                 "FirstName",
                 "LastName",
-                "Email"
-            };
-
-            IgnoreFields = new[]
-            {
-                "SN"
+                "Email",
+                "PhoneNumber",
+                "Gender",
+                "Department"
             };
         }
 
         [JsonIgnore]
-        public string[] RequiredFields { get; set; }
-
-        [JsonIgnore]
-        public string[] IgnoreFields { get; set; }
+        public string[] RequiredColumns { get; set; }
+        public string[] UniqueColumns { get; set; } = { "RegNumber" };
 
         /// <summary>
         /// The Excel file containing the student records.

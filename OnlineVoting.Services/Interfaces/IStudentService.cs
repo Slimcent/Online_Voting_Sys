@@ -11,5 +11,6 @@ namespace OnlineVoting.Services.Interfaces
         Task<Response> Vote(VoteRequest request);
         Task<Result<string>> UploadStudents(UploadStudentRequest request);
         Task<Models.Dtos.Response.FileStreamResponse> DownloadStudentsList();
+        Task<int> UpdateInactiveStudents();
     }
 }

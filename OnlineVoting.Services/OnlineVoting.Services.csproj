@@ -26,6 +26,7 @@
     <ProjectReference Include="..\OnlineVoting.Models\OnlineVoting.Models.csproj" />
     <ProjectReference Include="..\VotingSystem.Data\VotingSystem.Data.csproj" />
     <ProjectReference Include="..\VotingSystem.Logger\VotingSystem.Logger.csproj" />
+    <ProjectReference Include="..\OnlineVoting.BackgroundTasks\OnlineVoting.BackgroundTasks.csproj" />
   </ItemGroup>
 
 </Project>

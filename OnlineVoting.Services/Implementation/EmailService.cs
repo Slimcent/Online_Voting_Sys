@@ -1,4 +1,5 @@
 ﻿using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using OnlineVoting.Models.Dtos.Request.Email;
@@ -43,24 +44,48 @@ namespace OnlineVoting.Services.Implementation
 
             EmailDataDto emailData = EmailExtension.SendVoterEmailData(emailRequest);
 
-            await SendEmail(emailData);
+            bool emailSent = await SendEmail(emailData);
+
+            if (!emailSent)
+                throw new InvalidOperationException($"Voter email sending failed for {request.Email}.");
 
             _loggerMessage.LogInfo($"Voter email processing completed for {request.Email}.");
         }
 
-        public async Task SendCreateUserEmail(UserMailDto request)
+        public async Task SendCreateUserEmail(CreateUserEmailRequest request)
         {
-            _loggerMessage.LogInfo($"Create user email request received for user {request.User.Id}.");
+            _loggerMessage.LogInfo($"Create user email request received for {request.Email}.");
 
-            string emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(request.User);
-            string resetPasswordToken = await _userManager.GeneratePasswordResetTokenAsync(request.User);
+            string? firstName = request.FirstName;
+            string? email = request.Email;
+            string? emailConfirmationToken = request.EmailConfirmationToken;
+            string? resetPasswordToken = request.ResetPasswordToken;
+
+            if ((string.IsNullOrWhiteSpace(emailConfirmationToken) || string.IsNullOrWhiteSpace(resetPasswordToken))
+                && !string.IsNullOrWhiteSpace(request.UserId))
+            {
+                User? user = await _userManager.FindByIdAsync(request.UserId);
+
+                if (user is null)
+                {
+                    _loggerMessage.LogWarn($"Create user email could not be sent because user {request.UserId} was not found.");
+
+                    return;
+                }
+
+                firstName ??= user.FirstName;
+                email ??= user.Email;
+
+                emailConfirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                resetPasswordToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            }
 
             EmailRequestDto emailRequest = new()
             {
                 FromName = _emailSettings.SenderName,
                 FromEmail = _emailSettings.SenderEmail,
-                ToName = request.FirstName,
-                ToEmail = request.User.Email,
+                ToName = firstName,
+                ToEmail = email,
                 AppUrl = _emailSettings?.AppUrl,
                 EmailConfirmationToken = emailConfirmationToken,
                 ResetPasswordToken = resetPasswordToken
@@ -68,9 +93,12 @@ namespace OnlineVoting.Services.Implementation
 
             EmailDataDto emailData = EmailExtension.CreateUserEmailData(emailRequest);
 
-            await SendEmail(emailData);
+            bool emailSent = await SendEmail(emailData);
 
-            _loggerMessage.LogInfo($"Create user email processing completed for user {request.User.Id}.");
+            if (!emailSent)
+                throw new InvalidOperationException($"Create user email sending failed for {email}.");
+
+            _loggerMessage.LogInfo($"Create user email processing completed for {email}.");
         }
 
         public async Task<Result<string>> SendResetPasswordEmail(string email)
@@ -161,15 +189,15 @@ namespace OnlineVoting.Services.Implementation
 
             return Result<string>.Success("A link to change your email will be sent to you if an account with this email exist");
         }
-
+                               
         protected virtual async Task<bool> SendEmail(EmailDataDto request)
         {
             SmtpClient client = new();
 
             try
             {
-                await client.ConnectAsync(_emailSettings.Server, _emailSettings.Port, true);
-                await client.AuthenticateAsync(new NetworkCredential(_emailSettings.SenderEmail, _emailSettings.Password));
+                await client.ConnectAsync(_emailSettings.Server, _emailSettings.Port, SecureSocketOptions.SslOnConnect);
+                await client.AuthenticateAsync(_emailSettings.SenderEmail, _emailSettings.Password);
                 await client.SendAsync(request.MessageBody);
                 await client.DisconnectAsync(true);
 
