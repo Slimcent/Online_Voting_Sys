@@ -12,10 +12,11 @@ namespace OnlineVoting.Tests.TestData.Factories
                 FirstName = TestValues.ValidName,
                 LastName = "Obinna",
                 Email = TestValues.ValidEmail,
+                RegNumber = TestValues.ValidRegistrationNumber,
                 PhoneNumber = TestValues.ValidPhoneNumber,
                 GenderId = TestValues.ValidGenderId,
-                UserType = TestValues.ValidUserType,
-                Role = TestValues.ValidRole,
+                UserTypeId = TestValues.ValidUserType,
+                RoleId = TestValues.ValidRoleId,
                 DepartmentId = 1
             };
         }

@@ -53,6 +53,14 @@
     <ProjectReference Include="..\OnlineVoting.Models\OnlineVoting.Models.csproj" />
     <ProjectReference Include="..\OnlineVoting.Services\OnlineVoting.Services.csproj" />
     <ProjectReference Include="..\VotingSystem.Logger\VotingSystem.Logger.csproj" />
+    <ProjectReference Include="..\OnlineVoting.BackgroundTasks\OnlineVoting.BackgroundTasks.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+	  <Content Update="wwwroot\html\**\*">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		  <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+	  </Content>
   </ItemGroup>
 
 </Project>

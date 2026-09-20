@@ -24,11 +24,11 @@ namespace OnlineVoting.Tests.UnitTests.Models.Validators.Request
         public async Task Validate_InvalidName_ShouldHaveNameValidationError()
         {
             AddUserToRoleRequest request = AddUserToRoleRequestFactory.CreateValid();
-            request.Name = string.Empty;
+            request.RoleId = string.Empty;
 
             TestValidationResult<AddUserToRoleRequest> result = await _validator.TestValidateAsync(request);
 
-            result.ShouldHaveValidationErrorFor(value => value.Name);
+            result.ShouldHaveValidationErrorFor(value => value.RoleId);
         }
 
         [Fact]

@@ -275,7 +275,7 @@ namespace OnlineVoting.Tests.UnitTests.Api.Controllers
             AddUserToRoleRequest request = new()
             {
                 Email = "user@example.com",
-                Name = "Admin"
+                RoleId = "Admin"
             };
 
             roleService.Setup(service => service.AddUserToRole(request)).ReturnsAsync(Result<string>.Success("User added to role successfully"));
@@ -300,7 +300,7 @@ namespace OnlineVoting.Tests.UnitTests.Api.Controllers
             AddUserToRoleRequest request = new()
             {
                 Email = "user@example.com",
-                Name = "Admin"
+                RoleId = "Admin"
             };
 
             roleService.Setup(service => service.RemoveUserFromRole(request)).ReturnsAsync(Result<string>.Success("User removed from role successfully"));

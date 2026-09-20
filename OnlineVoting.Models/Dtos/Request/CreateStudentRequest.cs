@@ -6,6 +6,12 @@
     public class CreateStudentRequest : CreateUserRequest
     {
         /// <summary>
+        /// The student's registration number.
+        /// </summary>
+        /// <example>ESUT/2026/12345</example>
+        public required string RegNumber { get; set; }
+
+        /// <summary>
         /// The identifier of the department to which the student belongs.
         /// </summary>
         /// <example>1</example>

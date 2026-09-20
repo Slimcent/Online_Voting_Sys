@@ -26,6 +26,7 @@
 		<ProjectReference Include="..\OnlineVoting.Services\OnlineVoting.Services.csproj" />
 		<ProjectReference Include="..\VotingSystem.Data\VotingSystem.Data.csproj" />
 		<ProjectReference Include="..\OnlineVoting.Caching\OnlineVoting.Caching.csproj" />
+		<ProjectReference Include="..\OnlineVoting.BackgroundTasks\OnlineVoting.BackgroundTasks.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -38,10 +39,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="..\OnlineVoting.Api\Template\EmailTemplate.html">
-			<Link>Template\EmailTemplate.html</Link>
+		<None Include="..\OnlineVoting.Api\wwwroot\html\EmailTemplate.html">
+			<Link>wwwroot\html\EmailTemplate.html</Link>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-			<TargetPath>Template\EmailTemplate.html</TargetPath>
+			<TargetPath>wwwroot\html\EmailTemplate.html</TargetPath>
 		</None>
 	</ItemGroup>
 
