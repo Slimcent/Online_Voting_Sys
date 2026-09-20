@@ -6,6 +6,7 @@ using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Dtos.Response.Jwt;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Results;
+using OnlineVoting.Tests.TestData.Data;
 using OnlineVoting.Tests.TestData.Factories;
 using System.Security.Claims;
 
@@ -230,6 +231,240 @@ namespace OnlineVoting.Tests.UnitTests.Services
             factory.AuditTrailService.Verify(service => service.RecordAuthenticationEvent(ApplicationConstants.Audit.Events.LoginSucceeded,
                 ApplicationConstants.Audit.Outcomes.Success, ApplicationConstants.Audit.Descriptions.LoginSucceeded,
                 user, null), Times.Once);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public async Task DeleteUnconfirmedUsers_WithInvalidRetentionDays_ShouldThrowArgumentOutOfRangeException(int retentionDays)
+        {
+            using UserServiceFactory factory = new();
+
+            await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => factory.Service.DeleteUnconfirmedUsers(retentionDays));
+
+            factory.UnitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(), Times.Never);
+            factory.UserRepository.Verify(repository => repository.DeleteRange(It.IsAny<IEnumerable<User>>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task DeleteUnconfirmedUsers_WithNoMatchingUsers_ShouldReturnZero()
+        {
+            using UserServiceFactory factory = new();
+
+            User confirmedUser = new()
+            {
+                Id = "confirmed-user",
+                EmailConfirmed = true,
+                Active = false,
+                UserTypeId = 1,
+                CreatedAt = DateTime.UtcNow.AddDays(-10)
+            };
+
+            User recentUnconfirmedUser = new()
+            {
+                Id = "recent-unconfirmed-user",
+                EmailConfirmed = false,
+                Active = true,
+                UserTypeId = 1,
+                CreatedAt = DateTime.UtcNow.AddDays(-4)
+            };
+
+            await factory.AddCleanupData(new[] { confirmedUser, recentUnconfirmedUser });
+
+            int result = await factory.Service.DeleteUnconfirmedUsers(5);
+
+            Assert.Equal(0, result);
+
+            factory.UserRepository.Verify(repository => repository.DeleteRange(It.IsAny<IEnumerable<User>>()), Times.Never);
+            factory.StudentRepository.Verify(repository => repository.DeleteRange(It.IsAny<IEnumerable<Student>>()), Times.Never);
+            factory.StaffRepository.Verify(repository => repository.DeleteRange(It.IsAny<IEnumerable<Staff>>()), Times.Never);
+            factory.AddressRepository.Verify(repository => repository.DeleteRange(It.IsAny<IEnumerable<Address>>()), Times.Never);
+            factory.RegisteredVoterRepository.Verify(repository => repository.DeleteRange(It.IsAny<IEnumerable<RegisteredVoter>>()), Times.Never);
+            factory.UnitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(), Times.Never);
+        }
+
+        [Fact]
+        public async Task DeleteUnconfirmedUsers_WithExpiredUnconfirmedUsers_ShouldDeleteRelatedData()
+        {
+            using UserServiceFactory factory = new();
+
+            User studentUser = new()
+            {
+                Id = "expired-student-user",
+                EmailConfirmed = false,
+                Active = true,
+                UserTypeId = 1,
+                CreatedAt = DateTime.UtcNow.AddDays(-6)
+            };
+
+            User staffUser = new()
+            {
+                Id = "expired-staff-user",
+                EmailConfirmed = false,
+                Active = false,
+                UserTypeId = 1,
+                CreatedAt = DateTime.UtcNow.AddDays(-7)
+            };
+
+            User confirmedUser = new()
+            {
+                Id = "confirmed-user",
+                EmailConfirmed = true,
+                Active = false,
+                UserTypeId = 1,
+                CreatedAt = DateTime.UtcNow.AddDays(-10)
+            };
+
+            User recentUser = new()
+            {
+                Id = "recent-user",
+                EmailConfirmed = false,
+                Active = true,
+                UserTypeId = 1,
+                CreatedAt = DateTime.UtcNow.AddDays(-4)
+            };
+
+            Student student = new()
+            {
+                Id = Guid.NewGuid(),
+                UserId = studentUser.Id,
+                DepartmentId = 1,
+                GenderId = 1
+            };
+
+            Staff staff = new()
+            {
+                Id = Guid.NewGuid(),
+                UserId = staffUser.Id,
+                GenderId = 1
+            };
+
+            Address studentAddress = new()
+            {
+                Id = Guid.NewGuid(),
+                StudentId = student.Id
+            };
+
+            Address staffAddress = new()
+            {
+                Id = Guid.NewGuid(),
+                StaffId = staff.Id
+            };
+
+            RegisteredVoter registeredVoter = new()
+            {
+                Id = Guid.NewGuid(),
+                StudentId = student.Id,
+                DepartmentId = 1
+            };
+
+            await factory.AddCleanupData(
+                new[] { studentUser, staffUser, confirmedUser, recentUser },
+                new[] { student },
+                new[] { staff },
+                new[] { studentAddress, staffAddress },
+                new[] { registeredVoter });
+
+            int result = await factory.Service.DeleteUnconfirmedUsers(5);
+
+            Assert.Equal(2, result);
+
+            factory.AddressRepository.Verify(repository => repository.DeleteRange(
+                It.Is<IEnumerable<Address>>(items => items.Count() == 2
+                    && items.Any(x => x.Id == studentAddress.Id)
+                    && items.Any(x => x.Id == staffAddress.Id))), Times.Once);
+
+            factory.RegisteredVoterRepository.Verify(repository => repository.DeleteRange(
+                It.Is<IEnumerable<RegisteredVoter>>(items => items.Count() == 1
+                    && items.Any(x => x.Id == registeredVoter.Id))), Times.Once);
+
+            factory.StudentRepository.Verify(repository => repository.DeleteRange(
+                It.Is<IEnumerable<Student>>(items => items.Count() == 1
+                    && items.Any(x => x.Id == student.Id))), Times.Once);
+
+            factory.StaffRepository.Verify(repository => repository.DeleteRange(
+                It.Is<IEnumerable<Staff>>(items => items.Count() == 1
+                    && items.Any(x => x.Id == staff.Id))), Times.Once);
+
+            factory.UserRepository.Verify(repository => repository.DeleteRange(
+                It.Is<IEnumerable<User>>(items => items.Count() == 2
+                    && items.Any(x => x.Id == studentUser.Id)
+                    && items.Any(x => x.Id == staffUser.Id)
+                    && items.All(x => x.Id != confirmedUser.Id)
+                    && items.All(x => x.Id != recentUser.Id))), Times.Once);
+
+            factory.UnitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteUnconfirmedUsers_WithNoMatchingStudentOrStaff_ShouldDeleteUserSafely()
+        {
+            using UserServiceFactory factory = new();
+
+            User user = new()
+            {
+                Id = "expired-user",
+                EmailConfirmed = false,
+                Active = true,
+                UserTypeId = 1,
+                CreatedAt = DateTime.UtcNow.AddDays(-6)
+            };
+
+            Student studentWithoutUser = new()
+            {
+                Id = Guid.NewGuid(),
+                UserId = null,
+                DepartmentId = 1,
+                GenderId = 1
+            };
+
+            Staff staffWithoutUser = new()
+            {
+                Id = Guid.NewGuid(),
+                UserId = null,
+                GenderId = 1
+            };
+
+            await factory.AddCleanupData(new[] { user }, new[] { studentWithoutUser }, new[] { staffWithoutUser });
+
+            int result = await factory.Service.DeleteUnconfirmedUsers(5);
+
+            Assert.Equal(1, result);
+
+            factory.StudentRepository.Verify(repository => repository.DeleteRange(
+                It.Is<IEnumerable<Student>>(items => !items.Any())), Times.Once);
+
+            factory.StaffRepository.Verify(repository => repository.DeleteRange(
+                It.Is<IEnumerable<Staff>>(items => !items.Any())), Times.Once);
+
+            factory.AddressRepository.Verify(repository => repository.DeleteRange(
+                It.Is<IEnumerable<Address>>(items => !items.Any())), Times.Once);
+
+            factory.RegisteredVoterRepository.Verify(repository => repository.DeleteRange(
+                It.Is<IEnumerable<RegisteredVoter>>(items => !items.Any())), Times.Once);
+
+            factory.UserRepository.Verify(repository => repository.DeleteRange(
+                It.Is<IEnumerable<User>>(items => items.Count() == 1 && items.Any(x => x.Id == user.Id))), Times.Once);
+
+            factory.UnitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteUnconfirmedUsers_WithUserAtRetentionBoundary_ShouldDeleteUser()
+        {
+            using UserServiceFactory factory = new();
+
+            User user = UserTestData.CreateUserAtRetentionBoundary("boundary-user");
+
+            await factory.AddCleanupData(new[] { user });
+
+            int result = await factory.Service.DeleteUnconfirmedUsers(5);
+
+            Assert.Equal(1, result);
+
+            factory.UserRepository.Verify(repository => repository.DeleteRange(It.Is<IEnumerable<User>>(items => items.Count() == 1 && items.Any(x => x.Id == user.Id))), Times.Once);
+
+            factory.UnitOfWork.Verify(unitOfWork => unitOfWork.SaveChangesAsync(), Times.Once);
         }
     }
 }

@@ -20,7 +20,7 @@
         public const string TooLongPhoneNumber = "080123456789";
         public const string PhoneNumberWithLetters = "08012ABC678";
         public const string ValidRegistrationNumber = "REG123456";
-        public const string ValidRole = "Student";
+        public const string ValidRoleId = "Student";
         public const int ValidGenderId = 1;
         public const int ValidUserType = 2;
         public const string ValidClaimType = "Permission";
