@@ -5329,5 +5329,24 @@ Password-reset and change-email operations remain synchronous because their resu
 
 ---
 
+## Address Ownership and Data Integrity
+
+Updated `Address` so it now belongs directly to `User` instead of `Student` or `Staff`.
+
+```
+Student -> User <- Staff
+           |
+           v
+        Address
+```
+
+Users can be created without an address and add one later. `Address.UserId` is unique, so one user cannot have multiple address records.
+
+Also added database constraints for unique student registration numbers, faculty names, gender names, user type names, normalized user emails 
+and department names within a faculty.
+
+The migration was adjusted to copy existing address ownership to `UserId` before removing `StudentId` and `StaffId`.
+
+Existing data was checked for duplicates, invalid address relationships and values exceeding the new column limits before the migration was applied.
 
 ---

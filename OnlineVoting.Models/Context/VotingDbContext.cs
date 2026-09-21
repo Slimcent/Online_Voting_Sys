@@ -230,8 +230,13 @@ namespace OnlineVoting.Models.Context
                     .WithOne(e => e.User)
                     .HasForeignKey(refreshToken => refreshToken.UserId)
                     .IsRequired();
-            });
 
+                b.HasIndex(e => e.NormalizedEmail)
+                    .HasDatabaseName("EmailIndex")
+                    .IsUnique()
+                    .HasFilter("[NormalizedEmail] IS NOT NULL");
+            });
+                        
             modelBuilder.Entity<RefreshToken>(b =>
             {
                 b.HasIndex(e => e.TokenHash)
@@ -391,7 +396,89 @@ namespace OnlineVoting.Models.Context
                     .WithOne(e => e.Role)
                     .HasForeignKey(rc => rc.RoleId)
                     .IsRequired();
-            });            
+            });
+
+            modelBuilder.Entity<Address>(b =>
+            {
+                b.Property(e => e.UserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                b.Property(e => e.StreetName)
+                    .HasMaxLength(200);
+
+                b.Property(e => e.City)
+                    .HasMaxLength(100);
+
+                b.Property(e => e.State)
+                    .HasMaxLength(100);
+
+                b.Property(e => e.Nationality)
+                    .HasMaxLength(100);
+
+                b.HasIndex(e => e.UserId)
+                    .IsUnique();
+
+                b.HasOne(e => e.User)
+                    .WithOne(e => e.Address)
+                    .HasForeignKey<Address>(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
+
+            modelBuilder.Entity<Student>(b =>
+            {
+                b.Property(e => e.RegNumber)
+                    .HasMaxLength(50);
+
+                b.HasIndex(e => e.RegNumber)
+                    .IsUnique()
+                    .HasFilter("[RegNumber] IS NOT NULL");
+            });
+
+            modelBuilder.Entity<Faculty>(b =>
+            {
+                b.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                b.HasIndex(e => e.Name)
+                    .IsUnique();
+            });
+
+            modelBuilder.Entity<Department>(b =>
+            {
+                b.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                b.HasIndex(e => new
+                {
+                    e.FacultyId,
+                    e.Name
+                })
+                .IsUnique();
+            });
+
+            modelBuilder.Entity<Gender>(b =>
+            {
+                b.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                b.HasIndex(e => e.Name)
+                    .IsUnique();
+            });
+
+            modelBuilder.Entity<UserType>(b =>
+            {
+                b.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                b.HasIndex(e => e.Name)
+                    .IsUnique();
+            });
         }
     }
 }

@@ -9,7 +9,7 @@
         /// The plot or building number.
         /// </summary>
         /// <example>12</example>
-        public int PlotNo { get; set; }
+        public int? PlotNo { get; set; }
 
         /// <summary>
         /// The street name.

@@ -342,13 +342,13 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Address studentAddress = new()
             {
                 Id = Guid.NewGuid(),
-                StudentId = student.Id
+                UserId = studentUser.Id
             };
 
             Address staffAddress = new()
             {
                 Id = Guid.NewGuid(),
-                StaffId = staff.Id
+                UserId = staffUser.Id
             };
 
             RegisteredVoter registeredVoter = new()
