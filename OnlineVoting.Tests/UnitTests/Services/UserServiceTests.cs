@@ -353,9 +353,8 @@ namespace OnlineVoting.Tests.UnitTests.Services
 
             RegisteredVoter registeredVoter = new()
             {
-                Id = Guid.NewGuid(),
+                Id = Guid.NewGuid().ToString(),
                 StudentId = student.Id,
-                DepartmentId = 1
             };
 
             await factory.AddCleanupData(

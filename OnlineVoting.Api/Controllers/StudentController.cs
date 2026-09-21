@@ -57,13 +57,13 @@ namespace OnlineVoting.Api.Controllers
             return result.ToActionResult(this);
         }
 
-        [HttpPost("create-contestant", Name = "Create-Contestants")]
-        [ApiDocumentation(StudentDocumentationKeys.CreateContestant)]
-        public async Task<IActionResult> CreateContestant([FromQuery] string regNo, [FromQuery] string position)
-        {
-            Result<Response> result = await _studentService.CreateContestant(regNo, position);
+        //[HttpPost("create-contestant", Name = "Create-Contestants")]
+        //[ApiDocumentation(StudentDocumentationKeys.CreateContestant)]
+        //public async Task<IActionResult> CreateContestant([FromQuery] string regNo, [FromQuery] string position)
+        //{
+        //    Result<Response> result = await _studentService.CreateContestant(regNo, position);
 
-            return result.ToActionResult(this);
-        }
+        //    return result.ToActionResult(this);
+        //}
     }
 }

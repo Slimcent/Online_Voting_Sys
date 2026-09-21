@@ -548,12 +548,8 @@ namespace OnlineVoting.Services.Implementation
             List<Guid> staffIds = staff.Select(x => x.Id).ToList();
 
             List<Address> addresses = await _addressRepo.GetQueryable(x => (x.UserId != null && userIds.Contains(x.UserId))).ToListAsync();
-
-            List<RegisteredVoter> registeredVoters = await _registeredVoterRepo.GetQueryable(x => x.StudentId.HasValue && studentIds.Contains(x.StudentId.Value))
-                .ToListAsync();
-
+                        
             _addressRepo.DeleteRange(addresses);
-            _registeredVoterRepo.DeleteRange(registeredVoters);
             _studentRepo.DeleteRange(students);
             _staffRepo.DeleteRange(staff);
             _userRepo.DeleteRange(users);

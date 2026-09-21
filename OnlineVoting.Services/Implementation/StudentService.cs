@@ -45,34 +45,34 @@ namespace OnlineVoting.Services.Implementation
             _mapper = _serviceFactory.GetService<IMapper>();
         }
 
-        public async Task<Result<Response>> CreateContestant(string regNo, string position)
-        {
-            if (string.IsNullOrWhiteSpace(regNo))
-                return Result<Response>.ValidationError("Registration number cannot be empty");
+        //public async Task<Result<Response>> CreateContestant(string regNo, string position)
+        //{
+        //    if (string.IsNullOrWhiteSpace(regNo))
+        //        return Result<Response>.ValidationError("Registration number cannot be empty");
 
-            if (string.IsNullOrWhiteSpace(position))
-                return Result<Response>.ValidationError("Position cannot be empty");
+        //    if (string.IsNullOrWhiteSpace(position))
+        //        return Result<Response>.ValidationError("Position cannot be empty");
 
-            Contestant contestantExists = await _contestantRepo.GetSingleByAsync(r => r.Student.RegNumber == regNo, include: r => r.Include(s => s.Student));
-            if (contestantExists != null)
-                return Result<Response>.Conflict($"Contestant with registration number {regNo} already exists");
+        //    Contestant contestantExists = await _contestantRepo.GetSingleByAsync(r => r.Student.RegNumber == regNo, include: r => r.Include(s => s.Student));
+        //    if (contestantExists != null)
+        //        return Result<Response>.Conflict($"Contestant with registration number {regNo} already exists");
 
-            Student student = await _studentRepo.GetSingleByAsync(s => s.RegNumber == regNo, include: s => s.Include(u => u.User));
-            if (student == null)
-                return Result<Response>.NotFound($"Student with registration number {regNo} was not found");
+        //    Student student = await _studentRepo.GetSingleByAsync(s => s.RegNumber == regNo, include: s => s.Include(u => u.User));
+        //    if (student == null)
+        //        return Result<Response>.NotFound($"Student with registration number {regNo} was not found");
 
-            Contestant contestant = new()
-            {
-                StudentId = student.Id,
-                //UserId = student.UserId
-            };
+        //    Contestant contestant = new()
+        //    {
+        //        StudentId = student.Id,
+        //        //UserId = student.UserId
+        //    };
 
-            await _contestantRepo.AddAsync(contestant);
+        //    await _contestantRepo.AddAsync(contestant);
 
-            Response response = new Response(true, $"Contestant with RegNumber {regNo} created successfully");
+        //    Response response = new Response(true, $"Contestant with RegNumber {regNo} created successfully");
 
-            return Result<Response>.Created(response);
-        }
+        //    return Result<Response>.Created(response);
+        //}
 
         public async Task<Result<Response>> CreateStudent(CreateStudentRequest request)
         {

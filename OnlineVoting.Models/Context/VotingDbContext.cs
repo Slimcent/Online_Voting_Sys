@@ -181,6 +181,7 @@ namespace OnlineVoting.Models.Context
                 
         public DbSet<Student> Students { get; set; }
         public DbSet<Vote> Votes { get; set; }
+        public DbSet<Year> Years { get; set; }
         public DbSet<Contestant> Contestants { get; set; }
         public DbSet<Position> Positions { get; set; }
         public virtual DbSet<Department> Departments { get; set; }
@@ -190,10 +191,17 @@ namespace OnlineVoting.Models.Context
         public virtual DbSet<Menu> Menus { get; set; }
         public virtual DbSet<Claims> Claims { get; set; }
         public virtual DbSet<UserType> UserTypes { get; set; }
+        public virtual DbSet<RegisteredVoter> RegisteredVoters { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<AuditTrail> AuditTrails { get; set; }
         public DbSet<AuditOutcome> AuditOutcomes { get; set; }
         public DbSet<AuditLocation> AuditLocations { get; set; }
+        public DbSet<Election> Elections { get; set; }
+        public DbSet<ElectionType> ElectionTypes { get; set; }
+        public DbSet<ElectionStatus> ElectionStatuses { get; set; }
+        public DbSet<ElectionPosition> ElectionPositions { get; set; }
+        public DbSet<PositionApplicationStatus> PositionApplicationStatuses { get; set; }
+        public DbSet<PositionApplication> PositionApplications { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -478,6 +486,326 @@ namespace OnlineVoting.Models.Context
 
                 b.HasIndex(e => e.Name)
                     .IsUnique();
+            });
+
+            modelBuilder.Entity<Year>(b =>
+            {
+                b.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                b.HasIndex(e => e.Name)
+                    .IsUnique();
+            });
+
+            modelBuilder.Entity<ElectionType>(b =>
+            {
+                b.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                b.Property(e => e.Description)
+                    .HasMaxLength(250);
+
+                b.HasIndex(e => e.Name)
+                    .IsUnique();
+            });
+
+            modelBuilder.Entity<ElectionStatus>(b =>
+            {
+                b.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                b.Property(e => e.Description)
+                    .HasMaxLength(250);
+
+                b.HasIndex(e => e.Name)
+                    .IsUnique();
+            });
+
+            modelBuilder.Entity<Position>(b =>
+            {
+                b.Property(e => e.Id)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                b.ToTable(t => t.HasCheckConstraint(
+                    "CK_Positions_Scope",
+                    "[FacultyId] IS NULL OR [DepartmentId] IS NULL"));
+
+                b.HasIndex(e => e.Name)
+                    .IsUnique()
+                    .HasFilter("[FacultyId] IS NULL AND [DepartmentId] IS NULL");
+
+                b.HasIndex(e => new { e.FacultyId, e.Name })
+                    .IsUnique()
+                    .HasFilter("[FacultyId] IS NOT NULL AND [DepartmentId] IS NULL");
+
+                b.HasIndex(e => new { e.DepartmentId, e.Name })
+                    .IsUnique()
+                    .HasFilter("[DepartmentId] IS NOT NULL AND [FacultyId] IS NULL");
+
+                b.HasOne(e => e.Faculty)
+                    .WithMany()
+                    .HasForeignKey(e => e.FacultyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(e => e.Department)
+                    .WithMany()
+                    .HasForeignKey(e => e.DepartmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<ElectionPosition>(b =>
+            {
+                b.Property(e => e.Id)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.Property(e => e.ElectionId)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.Property(e => e.PositionId)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.Property(e => e.ApplicationFee)
+                    .HasPrecision(18, 2);
+
+                b.Property(e => e.Currency)
+                    .IsRequired()
+                    .HasMaxLength(3)
+                    .IsUnicode(false);
+
+                b.HasIndex(e => new { e.ElectionId, e.PositionId })
+                    .IsUnique();
+
+                b.ToTable(t => t.HasCheckConstraint(
+                    "CK_ElectionPositions_ApplicationFee",
+                    "[ApplicationFee] >= 0"));
+
+                b.HasOne(e => e.Election)
+                    .WithMany(e => e.ElectionPositions)
+                    .HasForeignKey(e => e.ElectionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(e => e.Position)
+                    .WithMany(e => e.ElectionPositions)
+                    .HasForeignKey(e => e.PositionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<PositionApplicationStatus>(b =>
+            {
+                b.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                b.Property(e => e.Description)
+                    .HasMaxLength(250);
+
+                b.HasIndex(e => e.Name)
+                    .IsUnique();
+            });
+
+            modelBuilder.Entity<PositionApplication>(b =>
+            {
+                b.Property(e => e.Id)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.Property(e => e.ElectionPositionId)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.HasIndex(e => new { e.StudentId, e.ElectionPositionId })
+                    .IsUnique();
+
+                b.HasOne(e => e.Student)
+                    .WithMany()
+                    .HasForeignKey(e => e.StudentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(e => e.ElectionPosition)
+                    .WithMany(e => e.Applications)
+                    .HasForeignKey(e => e.ElectionPositionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(e => e.PositionApplicationStatus)
+                    .WithMany(e => e.Applications)
+                    .HasForeignKey(e => e.PositionApplicationStatusId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Contestant>(b =>
+            {
+                b.Property(e => e.Id)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.Property(e => e.PositionApplicationId)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.HasIndex(e => e.PositionApplicationId)
+                    .IsUnique();
+
+                b.HasOne(e => e.PositionApplication)
+                    .WithOne(e => e.Contestant)
+                    .HasForeignKey<Contestant>(e => e.PositionApplicationId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Election>(b =>
+            {
+                b.Property(e => e.Id)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                b.HasIndex(e => new { e.ElectionTypeId, e.YearId })
+                    .IsUnique()
+                    .HasFilter("[FacultyId] IS NULL AND [DepartmentId] IS NULL");
+
+                b.HasIndex(e => new { e.FacultyId, e.ElectionTypeId, e.YearId })
+                    .IsUnique()
+                    .HasFilter("[FacultyId] IS NOT NULL AND [DepartmentId] IS NULL");
+
+                b.HasIndex(e => new { e.DepartmentId, e.ElectionTypeId, e.YearId })
+                    .IsUnique()
+                    .HasFilter("[DepartmentId] IS NOT NULL AND [FacultyId] IS NULL");
+
+                b.HasOne(e => e.Year)
+                    .WithMany(e => e.Elections)
+                    .HasForeignKey(e => e.YearId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(e => e.ElectionType)
+                    .WithMany(e => e.Elections)
+                    .HasForeignKey(e => e.ElectionTypeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(e => e.ElectionStatus)
+                    .WithMany(e => e.Elections)
+                    .HasForeignKey(e => e.ElectionStatusId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(e => e.Faculty)
+                    .WithMany()
+                    .HasForeignKey(e => e.FacultyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(e => e.Department)
+                    .WithMany()
+                    .HasForeignKey(e => e.DepartmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+                                
+                b.ToTable(t =>
+                {
+                    t.HasCheckConstraint(
+                        "CK_Elections_Scope",
+                        "[FacultyId] IS NULL OR [DepartmentId] IS NULL");
+
+                    t.HasCheckConstraint(
+                        "CK_Elections_ApplicationPeriod",
+                        "([ApplicationStartAt] IS NULL AND [ApplicationEndAt] IS NULL) OR " +
+                        "([ApplicationStartAt] IS NOT NULL AND [ApplicationEndAt] IS NOT NULL AND " +
+                        "[ApplicationEndAt] > [ApplicationStartAt])");
+
+                    t.HasCheckConstraint(
+                        "CK_Elections_VoterRegistrationPeriod",
+                        "([VoterRegistrationStartAt] IS NULL AND [VoterRegistrationEndAt] IS NULL) OR " +
+                        "([VoterRegistrationStartAt] IS NOT NULL AND [VoterRegistrationEndAt] IS NOT NULL AND " +
+                        "[VoterRegistrationEndAt] > [VoterRegistrationStartAt])");
+
+                    t.HasCheckConstraint(
+                        "CK_Elections_VotingPeriod",
+                        "([VotingStartAt] IS NULL AND [VotingEndAt] IS NULL) OR " +
+                        "([VotingStartAt] IS NOT NULL AND [VotingEndAt] IS NOT NULL AND " +
+                        "[VotingEndAt] > [VotingStartAt])");
+                });
+            });
+
+            modelBuilder.Entity<Vote>(b =>
+            {
+                b.Property(e => e.Id)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.Property(e => e.RegisteredVoterId)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.Property(e => e.ContestantId)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.Property(e => e.ElectionPositionId)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.HasIndex(e => new
+                {
+                    e.RegisteredVoterId,
+                    e.ElectionPositionId
+                })
+                .IsUnique();
+
+                b.HasOne(e => e.RegisteredVoter)
+                    .WithMany(e => e.Votes)
+                    .HasForeignKey(e => e.RegisteredVoterId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(e => e.Contestant)
+                    .WithMany()
+                    .HasForeignKey(e => e.ContestantId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(e => e.ElectionPosition)
+                    .WithMany()
+                    .HasForeignKey(e => e.ElectionPositionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<RegisteredVoter>(b =>
+            {
+                b.Property(e => e.Id)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.Property(e => e.ElectionId)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.Property(e => e.VotingCode)
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
+
+                b.HasIndex(e => new { e.StudentId, e.ElectionId })
+                    .IsUnique();
+
+                b.HasIndex(e => e.VotingCode)
+                    .IsUnique();
+
+                b.HasOne(e => e.Student)
+                    .WithMany(e => e.RegisteredVoters)
+                    .HasForeignKey(e => e.StudentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(e => e.Election)
+                    .WithMany(e => e.RegisteredVoters)
+                    .HasForeignKey(e => e.ElectionId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

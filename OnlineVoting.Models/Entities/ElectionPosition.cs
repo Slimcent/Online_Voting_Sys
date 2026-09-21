@@ -2,19 +2,21 @@
 
 namespace OnlineVoting.Models.Entities
 {
-    public class RegisteredVoter : ITracker, IAuditable
+    public class ElectionPosition : ITracker, IAuditable
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
-        public Guid StudentId { get; set; }
-        public string ElectionId { get; set; }
-        public string VotingCode { get; set; }
+        public string ElectionId { get; set; } = string.Empty;
+        public string PositionId { get; set; } = string.Empty;
+        public decimal ApplicationFee { get; set; }
+        public string Currency { get; set; } = string.Empty;
         public bool Active { get; set; } = true;
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public string? CreatedBy { get; set; }
+
         public string? UpdatedBy { get; set; }
-        public virtual Student Student { get; set; } = null!;
         public virtual Election Election { get; set; } = null!;
-        public ICollection<Vote> Votes { get; set; } = [];
+        public virtual Position Position { get; set; } = null!;
+        public ICollection<PositionApplication> Applications { get; set; } = [];
     }
 }
