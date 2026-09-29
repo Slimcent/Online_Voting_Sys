@@ -351,18 +351,11 @@ namespace OnlineVoting.Tests.UnitTests.Services
                 UserId = staffUser.Id
             };
 
-            RegisteredVoter registeredVoter = new()
-            {
-                Id = Guid.NewGuid().ToString(),
-                StudentId = student.Id,
-            };
-
             await factory.AddCleanupData(
                 new[] { studentUser, staffUser, confirmedUser, recentUser },
                 new[] { student },
                 new[] { staff },
-                new[] { studentAddress, staffAddress },
-                new[] { registeredVoter });
+                new[] { studentAddress, staffAddress });
 
             int result = await factory.Service.DeleteUnconfirmedUsers(5);
 
@@ -372,11 +365,7 @@ namespace OnlineVoting.Tests.UnitTests.Services
                 It.Is<IEnumerable<Address>>(items => items.Count() == 2
                     && items.Any(x => x.Id == studentAddress.Id)
                     && items.Any(x => x.Id == staffAddress.Id))), Times.Once);
-
-            factory.RegisteredVoterRepository.Verify(repository => repository.DeleteRange(
-                It.Is<IEnumerable<RegisteredVoter>>(items => items.Count() == 1
-                    && items.Any(x => x.Id == registeredVoter.Id))), Times.Once);
-
+                        
             factory.StudentRepository.Verify(repository => repository.DeleteRange(
                 It.Is<IEnumerable<Student>>(items => items.Count() == 1
                     && items.Any(x => x.Id == student.Id))), Times.Once);
@@ -440,7 +429,7 @@ namespace OnlineVoting.Tests.UnitTests.Services
                 It.Is<IEnumerable<Address>>(items => !items.Any())), Times.Once);
 
             factory.RegisteredVoterRepository.Verify(repository => repository.DeleteRange(
-                It.Is<IEnumerable<RegisteredVoter>>(items => !items.Any())), Times.Once);
+                It.IsAny<IEnumerable<RegisteredVoter>>()), Times.Never);
 
             factory.UserRepository.Verify(repository => repository.DeleteRange(
                 It.Is<IEnumerable<User>>(items => items.Count() == 1 && items.Any(x => x.Id == user.Id))), Times.Once);

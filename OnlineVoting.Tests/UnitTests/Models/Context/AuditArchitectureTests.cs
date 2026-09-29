@@ -6,11 +6,11 @@ namespace OnlineVoting.Tests.UnitTests.Models.Context
     public class AuditArchitectureTests
     {
         [Fact]
-        public void Vote_ShouldNotBeAuditable()
+        public void Vote_ShouldBeAuditable()
         {
             bool isAuditable = typeof(IAuditable).IsAssignableFrom(typeof(Vote));
 
-            Assert.False(isAuditable);
+            Assert.True(isAuditable);
         }
 
         [Fact]
