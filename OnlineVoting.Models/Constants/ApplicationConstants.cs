@@ -54,5 +54,31 @@
                 public const string InactiveAccount = "Account is not active. Contact the administrator.";
             }
         }
+
+        public static class ElectionStatusCodes
+        {
+            public const string Draft = "DRAFT";
+            public const string RegistrationOpen = "REGISTRATION_OPEN";
+            public const string RegistrationClosed = "REGISTRATION_CLOSED";
+            public const string VotingOpen = "VOTING_OPEN";
+            public const string Completed = "COMPLETED";
+            public const string Cancelled = "CANCELLED";
+        }
+
+        public static class ElectionScopeCodes
+        {
+            public const string University = "UNIVERSITY";
+            public const string Faculty = "FACULTY";
+            public const string Department = "DEPARTMENT";
+        }
+
+        public static class PositionApplicationStatuses
+        {
+            public const string PendingPayment = "Pending Payment";
+            public const string PendingReview = "Pending Review";
+            public const string Approved = "Approved";
+            public const string Rejected = "Rejected";
+            public const string Withdrawn = "Withdrawn";
+        }
     }
 }

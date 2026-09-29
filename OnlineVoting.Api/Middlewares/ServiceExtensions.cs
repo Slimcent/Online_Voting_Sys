@@ -123,6 +123,7 @@ namespace OnlineVoting.Api.Middlewares
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
             services.AddScoped<IAuditMetadataProvider, AuditMetadataProvider>();
             services.AddScoped<IAuditTrailService, AuditTrailService>();
+            services.AddScoped<IElectionTypeService, ElectionTypeService>();
             services.AddScoped<SendCreateUserEmailTask>();
             services.AddScoped<ProcessStudentUploadTask>();
             services.AddScoped<UpdateInactiveStudentsTask>();
