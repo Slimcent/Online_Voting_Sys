@@ -17,46 +17,37 @@ namespace VotingSystem.Data.SeedData
             {
                 new ElectionStatus
                 {
+                    Code = "DRAFT",
                     Name = "Draft",
-                    Description = "The election has been created but is not yet open."
+                    Description = "The election has been created but is not yet operational."
                 },
                 new ElectionStatus
                 {
-                    Name = "Application Open",
-                    Description = "Applications for election positions are open."
+                    Code = "REGISTRATION_OPEN",
+                    Name = "Registration Open",
+                    Description = "Candidate applications and/or voter registration are currently open according to the configured election periods."
                 },
                 new ElectionStatus
                 {
-                    Name = "Application Closed",
-                    Description = "Applications for election positions are closed."
+                    Code = "REGISTRATION_CLOSED",
+                    Name = "Registration Closed",
+                    Description = "Candidate applications and voter registration have closed."
                 },
                 new ElectionStatus
                 {
-                    Name = "Voter Registration Open",
-                    Description = "Voter registration is open."
-                },
-                new ElectionStatus
-                {
-                    Name = "Voter Registration Closed",
-                    Description = "Voter registration is closed."
-                },
-                new ElectionStatus
-                {
+                    Code = "VOTING_OPEN",
                     Name = "Voting Open",
                     Description = "Voting is currently open."
                 },
                 new ElectionStatus
                 {
-                    Name = "Voting Closed",
-                    Description = "Voting has ended."
-                },
-                new ElectionStatus
-                {
+                    Code = "COMPLETED",
                     Name = "Completed",
                     Description = "The election has been completed."
                 },
                 new ElectionStatus
                 {
+                    Code = "CANCELLED",
                     Name = "Cancelled",
                     Description = "The election has been cancelled."
                 }

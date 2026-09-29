@@ -37,6 +37,7 @@ namespace VotingSystem.Data.SeedData
                     await SeedGenders(context, seed);
                     await SeedAuditData.SeedAuditOutcomes(context);
                     await SeedYearData.SeedYears(context);
+                    await SeedElectionScopeData.SeedElectionScopes(context);
                     await SeedElectionTypeData.SeedElectionTypes(context);
                     await SeedElectionStatusData.SeedElectionStatuses(context);
                     await SeedPositionApplicationStatusData.SeedPositionApplicationStatuses(context);
