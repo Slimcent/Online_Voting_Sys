@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using OnlineVoting.Models.Context.ContextExtensions;
 using OnlineVoting.Models.ContextExtensions;
 using OnlineVoting.Models.Entities;
+using OnlineVoting.Models.Entities.OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Interfaces;
 
 namespace OnlineVoting.Models.Context
@@ -198,6 +199,7 @@ namespace OnlineVoting.Models.Context
         public DbSet<AuditLocation> AuditLocations { get; set; }
         public DbSet<Election> Elections { get; set; }
         public DbSet<ElectionType> ElectionTypes { get; set; }
+        public DbSet<ElectionScope> ElectionScopes { get; set; }
         public DbSet<ElectionStatus> ElectionStatuses { get; set; }
         public DbSet<ElectionPosition> ElectionPositions { get; set; }
         public DbSet<PositionApplicationStatus> PositionApplicationStatuses { get; set; }
@@ -509,16 +511,48 @@ namespace OnlineVoting.Models.Context
 
                 b.HasIndex(e => e.Name)
                     .IsUnique();
+
+                b.HasOne(e => e.ElectionScope)
+                    .WithMany(e => e.ElectionTypes)
+                    .HasForeignKey(e => e.ElectionScopeId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
-            modelBuilder.Entity<ElectionStatus>(b =>
+            modelBuilder.Entity<ElectionScope>(b =>
             {
+                b.Property(e => e.Code)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
                 b.Property(e => e.Name)
                     .IsRequired()
                     .HasMaxLength(100);
 
                 b.Property(e => e.Description)
                     .HasMaxLength(250);
+
+                b.HasIndex(e => e.Code)
+                    .IsUnique();
+
+                b.HasIndex(e => e.Name)
+                    .IsUnique();
+            });
+
+            modelBuilder.Entity<ElectionStatus>(b =>
+            {
+                b.Property(e => e.Code)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                b.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                b.Property(e => e.Description)
+                    .HasMaxLength(250);
+
+                b.HasIndex(e => e.Code)
+                    .IsUnique();
 
                 b.HasIndex(e => e.Name)
                     .IsUnique();
