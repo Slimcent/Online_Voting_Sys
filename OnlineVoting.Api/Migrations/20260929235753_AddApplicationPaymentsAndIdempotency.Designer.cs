@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OnlineVoting.Models.Context;
 
@@ -11,9 +12,11 @@ using OnlineVoting.Models.Context;
 namespace OnlineVoting.Api.Migrations
 {
     [DbContext(typeof(VotingDbContext))]
-    partial class VotingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260929235753_AddApplicationPaymentsAndIdempotency")]
+    partial class AddApplicationPaymentsAndIdempotency
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1159,10 +1162,6 @@ namespace OnlineVoting.Api.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(3)");
 
-                    b.Property<string>("FailureReason")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
                     b.Property<string>("InvoiceId")
                         .IsRequired()
                         .HasMaxLength(36)
@@ -1337,6 +1336,46 @@ namespace OnlineVoting.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("PositionApplications");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.PositionApplicationStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("PositionApplicationStatuses");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.RefreshToken", b =>
@@ -1770,54 +1809,6 @@ namespace OnlineVoting.Api.Migrations
                     b.ToTable("Years");
                 });
 
-            modelBuilder.Entity("PositionApplicationStatus", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Active")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("PositionApplicationStatuses");
-                });
-
             modelBuilder.Entity("Vote", b =>
                 {
                     b.Property<string>("Id")
@@ -2133,14 +2124,14 @@ namespace OnlineVoting.Api.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("PositionApplicationStatus", "PositionApplicationStatus")
+                    b.HasOne("OnlineVoting.Models.Entities.PositionApplicationStatus", "PositionApplicationStatus")
                         .WithMany("Applications")
                         .HasForeignKey("PositionApplicationStatusId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("OnlineVoting.Models.Entities.Student", "Student")
-                        .WithMany("PositionApplications")
+                        .WithMany()
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -2341,6 +2332,11 @@ namespace OnlineVoting.Api.Migrations
                     b.Navigation("Invoice");
                 });
 
+            modelBuilder.Entity("OnlineVoting.Models.Entities.PositionApplicationStatus", b =>
+                {
+                    b.Navigation("Applications");
+                });
+
             modelBuilder.Entity("OnlineVoting.Models.Entities.RegisteredVoter", b =>
                 {
                     b.Navigation("Votes");
@@ -2355,8 +2351,6 @@ namespace OnlineVoting.Api.Migrations
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Student", b =>
                 {
-                    b.Navigation("PositionApplications");
-
                     b.Navigation("RegisteredVoters");
                 });
 
@@ -2387,11 +2381,6 @@ namespace OnlineVoting.Api.Migrations
             modelBuilder.Entity("OnlineVoting.Models.Entities.Year", b =>
                 {
                     b.Navigation("Elections");
-                });
-
-            modelBuilder.Entity("PositionApplicationStatus", b =>
-                {
-                    b.Navigation("Applications");
                 });
 #pragma warning restore 612, 618
         }

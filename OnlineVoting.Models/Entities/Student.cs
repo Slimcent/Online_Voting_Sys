@@ -19,5 +19,6 @@ namespace OnlineVoting.Models.Entities
         public virtual Gender Gender { get; set; }
         public virtual Department? Department { get; set; }
         public ICollection<RegisteredVoter> RegisteredVoters { get; set; } = [];
+        public ICollection<PositionApplication> PositionApplications { get; set; } = [];
     }
 }

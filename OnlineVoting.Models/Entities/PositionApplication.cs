@@ -13,6 +13,7 @@ namespace OnlineVoting.Models.Entities
         public DateTime UpdatedAt { get; set; }
         public string? CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }
+        public virtual Invoice? Invoice { get; set; }
         public virtual Student Student { get; set; } = null!;
         public virtual ElectionPosition ElectionPosition { get; set; } = null!;
         public virtual PositionApplicationStatus PositionApplicationStatus { get; set; } = null!;

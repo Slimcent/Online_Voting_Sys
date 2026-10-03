@@ -74,11 +74,53 @@
 
         public static class PositionApplicationStatuses
         {
-            public const string PendingPayment = "Pending Payment";
-            public const string PendingReview = "Pending Review";
-            public const string Approved = "Approved";
-            public const string Rejected = "Rejected";
-            public const string Withdrawn = "Withdrawn";
+            public const string PendingPayment = "PENDING_PAYMENT";
+            public const string PendingReview = "PENDING_REVIEW";
+            public const string Approved = "APPROVED";
+            public const string Rejected = "REJECTED";
+            public const string Withdrawn = "WITHDRAWN";
+        }
+
+        public static class InvoiceStatuses
+        {
+            public const string Unpaid = "UNPAID";
+            public const string Paid = "PAID";
+            public const string Cancelled = "CANCELLED";
+        }
+
+        public static class PaymentStatuses
+        {
+            public const string Pending = "PENDING";
+            public const string Succeeded = "SUCCEEDED";
+            public const string Failed = "FAILED";
+            public const string Cancelled = "CANCELLED";
+        }
+
+        public static class IdempotencyStatuses
+        {
+            public const string Processing = "Processing";
+            public const string Completed = "Completed";
+            public const string Failed = "Failed";
+        }
+
+        public static class IdempotencyOperations
+        {
+            public const string CreatePositionApplication = "CreatePositionApplication";
+            public const string InitiatePayment = "InitiatePayment";
+        }
+
+        public static class PaymentGateways
+        {
+            public const string Paystack = "PAYSTACK";
+            public const string Flutterwave = "FLUTTERWAVE";
+        }
+
+        public static class GatewayPaymentStatuses
+        {
+            public const string Pending = "PENDING";
+            public const string Succeeded = "SUCCEEDED";
+            public const string Failed = "FAILED";
+            public const string Cancelled = "CANCELLED";
         }
     }
 }

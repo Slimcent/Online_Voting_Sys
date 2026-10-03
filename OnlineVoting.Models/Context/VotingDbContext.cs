@@ -204,6 +204,12 @@ namespace OnlineVoting.Models.Context
         public DbSet<ElectionPosition> ElectionPositions { get; set; }
         public DbSet<PositionApplicationStatus> PositionApplicationStatuses { get; set; }
         public DbSet<PositionApplication> PositionApplications { get; set; }
+        public DbSet<Invoice> Invoices { get; set; }
+        public DbSet<InvoiceStatus> InvoiceStatuses { get; set; }
+        public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
+        public DbSet<PaymentStatus> PaymentStatuses { get; set; }
+        public DbSet<PaymentGateway> PaymentGateways { get; set; }
+        public DbSet<IdempotencyRecord> IdempotencyRecords { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -641,6 +647,13 @@ namespace OnlineVoting.Models.Context
                     .IsRequired()
                     .HasMaxLength(100);
 
+                b.Property(x => x.Code)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                b.HasIndex(x => x.Code)
+                    .IsUnique();
+
                 b.Property(e => e.Description)
                     .HasMaxLength(250);
 
@@ -662,7 +675,7 @@ namespace OnlineVoting.Models.Context
                     .IsUnique();
 
                 b.HasOne(e => e.Student)
-                    .WithMany()
+                    .WithMany(e => e.PositionApplications)
                     .HasForeignKey(e => e.StudentId)
                     .OnDelete(DeleteBehavior.Restrict);
 
@@ -840,6 +853,254 @@ namespace OnlineVoting.Models.Context
                     .WithMany(e => e.RegisteredVoters)
                     .HasForeignKey(e => e.ElectionId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<InvoiceStatus>(b =>
+            {
+                b.Property(e => e.Code)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                b.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                b.Property(e => e.Description)
+                    .HasMaxLength(250);
+
+                b.HasIndex(e => e.Code)
+                    .IsUnique();
+
+                b.HasIndex(e => e.Name)
+                    .IsUnique();
+            });
+
+            modelBuilder.Entity<PaymentStatus>(b =>
+            {
+                b.Property(e => e.Code)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                b.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                b.Property(e => e.Description)
+                    .HasMaxLength(250);
+
+                b.HasIndex(e => e.Code)
+                    .IsUnique();
+
+                b.HasIndex(e => e.Name)
+                    .IsUnique();
+            });
+
+            modelBuilder.Entity<PaymentGateway>(b =>
+            {
+                b.Property(e => e.Code)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                b.Property(e => e.Name)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                b.Property(e => e.Description)
+                    .HasMaxLength(250);
+
+                b.HasIndex(e => e.Code)
+                    .IsUnique();
+
+                b.HasIndex(e => e.Name)
+                    .IsUnique();
+            });
+
+            modelBuilder.Entity<Invoice>(b =>
+            {
+                b.Property(e => e.Id)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.Property(e => e.PositionApplicationId)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.Property(e => e.InvoiceNumber)
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
+
+                b.Property(e => e.UserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                b.Property(e => e.PayerFirstName)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                b.Property(e => e.PayerLastName)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                b.Property(e => e.PayerEmail)
+                    .HasMaxLength(256);
+
+                b.Property(e => e.RegistrationNumber)
+                    .HasMaxLength(50);
+
+                b.Property(e => e.Amount)
+                    .HasPrecision(18, 2);
+
+                b.Property(e => e.Currency)
+                    .IsRequired()
+                    .HasMaxLength(3)
+                    .IsUnicode(false);
+
+                b.HasIndex(e => e.PositionApplicationId)
+                    .IsUnique();
+
+                b.HasIndex(e => e.InvoiceNumber)
+                    .IsUnique();
+
+                b.ToTable(t => t.HasCheckConstraint(
+                    "CK_Invoices_Amount",
+                    "[Amount] >= 0"));
+
+                b.HasOne(e => e.PositionApplication)
+                    .WithOne(e => e.Invoice)
+                    .HasForeignKey<Invoice>(e => e.PositionApplicationId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(e => e.InvoiceStatus)
+                    .WithMany(e => e.Invoices)
+                    .HasForeignKey(e => e.InvoiceStatusId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<PaymentTransaction>(b =>
+            {
+                b.Property(e => e.Id)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.Property(e => e.InvoiceId)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.Property(e => e.PaymentReference)
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
+
+                b.Property(e => e.ProviderReference)
+                    .HasMaxLength(200)
+                    .IsUnicode(false);
+
+                b.Property(e => e.CheckoutUrl)
+                    .HasMaxLength(2000);
+
+                b.Property(e => e.UserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                b.Property(e => e.PayerFirstName)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                b.Property(e => e.PayerLastName)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                b.Property(e => e.PayerEmail)
+                    .HasMaxLength(256);
+
+                b.Property(e => e.RegistrationNumber)
+                    .HasMaxLength(50);
+
+                b.Property(e => e.Amount)
+                    .HasPrecision(18, 2);
+
+                b.Property(e => e.Currency)
+                    .IsRequired()
+                    .HasMaxLength(3)
+                    .IsUnicode(false);
+
+                b.Property(e => e.FailureReason)
+                    .HasMaxLength(500);
+
+                b.HasIndex(e => e.PaymentReference)
+                    .IsUnique();
+
+                b.HasIndex(e => new
+                {
+                    e.PaymentGatewayId,
+                    e.ProviderReference
+                })
+                .IsUnique()
+                .HasFilter("[ProviderReference] IS NOT NULL");
+
+                b.ToTable(t => t.HasCheckConstraint(
+                    "CK_PaymentTransactions_Amount",
+                    "[Amount] >= 0"));
+
+                b.HasOne(e => e.Invoice)
+                    .WithMany(e => e.PaymentTransactions)
+                    .HasForeignKey(e => e.InvoiceId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(e => e.PaymentGateway)
+                    .WithMany(e => e.PaymentTransactions)
+                    .HasForeignKey(e => e.PaymentGatewayId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                b.HasOne(e => e.PaymentStatus)
+                    .WithMany(e => e.PaymentTransactions)
+                    .HasForeignKey(e => e.PaymentStatusId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<IdempotencyRecord>(b =>
+            {
+                b.Property(e => e.Id)
+                    .HasMaxLength(36)
+                    .IsUnicode(false);
+
+                b.Property(e => e.Key)
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .IsUnicode(false);
+
+                b.Property(e => e.UserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                b.Property(e => e.Operation)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                b.Property(e => e.RequestHash)
+                    .IsRequired()
+                    .HasMaxLength(64)
+                    .IsUnicode(false);
+
+                b.Property(e => e.Status)
+                    .IsRequired()
+                    .HasMaxLength(20)
+                    .IsUnicode(false);
+
+                b.Property(e => e.ResourceId)
+                    .HasMaxLength(450);
+
+                b.Property(e => e.Response)
+                    .HasMaxLength(2000);
+
+                b.HasIndex(e => new
+                {
+                    e.UserId,
+                    e.Operation,
+                    e.Key
+                })
+                .IsUnique();
             });
         }
     }

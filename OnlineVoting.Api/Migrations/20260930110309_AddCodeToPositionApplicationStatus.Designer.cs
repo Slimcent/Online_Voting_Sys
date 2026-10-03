@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OnlineVoting.Models.Context;
 
@@ -11,9 +12,11 @@ using OnlineVoting.Models.Context;
 namespace OnlineVoting.Api.Migrations
 {
     [DbContext(typeof(VotingDbContext))]
-    partial class VotingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260930110309_AddCodeToPositionApplicationStatus")]
+    partial class AddCodeToPositionApplicationStatus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1159,10 +1162,6 @@ namespace OnlineVoting.Api.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(3)");
 
-                    b.Property<string>("FailureReason")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
                     b.Property<string>("InvoiceId")
                         .IsRequired()
                         .HasMaxLength(36)
@@ -2140,7 +2139,7 @@ namespace OnlineVoting.Api.Migrations
                         .IsRequired();
 
                     b.HasOne("OnlineVoting.Models.Entities.Student", "Student")
-                        .WithMany("PositionApplications")
+                        .WithMany()
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -2355,8 +2354,6 @@ namespace OnlineVoting.Api.Migrations
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Student", b =>
                 {
-                    b.Navigation("PositionApplications");
-
                     b.Navigation("RegisteredVoters");
                 });
 
