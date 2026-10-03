@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using OnlineVoting.Models.Constants;
 using OnlineVoting.Models.Context;
 using OnlineVoting.Models.Entities;
 
@@ -17,28 +18,33 @@ namespace VotingSystem.Data.SeedData
             {
                 new PositionApplicationStatus
                 {
+                    Code = ApplicationConstants.PositionApplicationStatuses.PendingPayment,
                     Name = "Pending Payment",
-                    Description = "The application is waiting for payment."
+                    Description = "The position application is waiting for payment."
                 },
                 new PositionApplicationStatus
                 {
+                    Code = ApplicationConstants.PositionApplicationStatuses.PendingReview,
                     Name = "Pending Review",
-                    Description = "The application is waiting to be reviewed."
+                    Description = "The position application is waiting for review."
                 },
                 new PositionApplicationStatus
                 {
+                    Code = ApplicationConstants.PositionApplicationStatuses.Approved,
                     Name = "Approved",
-                    Description = "The application has been approved."
+                    Description = "The position application has been approved."
                 },
                 new PositionApplicationStatus
                 {
+                    Code = ApplicationConstants.PositionApplicationStatuses.Rejected,
                     Name = "Rejected",
-                    Description = "The application has been rejected."
+                    Description = "The position application has been rejected."
                 },
                 new PositionApplicationStatus
                 {
+                    Code = ApplicationConstants.PositionApplicationStatuses.Withdrawn,
                     Name = "Withdrawn",
-                    Description = "The application has been withdrawn."
+                    Description = "The position application has been withdrawn."
                 }
             };
 
