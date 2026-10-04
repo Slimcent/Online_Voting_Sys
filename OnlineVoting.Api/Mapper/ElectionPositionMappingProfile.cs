@@ -14,7 +14,7 @@ namespace OnlineVoting.Api.Mapper
                 .ForMember(destination => destination.Position, option => option.MapFrom(source => source.Position.Name))
                 .ForMember(destination => destination.NumberOfApplications, option => option.Ignore());
 
-            CreateMap<PositionApplication, PositionApplicationResponse>()
+            CreateMap<PositionApplication, ElectionPositionApplicationResponse>()
                 .ForMember(destination => destination.FirstName, option => option.MapFrom(source => source.Student.User != null
                         ? source.Student.User.FirstName : null))
                 .ForMember(destination => destination.LastName, option => option.MapFrom(source => source.Student.User != null

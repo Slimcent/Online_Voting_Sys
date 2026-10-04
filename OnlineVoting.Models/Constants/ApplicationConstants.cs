@@ -122,5 +122,12 @@
             public const string Failed = "FAILED";
             public const string Cancelled = "CANCELLED";
         }
+
+        public static class RoleNames
+        {
+            public const string Student = "student";
+            public const string Admin = "admin";
+            public const string SuperAdmin = "super-admin";
+        }
     }
 }

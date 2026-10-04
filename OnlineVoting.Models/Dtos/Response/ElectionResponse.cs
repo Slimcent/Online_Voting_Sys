@@ -264,7 +264,7 @@ namespace OnlineVoting.Models.Dtos.Response
     /// <summary>
     /// Represents an application submitted for an election position.
     /// </summary>
-    public class PositionApplicationResponse
+    public class ElectionPositionApplicationResponse
     {
         /// <summary>
         /// The identifier of the application.
@@ -357,6 +357,6 @@ namespace OnlineVoting.Models.Dtos.Response
 
         public int NumberOfApplications { get; set; }
 
-        public IEnumerable<PositionApplicationResponse> Applications { get; set; } = [];
+        public IEnumerable<ElectionPositionApplicationResponse> Applications { get; set; } = [];
     }
 }

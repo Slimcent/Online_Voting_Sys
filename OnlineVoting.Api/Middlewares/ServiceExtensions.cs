@@ -30,11 +30,13 @@ using OnlineVoting.Models.Interfaces;
 using OnlineVoting.Models.Validators.Request;
 using OnlineVoting.Services.BackgroundTasks;
 using OnlineVoting.Services.Implementation;
+using OnlineVoting.Services.Implementation.Payments;
 using OnlineVoting.Services.Infrastructures;
 using OnlineVoting.Services.Infrastructures.Auditing;
 using OnlineVoting.Services.Infrastructures.Authorization;
 using OnlineVoting.Services.Infrastructures.Authorization.Jwt;
 using OnlineVoting.Services.Interfaces;
+using OnlineVoting.Services.Interfaces.Payments;
 using Polly;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.IO.Compression;
@@ -100,7 +102,7 @@ namespace OnlineVoting.Api.Middlewares
         public static void ConfigureLoggerService(this IServiceCollection services) =>
             services.AddSingleton<ILoggerMessage, VotingSystem.Logger.LoggerMessage>();
 
-        public static IServiceCollection AddRepositories(this IServiceCollection services)
+        public static IServiceCollection AddRepositories(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddScoped<IUnitOfWork, UnitOfWork<VotingDbContext>>();
 
@@ -124,12 +126,20 @@ namespace OnlineVoting.Api.Middlewares
             services.AddScoped<IAuditMetadataProvider, AuditMetadataProvider>();
             services.AddScoped<IAuditTrailService, AuditTrailService>();
             services.AddScoped<IElectionTypeService, ElectionTypeService>();
+            services.AddScoped<IElectionService, ElectionService>();
+            services.AddScoped<IElectionPositionService, ElectionPositionService>();
+            services.AddScoped<IPositionApplicationService, PositionApplicationService>();
+            services.AddScoped<IPaymentService, PaymentService>();
+            services.AddScoped<IPaymentGateway, PaystackPaymentGateway>();
+            services.AddScoped<IPaymentGateway, FlutterwavePaymentGateway>();
+            services.AddScoped<IPaymentGatewayResolver, PaymentGatewayResolver>();
             services.AddScoped<SendCreateUserEmailTask>();
             services.AddScoped<ProcessStudentUploadTask>();
             services.AddScoped<UpdateInactiveStudentsTask>();
             services.AddScoped<DeleteUnconfirmedUsersTask>();
             services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
             services.AddMemoryCache();
+            services.AddPaystackPaymentGateway(configuration);
 
             services.AddHttpClient<IIpGeolocationService, IpGeolocationService>(client =>
             {
@@ -527,6 +537,22 @@ namespace OnlineVoting.Api.Middlewares
             }
 
             return app;
+        }
+
+        public static IServiceCollection AddPaystackPaymentGateway(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<PaystackSettings>(configuration.GetSection("Paystack"));
+
+            services.AddHttpClient<PaystackPaymentGateway>((serviceProvider, client) =>
+            {
+                IOptions<PaystackSettings> options = serviceProvider.GetRequiredService<IOptions<PaystackSettings>>();
+
+                client.BaseAddress = new Uri(options.Value.BaseUrl);
+            });
+
+            services.AddScoped<IPaymentGateway>(serviceProvider => serviceProvider.GetRequiredService<PaystackPaymentGateway>());
+
+            return services;
         }
     }
 }

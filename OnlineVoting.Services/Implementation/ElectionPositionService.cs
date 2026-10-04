@@ -367,7 +367,7 @@ namespace OnlineVoting.Services.Implementation
             {
                 if (applicationsByElectionPosition.TryGetValue(electionPosition.Id, out List<PositionApplication>? positionApplications))
                 {
-                    electionPosition.Applications = _mapper.Map<IEnumerable<PositionApplicationResponse>>(positionApplications);
+                    electionPosition.Applications = _mapper.Map<IEnumerable<ElectionPositionApplicationResponse>>(positionApplications);
                     electionPosition.NumberOfApplications = positionApplications.Count;
                 }
                 else
