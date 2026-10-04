@@ -94,7 +94,7 @@ namespace OnlineVoting.Tests.UnitTests.Controllers
                         Currency = "NGN",
                         Active = true,
                         NumberOfApplications = 1,
-                        Applications = new List<PositionApplicationResponse>
+                        Applications = new List<ElectionPositionApplicationResponse>
                         {
                             new()
                             {
