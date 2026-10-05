@@ -1,7 +1,6 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OnlineVoting.Api.Documentation;
 using OnlineVoting.Api.Documentation.Attributes;
 using OnlineVoting.Api.Documentation.Definitions.Keys;
 using OnlineVoting.Api.Extensions;
@@ -17,7 +16,7 @@ namespace OnlineVoting.Api.Controllers
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/[controller]")]
     [Authorize]
-    public class PositionApplicationController : ControllerBase
+    public class PositionApplicationController : BaseController
     {
         private readonly IPositionApplicationService _positionApplicationService;
 

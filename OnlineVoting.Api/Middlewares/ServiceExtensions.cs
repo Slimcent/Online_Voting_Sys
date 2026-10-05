@@ -130,6 +130,7 @@ namespace OnlineVoting.Api.Middlewares
             services.AddScoped<IElectionPositionService, ElectionPositionService>();
             services.AddScoped<IPositionApplicationService, PositionApplicationService>();
             services.AddScoped<IPaymentService, PaymentService>();
+            services.AddScoped<IContestantService, ContestantService>();
             services.AddScoped<IPaymentGateway, PaystackPaymentGateway>();
             services.AddScoped<IPaymentGateway, FlutterwavePaymentGateway>();
             services.AddScoped<IPaymentGatewayResolver, PaymentGatewayResolver>();
