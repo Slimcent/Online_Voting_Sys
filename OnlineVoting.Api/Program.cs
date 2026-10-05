@@ -39,7 +39,7 @@ builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Smtp
 
 builder.Services.ConfigureAuthorization();
 
-builder.Services.AddRepositories();
+builder.Services.AddRepositories(builder.Configuration);
 
 builder.Services.ConfigureValidators();
 

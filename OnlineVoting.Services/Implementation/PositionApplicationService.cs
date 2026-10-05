@@ -426,6 +426,7 @@ namespace OnlineVoting.Services.Implementation
             await _unitOfWork.SaveChangesAsync();
 
             await _cacheService.RemoveByTag(CacheTags.PositionApplication);
+            await _cacheService.RemoveByTag(CacheTags.Invoice);
 
             _loggerMessage.LogInfo($"Position application with id {normalizedPositionApplicationId} was cancelled successfully by user id {userId}. Invoice with id {positionApplication.Invoice.Id} was also cancelled.");
 
@@ -722,6 +723,8 @@ namespace OnlineVoting.Services.Implementation
 
                 if (requestedStatus.Code == ApplicationConstants.PositionApplicationStatuses.Approved)
                 {
+                    await _cacheService.RemoveByTag(CacheTags.Contestant);
+
                     _loggerMessage.LogInfo($"Position application with id {normalizedPositionApplicationId} was approved successfully by user id {userId}.");
 
                     return Result<string>.Success("Position application approved successfully.");

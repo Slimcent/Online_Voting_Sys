@@ -7,7 +7,7 @@ namespace OnlineVoting.Api.Documentation
 {
     public static class ContestantDocumentation
     {
-        public static readonly Dictionary<string, ApiOperationDocumentation> Documentation = new()
+        public static readonly IReadOnlyDictionary<string, ApiOperationDocumentation> Operations = new Dictionary<string, ApiOperationDocumentation>
         {
             [ContestantDocumentationKeys.GetContestants] = new ApiOperationDocumentation
             {
