@@ -191,8 +191,8 @@ namespace OnlineVoting.Tests.TestData.Factories
                     MetaData = electionPositions.MetaData
                 });
 
-            Mapper.Setup(mapper => mapper.Map<IEnumerable<PositionApplicationResponse>>(It.IsAny<IEnumerable<PositionApplication>>()))
-                .Returns((IEnumerable<PositionApplication> applications) => applications.Select(application => new PositionApplicationResponse
+            Mapper.Setup(mapper => mapper.Map<IEnumerable<ElectionPositionApplicationResponse>>(It.IsAny<IEnumerable<PositionApplication>>()))
+                .Returns((IEnumerable<PositionApplication> applications) => applications.Select(application => new ElectionPositionApplicationResponse
                 {
                     Id = application.Id,
                     StudentId = application.StudentId,

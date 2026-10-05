@@ -6,6 +6,7 @@ using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Pagination;
 using OnlineVoting.Models.Results;
+using OnlineVoting.Services.Infrastructures;
 using OnlineVoting.Services.Interfaces;
 
 namespace OnlineVoting.Tests.Controllers
@@ -99,8 +100,8 @@ namespace OnlineVoting.Tests.Controllers
             IActionResult result = await controller.CreatePositionApplication(request);
 
             OkObjectResult okResult = Assert.IsType<OkObjectResult>(result);
-
-            CreatePositionApplicationResponse value = Assert.IsType<CreatePositionApplicationResponse>(okResult.Value);
+            SuccessResponse successResponse = Assert.IsType<SuccessResponse>(okResult.Value);
+            CreatePositionApplicationResponse value = Assert.IsType<CreatePositionApplicationResponse>(successResponse.Data);
 
             Assert.Equal(response.PositionApplicationId, value.PositionApplicationId);
             Assert.Equal(response.InvoiceId, value.InvoiceId);
@@ -220,14 +221,14 @@ namespace OnlineVoting.Tests.Controllers
                 Items =
                 [
                     new PositionApplicationResponse
-            {
-                PositionApplicationId = Guid.NewGuid().ToString(),
-                ElectionPositionId = Guid.NewGuid().ToString(),
-                ElectionName = "2026 Engineering Election",
-                PositionName = "President",
-                ApplicationStatus = "Pending Payment",
-                CreatedAt = DateTime.UtcNow
-            }
+                    {
+                        PositionApplicationId = Guid.NewGuid().ToString(),
+                        ElectionPositionId = Guid.NewGuid().ToString(),
+                        ElectionName = "2026 Engineering Election",
+                        PositionName = "President",
+                        ApplicationStatus = "Pending Payment",
+                        CreatedAt = DateTime.UtcNow
+                    }
                 ]
             };
 
@@ -237,7 +238,8 @@ namespace OnlineVoting.Tests.Controllers
             IActionResult actionResult = await controller.GetMyPositionApplications(request);
 
             OkObjectResult okResult = Assert.IsType<OkObjectResult>(actionResult);
-            PagedResponse<PositionApplicationResponse> result = Assert.IsType<PagedResponse<PositionApplicationResponse>>(okResult.Value);
+            SuccessResponse successResponse = Assert.IsType<SuccessResponse>(okResult.Value);
+            PagedResponse<PositionApplicationResponse> result = Assert.IsType<PagedResponse<PositionApplicationResponse>>(successResponse.Data);
 
             Assert.Single(result.Items);
             Assert.Equal(response.Items.Single().PositionApplicationId, result.Items.Single().PositionApplicationId);
@@ -273,7 +275,8 @@ namespace OnlineVoting.Tests.Controllers
             IActionResult actionResult = await controller.GetMyPositionApplication(positionApplicationId);
 
             OkObjectResult okResult = Assert.IsType<OkObjectResult>(actionResult);
-            PositionApplicationResponse result = Assert.IsType<PositionApplicationResponse>(okResult.Value);
+            SuccessResponse successResponse = Assert.IsType<SuccessResponse>(okResult.Value);
+            PositionApplicationResponse result = Assert.IsType<PositionApplicationResponse>(successResponse.Data);
 
             Assert.Equal(positionApplicationId, result.PositionApplicationId);
             Assert.Equal(response.StudentId, result.StudentId);
@@ -316,7 +319,8 @@ namespace OnlineVoting.Tests.Controllers
             IActionResult actionResult = await controller.GetPositionApplication(positionApplicationId);
 
             OkObjectResult okResult = Assert.IsType<OkObjectResult>(actionResult);
-            PositionApplicationResponse result = Assert.IsType<PositionApplicationResponse>(okResult.Value);
+            SuccessResponse successResponse = Assert.IsType<SuccessResponse>(okResult.Value);
+            PositionApplicationResponse result = Assert.IsType<PositionApplicationResponse>(successResponse.Data);
 
             Assert.Equal(positionApplicationId, result.PositionApplicationId);
             Assert.Equal(response.StudentId, result.StudentId);
@@ -348,18 +352,18 @@ namespace OnlineVoting.Tests.Controllers
                 Items =
                 [
                     new PositionApplicationResponse
-            {
-                PositionApplicationId = Guid.NewGuid().ToString(),
-                StudentId = Guid.NewGuid(),
-                RegistrationNumber = "REG001",
-                StudentName = "Test Student",
-                StudentEmail = "student@example.com",
-                ElectionPositionId = Guid.NewGuid().ToString(),
-                ElectionName = "2026 Engineering Election",
-                PositionName = "President",
-                ApplicationStatus = "Pending Review",
-                CreatedAt = DateTime.UtcNow
-            }
+                    {
+                        PositionApplicationId = Guid.NewGuid().ToString(),
+                        StudentId = Guid.NewGuid(),
+                        RegistrationNumber = "REG001",
+                        StudentName = "Test Student",
+                        StudentEmail = "student@example.com",
+                        ElectionPositionId = Guid.NewGuid().ToString(),
+                        ElectionName = "2026 Engineering Election",
+                        PositionName = "President",
+                        ApplicationStatus = "Pending Review",
+                        CreatedAt = DateTime.UtcNow
+                    }
                 ]
             };
 
@@ -369,7 +373,8 @@ namespace OnlineVoting.Tests.Controllers
             IActionResult actionResult = await controller.GetPositionApplications(request);
 
             OkObjectResult okResult = Assert.IsType<OkObjectResult>(actionResult);
-            PagedResponse<PositionApplicationResponse> result = Assert.IsType<PagedResponse<PositionApplicationResponse>>(okResult.Value);
+            SuccessResponse successResponse = Assert.IsType<SuccessResponse>(okResult.Value);
+            PagedResponse<PositionApplicationResponse> result = Assert.IsType<PagedResponse<PositionApplicationResponse>>(successResponse.Data);
 
             Assert.NotNull(result.Items);
             Assert.Single(result.Items);
@@ -395,7 +400,8 @@ namespace OnlineVoting.Tests.Controllers
             IActionResult actionResult = await controller.ApproveOrRejectPositionApplication(request);
 
             OkObjectResult okResult = Assert.IsType<OkObjectResult>(actionResult);
-            string result = Assert.IsType<string>(okResult.Value);
+            SuccessResponse successResponse = Assert.IsType<SuccessResponse>(okResult.Value);
+            string result = Assert.IsType<string>(successResponse.Data);
 
             Assert.Equal("Position application approved successfully.", result);
 
@@ -450,7 +456,8 @@ namespace OnlineVoting.Tests.Controllers
             IActionResult actionResult = await controller.GetPositionApplicationsWithContestants(request);
 
             OkObjectResult okResult = Assert.IsType<OkObjectResult>(actionResult);
-            PagedResponse<PositionApplicationResponse> result = Assert.IsType<PagedResponse<PositionApplicationResponse>>(okResult.Value);
+            SuccessResponse successResponse = Assert.IsType<SuccessResponse>(okResult.Value);
+            PagedResponse<PositionApplicationResponse> result = Assert.IsType<PagedResponse<PositionApplicationResponse>>(successResponse.Data);
 
             Assert.NotNull(result.Items);
             Assert.Single(result.Items);

@@ -1,4 +1,5 @@
 ﻿using Moq;
+using OnlineVoting.Models.Constants;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
@@ -285,7 +286,7 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Assert.Equal("President", response.Position);
             Assert.Equal(1, response.NumberOfApplications);
 
-            PositionApplicationResponse applicationResponse = Assert.Single(response.Applications);
+            ElectionPositionApplicationResponse applicationResponse = Assert.Single(response.Applications);
 
             Assert.Equal(application.Id, applicationResponse.Id);
             Assert.Equal(student.Id, applicationResponse.StudentId);
@@ -328,7 +329,10 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Student secondStudent = ElectionPositionTestData.CreateStudent(secondUser, electricalEngineering, "EE/2026/001");
 
             PositionApplicationStatus approvedStatus = ElectionPositionTestData.CreatePositionApplicationStatus(3, "Approved");
+            approvedStatus.Code = ApplicationConstants.PositionApplicationStatuses.Approved;
+
             PositionApplicationStatus rejectedStatus = ElectionPositionTestData.CreatePositionApplicationStatus(4, "Rejected");
+            rejectedStatus.Code = ApplicationConstants.PositionApplicationStatuses.Rejected;
 
             PositionApplication approvedApplication = ElectionPositionTestData.CreatePositionApplication(electionPosition, firstStudent, approvedStatus);
             PositionApplication rejectedApplication = ElectionPositionTestData.CreatePositionApplication(electionPosition, secondStudent, rejectedStatus);
@@ -343,6 +347,7 @@ namespace OnlineVoting.Tests.UnitTests.Services
             await factory.DbContextFactory.Context.Set<ElectionPosition>().AddAsync(electionPosition);
             await factory.DbContextFactory.Context.Set<PositionApplication>().AddRangeAsync(approvedApplication, rejectedApplication);
             await factory.DbContextFactory.Context.SaveChangesAsync();
+            await factory.DbContextFactory.Context.Set<PositionApplicationStatus>().AddRangeAsync(approvedStatus, rejectedStatus);
 
             ElectionPositionRequest request = new()
             {
@@ -553,7 +558,10 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Student secondStudent = ElectionPositionTestData.CreateStudent(secondUser, department, "CE/2026/002");
 
             PositionApplicationStatus approvedStatus = ElectionPositionTestData.CreatePositionApplicationStatus(3, "Approved");
+            approvedStatus.Code = ApplicationConstants.PositionApplicationStatuses.Approved;
+
             PositionApplicationStatus rejectedStatus = ElectionPositionTestData.CreatePositionApplicationStatus(4, "Rejected");
+            rejectedStatus.Code = ApplicationConstants.PositionApplicationStatuses.Rejected;
 
             PositionApplication approvedApplication = ElectionPositionTestData.CreatePositionApplication(electionPosition, firstStudent, approvedStatus);
             PositionApplication rejectedApplication = ElectionPositionTestData.CreatePositionApplication(electionPosition, secondStudent, rejectedStatus);
@@ -564,10 +572,10 @@ namespace OnlineVoting.Tests.UnitTests.Services
             await factory.DbContextFactory.Context.Set<Department>().AddAsync(department);
             await factory.DbContextFactory.Context.Set<User>().AddRangeAsync(firstUser, secondUser);
             await factory.DbContextFactory.Context.Set<Student>().AddRangeAsync(firstStudent, secondStudent);
-            await factory.DbContextFactory.Context.Set<PositionApplicationStatus>().AddRangeAsync(approvedStatus, rejectedStatus);
             await factory.DbContextFactory.Context.Set<ElectionPosition>().AddAsync(electionPosition);
             await factory.DbContextFactory.Context.Set<PositionApplication>().AddRangeAsync(approvedApplication, rejectedApplication);
             await factory.DbContextFactory.Context.SaveChangesAsync();
+            await factory.DbContextFactory.Context.Set<PositionApplicationStatus>().AddRangeAsync(approvedStatus, rejectedStatus);
 
             ElectionPositionRequest request = new()
             {
@@ -583,13 +591,14 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Assert.NotNull(result.Value);
 
             ElectionPositionWithApplicationsResponse response = Assert.Single(result.Value.Items);
-            PositionApplicationResponse application = Assert.Single(response.Applications);
+            ElectionPositionApplicationResponse application = Assert.Single(response.Applications);
 
             Assert.Equal(1, response.NumberOfApplications);
             Assert.Equal(approvedApplication.Id, application.Id);
             Assert.Equal(approvedStatus.Id, application.PositionApplicationStatusId);
             Assert.Equal("Approved", application.PositionApplicationStatus);
         }
+
 
         [Fact]
         public async Task GetElectionPositionsWithApplications_WithDepartmentFilter_ShouldReturnOnlyMatchingApplications()
@@ -647,7 +656,7 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Assert.NotNull(result.Value);
 
             ElectionPositionWithApplicationsResponse response = Assert.Single(result.Value.Items);
-            PositionApplicationResponse application = Assert.Single(response.Applications);
+            ElectionPositionApplicationResponse application = Assert.Single(response.Applications);
 
             Assert.Equal(1, response.NumberOfApplications);
             Assert.Equal(firstApplication.Id, application.Id);
@@ -714,7 +723,7 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Assert.NotNull(result.Value);
 
             ElectionPositionWithApplicationsResponse response = Assert.Single(result.Value.Items);
-            PositionApplicationResponse application = Assert.Single(response.Applications);
+            ElectionPositionApplicationResponse application = Assert.Single(response.Applications);
 
             Assert.Equal(1, response.NumberOfApplications);
             Assert.Equal(firstApplication.Id, application.Id);
@@ -774,7 +783,7 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Assert.NotNull(result.Value);
 
             ElectionPositionWithApplicationsResponse response = Assert.Single(result.Value.Items);
-            PositionApplicationResponse application = Assert.Single(response.Applications);
+            ElectionPositionApplicationResponse application = Assert.Single(response.Applications);
 
             Assert.Equal(1, response.NumberOfApplications);
             Assert.Equal(activeApplication.Id, application.Id);
@@ -838,7 +847,7 @@ namespace OnlineVoting.Tests.UnitTests.Services
             Assert.Equal(2, result.Value.MetaData.TotalCount);
 
             ElectionPositionWithApplicationsResponse response = result.Value.Items.Single();
-            PositionApplicationResponse application = Assert.Single(response.Applications);
+            ElectionPositionApplicationResponse application = Assert.Single(response.Applications);
 
             Assert.Equal(presidentPosition.Id, response.Id);
             Assert.Equal(presidentApplication.Id, application.Id);
