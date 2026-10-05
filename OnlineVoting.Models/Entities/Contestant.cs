@@ -4,15 +4,13 @@ namespace OnlineVoting.Models.Entities
 {
     public class Contestant : ITracker, IAuditable
     {
-        public Guid Id { get; set; }
-        public Guid StudentId { get; set; }
-        public Guid PositionId { get; set; }
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string PositionApplicationId { get; set; } = string.Empty;
+        public bool Active { get; set; } = true;
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public string? CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }
-        public bool Active { get; set; } = true;
-        public virtual Student? Student { get; set; }
-        public virtual Position? Position { get; set; }
+        public virtual PositionApplication PositionApplication { get; set; } = null!;
     }
 }

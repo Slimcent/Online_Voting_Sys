@@ -36,6 +36,14 @@ namespace VotingSystem.Data.SeedData
                     await SeedUserTypes(context, seed);
                     await SeedGenders(context, seed);
                     await SeedAuditData.SeedAuditOutcomes(context);
+                    await SeedYearData.SeedYears(context);
+                    await SeedElectionScopeData.SeedElectionScopes(context);
+                    await SeedElectionTypeData.SeedElectionTypes(context);
+                    await SeedElectionStatusData.SeedElectionStatuses(context);
+                    await SeedPositionApplicationStatusData.SeedPositionApplicationStatuses(context);
+                    await SeedInvoiceStatusData.SeedInvoiceStatuses(context);
+                    await SeedPaymentStatusData.SeedPaymentStatuses(context);
+                    await SeedPaymentGatewayData.SeedPaymentGateways(context);
 
                     // These records must be saved before the admin
                     // and student seed methods can query them.

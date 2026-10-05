@@ -9,7 +9,7 @@ namespace OnlineVoting.Services.Interfaces
     public interface IPositionService
     {
         Task<Result<string>> CreatePosition(CreateWithNameRequest request);
-        Task<Result<string>> UpdatePosition(Guid positionId, CreateWithNameRequest request);
+        Task<Result<string>> UpdatePosition(string positionId, CreateWithNameRequest request);
         Task<Result<string>> DeletePosition(Guid id);
         Task<Result<PositionResponse>> GetAPosition(Guid positionId);
         Task<Result<string>> PatchPosition(Guid positionId, JsonPatchDocument<CreateWithNameRequest> request);

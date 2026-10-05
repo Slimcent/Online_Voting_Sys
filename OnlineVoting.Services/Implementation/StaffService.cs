@@ -87,30 +87,36 @@ namespace OnlineVoting.Services.Implementation
 
             return Result<string>.Created($"Staff with email {request.Email} was created successfully");
         }
-
-        private async Task CreateStaffAddress(Staff staff)
-        {
-            Address address = new() { StaffId = staff.Id };
-            await _addressRepo.AddAsync(address);
-        }
-
+                
         //public async Task<IEnumerable<StaffResponseDto>> GetAllStaff()
         //{
         //    IEnumerable<Staff> allStaff = await _staffRepo.GetAllAndInclude(x => x.Address, x => x.User);
 
         //    return _mapper.Map<IEnumerable<StaffResponseDto>>(allStaff);
         //}
-
+                
         public async Task<Result<string>> UpdateStaffAddress(Guid staffId, UpdateAddressRequest model)
         {
-            Address staffAddress = await _addressRepo.GetSingleByAsync(x => x.StaffId == staffId);
-            if (staffAddress == null)
+            Staff staff = await _staffRepo.GetSingleByAsync(x => x.Id == staffId);
+            if (staff == null)
                 return Result<string>.NotFound($"Staff with id {staffId} does not exist");
 
-            Address update = _mapper.Map(model, staffAddress);
-            await _addressRepo.UpdateAsync(update);
-            await _unitOfWork.SaveChangesAsync();
+            Address staffAddress = await _addressRepo.GetSingleByAsync(x => x.UserId == staff.UserId);
+            if (staffAddress == null)
+            {
+                Address address = _mapper.Map<Address>(model);
 
+                address.UserId = staff.UserId!;
+
+                await _addressRepo.AddAsync(address);
+
+                return Result<string>.Success("Address created successfully");
+            }
+
+            Address update = _mapper.Map(model, staffAddress);
+
+            await _addressRepo.UpdateAsync(update);
+            
             return Result<string>.Success("Address updated successfully");
         }
 
@@ -147,7 +153,7 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<Result<StaffResponse>> GetStaff(Guid id)
         {
-            Staff staff = await _staffRepo.GetSingleByAsync(x => x.Id == id, include: x => x.Include(x => x.Address).Include(x => x.User));
+            Staff staff = await _staffRepo.GetSingleByAsync(x => x.Id == id, include: x => x.Include(x => x.User).ThenInclude(x => x.Address));
 
             if (staff == null)
                 return Result<StaffResponse>.NotFound("Staff not found");
@@ -167,7 +173,6 @@ namespace OnlineVoting.Services.Implementation
         public async Task<Result<string>> DeleteStaffById(Guid id)
         {
             Staff staff = await _staffRepo.GetByIdAsync(id);
-
             if (staff == null)
                 return Result<string>.NotFound($"Staff with id {id} does not exist");
 
@@ -179,7 +184,7 @@ namespace OnlineVoting.Services.Implementation
         public async Task<Result<StaffResponse>> GetStaffByEmail(string email)
         {
             User user = await _userRepo.GetSingleByAsync(u => u.Email == email,
-                include: u => u.Include(s => s.Staff).ThenInclude(a => a.Address));
+                include: u => u.Include(s => s.Staff).Include(a => a.Address));
 
             if (user == null)
                 return Result<StaffResponse>.NotFound("User not found");
@@ -191,27 +196,21 @@ namespace OnlineVoting.Services.Implementation
 
         public async Task<Result<string>> PatchStaffAddress(Guid staffId, JsonPatchDocument<UpdateAddressRequest> request)
         {
-            Address staffAddress = await _addressRepo.GetSingleByAsync(x => x.StaffId == staffId);
+            Staff staff = await _staffRepo.GetSingleByAsync(x => x.Id == staffId);
+            if (staff == null)
+                return Result<string>.NotFound($"Staff with id {staffId} does not exist");
 
+            Address staffAddress = await _addressRepo.GetSingleByAsync(x => x.UserId == staff.UserId);
             if (staffAddress == null)
                 return Result<string>.NotFound($"Staff with id {staffId} does not exist");
 
-            UpdateAddressRequest updateAddress = new()
-            {
-                PlotNo = staffAddress.PlotNo ?? 0,
-                StreetName = staffAddress.StreetName,
-                City = staffAddress.City,
-                State = staffAddress.State,
-                Nationality = staffAddress.Nationality,
-            };
+            UpdateAddressRequest updateAddress = _mapper.Map<UpdateAddressRequest>(staffAddress);
 
             request.ApplyTo(updateAddress);
 
             _mapper.Map(updateAddress, staffAddress);
 
             await _addressRepo.UpdateAsync(staffAddress);
-
-            await _unitOfWork.SaveChangesAsync();
 
             return Result<string>.Success("Staff updated successfully");
         }

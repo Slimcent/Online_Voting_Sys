@@ -70,7 +70,8 @@ namespace OnlineVoting.Api.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("City")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -79,22 +80,19 @@ namespace OnlineVoting.Api.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nationality")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int?>("PlotNo")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("StaffId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("State")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("StreetName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("StudentId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -102,15 +100,15 @@ namespace OnlineVoting.Api.Migrations
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("StaffId")
-                        .IsUnique()
-                        .HasFilter("[StaffId] IS NOT NULL");
-
-                    b.HasIndex("StudentId")
-                        .IsUnique()
-                        .HasFilter("[StudentId] IS NOT NULL");
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("Addresses");
                 });
@@ -401,9 +399,10 @@ namespace OnlineVoting.Api.Migrations
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Contestant", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
 
                     b.Property<bool>("Active")
                         .HasColumnType("bit");
@@ -414,11 +413,11 @@ namespace OnlineVoting.Api.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("PositionId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("StudentId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("PositionApplicationId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -428,9 +427,8 @@ namespace OnlineVoting.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PositionId");
-
-                    b.HasIndex("StudentId");
+                    b.HasIndex("PositionApplicationId")
+                        .IsUnique();
 
                     b.ToTable("Contestants");
                 });
@@ -457,7 +455,8 @@ namespace OnlineVoting.Api.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -467,9 +466,250 @@ namespace OnlineVoting.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FacultyId");
+                    b.HasIndex("FacultyId", "Name")
+                        .IsUnique();
 
                     b.ToTable("Departments");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Election", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ApplicationEndAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ApplicationStartAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("DepartmentId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("ElectionStatusId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ElectionTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("FacultyId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("VoterRegistrationEndAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("VoterRegistrationStartAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("VotingEndAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("VotingStartAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("YearId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ElectionStatusId");
+
+                    b.HasIndex("YearId");
+
+                    b.HasIndex("ElectionTypeId", "YearId")
+                        .IsUnique()
+                        .HasFilter("[FacultyId] IS NULL AND [DepartmentId] IS NULL");
+
+                    b.HasIndex("DepartmentId", "ElectionTypeId", "YearId")
+                        .IsUnique()
+                        .HasFilter("[DepartmentId] IS NOT NULL AND [FacultyId] IS NULL");
+
+                    b.HasIndex("FacultyId", "ElectionTypeId", "YearId")
+                        .IsUnique()
+                        .HasFilter("[FacultyId] IS NOT NULL AND [DepartmentId] IS NULL");
+
+                    b.ToTable("Elections", t =>
+                        {
+                            t.HasCheckConstraint("CK_Elections_ApplicationPeriod", "([ApplicationStartAt] IS NULL AND [ApplicationEndAt] IS NULL) OR ([ApplicationStartAt] IS NOT NULL AND [ApplicationEndAt] IS NOT NULL AND [ApplicationEndAt] > [ApplicationStartAt])");
+
+                            t.HasCheckConstraint("CK_Elections_Scope", "[FacultyId] IS NULL OR [DepartmentId] IS NULL");
+
+                            t.HasCheckConstraint("CK_Elections_VoterRegistrationPeriod", "([VoterRegistrationStartAt] IS NULL AND [VoterRegistrationEndAt] IS NULL) OR ([VoterRegistrationStartAt] IS NOT NULL AND [VoterRegistrationEndAt] IS NOT NULL AND [VoterRegistrationEndAt] > [VoterRegistrationStartAt])");
+
+                            t.HasCheckConstraint("CK_Elections_VotingPeriod", "([VotingStartAt] IS NULL AND [VotingEndAt] IS NULL) OR ([VotingStartAt] IS NOT NULL AND [VotingEndAt] IS NOT NULL AND [VotingEndAt] > [VotingStartAt])");
+                        });
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.ElectionPosition", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("ApplicationFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(3)");
+
+                    b.Property<string>("ElectionId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
+
+                    b.Property<string>("PositionId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PositionId");
+
+                    b.HasIndex("ElectionId", "PositionId")
+                        .IsUnique();
+
+                    b.ToTable("ElectionPositions", t =>
+                        {
+                            t.HasCheckConstraint("CK_ElectionPositions_ApplicationFee", "[ApplicationFee] >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.ElectionStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("ElectionStatuses");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.ElectionType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<int>("ElectionScopeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ElectionScopeId");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("ElectionTypes");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Faculty", b =>
@@ -491,7 +731,8 @@ namespace OnlineVoting.Api.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -500,6 +741,9 @@ namespace OnlineVoting.Api.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("Faculties");
                 });
@@ -514,11 +758,218 @@ namespace OnlineVoting.Api.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Gender");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.IdempotencyRecord", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Operation")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<string>("ResourceId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Response")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<int?>("StatusCode")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Operation", "Key")
+                        .IsUnique();
+
+                    b.ToTable("IdempotencyRecords");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Invoice", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(3)");
+
+                    b.Property<string>("InvoiceNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int>("InvoiceStatusId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PayerEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("PayerFirstName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PayerLastName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PositionApplicationId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
+
+                    b.Property<string>("RegistrationNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceNumber")
+                        .IsUnique();
+
+                    b.HasIndex("InvoiceStatusId");
+
+                    b.HasIndex("PositionApplicationId")
+                        .IsUnique();
+
+                    b.ToTable("Invoices", t =>
+                        {
+                            t.HasCheckConstraint("CK_Invoices_Amount", "[Amount] >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.InvoiceStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Gender");
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("InvoiceStatuses");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Menu", b =>
@@ -537,11 +988,264 @@ namespace OnlineVoting.Api.Migrations
                     b.ToTable("Menus");
                 });
 
+            modelBuilder.Entity("OnlineVoting.Models.Entities.OnlineVoting.Models.Entities.ElectionScope", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("ElectionScopes");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.PaymentGateway", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("PaymentGateways");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.PaymentStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("PaymentStatuses");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.PaymentTransaction", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("CheckoutUrl")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(3)");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("InvoiceId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PayerEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("PayerFirstName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PayerLastName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("PaymentGatewayId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PaymentReference")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int>("PaymentStatusId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProviderReference")
+                        .HasMaxLength(200)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("RegistrationNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.HasIndex("PaymentReference")
+                        .IsUnique();
+
+                    b.HasIndex("PaymentStatusId");
+
+                    b.HasIndex("PaymentGatewayId", "ProviderReference")
+                        .IsUnique()
+                        .HasFilter("[ProviderReference] IS NOT NULL");
+
+                    b.ToTable("PaymentTransactions", t =>
+                        {
+                            t.HasCheckConstraint("CK_PaymentTransactions_Amount", "[Amount] >= 0");
+                        });
+                });
+
             modelBuilder.Entity("OnlineVoting.Models.Entities.Position", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
 
                     b.Property<bool>("Active")
                         .HasColumnType("bit");
@@ -552,8 +1256,16 @@ namespace OnlineVoting.Api.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<long?>("DepartmentId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("FacultyId")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -563,7 +1275,68 @@ namespace OnlineVoting.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Positions");
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasFilter("[FacultyId] IS NULL AND [DepartmentId] IS NULL");
+
+                    b.HasIndex("DepartmentId", "Name")
+                        .IsUnique()
+                        .HasFilter("[DepartmentId] IS NOT NULL AND [FacultyId] IS NULL");
+
+                    b.HasIndex("FacultyId", "Name")
+                        .IsUnique()
+                        .HasFilter("[FacultyId] IS NOT NULL AND [DepartmentId] IS NULL");
+
+                    b.ToTable("Positions", t =>
+                        {
+                            t.HasCheckConstraint("CK_Positions_Scope", "[FacultyId] IS NULL OR [DepartmentId] IS NULL");
+                        });
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.PositionApplication", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ElectionPositionId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
+
+                    b.Property<int>("PositionApplicationStatusId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ElectionPositionId");
+
+                    b.HasIndex("PositionApplicationStatusId");
+
+                    b.HasIndex("StudentId", "ElectionPositionId")
+                        .IsUnique();
+
+                    b.ToTable("PositionApplications");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.RefreshToken", b =>
@@ -640,9 +1413,13 @@ namespace OnlineVoting.Api.Migrations
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.RegisteredVoter", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -650,13 +1427,13 @@ namespace OnlineVoting.Api.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<long>("DepartmentId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("ElectionId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
 
-                    b.Property<bool>("IsDeActivated")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid?>("StudentId")
+                    b.Property<Guid>("StudentId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -666,17 +1443,22 @@ namespace OnlineVoting.Api.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("VotingCode")
-                        .HasColumnType("nvarchar(max)");
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(100)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DepartmentId");
+                    b.HasIndex("ElectionId");
 
-                    b.HasIndex("StudentId")
-                        .IsUnique()
-                        .HasFilter("[StudentId] IS NOT NULL");
+                    b.HasIndex("VotingCode")
+                        .IsUnique();
 
-                    b.ToTable("RegisteredVoter");
+                    b.HasIndex("StudentId", "ElectionId")
+                        .IsUnique();
+
+                    b.ToTable("RegisteredVoters");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Role", b =>
@@ -793,7 +1575,8 @@ namespace OnlineVoting.Api.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RegNumber")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -809,6 +1592,10 @@ namespace OnlineVoting.Api.Migrations
                     b.HasIndex("DepartmentId");
 
                     b.HasIndex("GenderId");
+
+                    b.HasIndex("RegNumber")
+                        .IsUnique()
+                        .HasFilter("[RegNumber] IS NOT NULL");
 
                     b.HasIndex("UserId")
                         .IsUnique()
@@ -900,7 +1687,9 @@ namespace OnlineVoting.Api.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("EmailIndex");
+                        .IsUnique()
+                        .HasDatabaseName("EmailIndex")
+                        .HasFilter("[NormalizedEmail] IS NOT NULL");
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
@@ -928,7 +1717,8 @@ namespace OnlineVoting.Api.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -938,38 +1728,144 @@ namespace OnlineVoting.Api.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Name")
+                        .IsUnique();
+
                     b.ToTable("UserTypes");
                 });
 
-            modelBuilder.Entity("OnlineVoting.Models.Entities.Vote", b =>
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Year", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("bigint");
 
-                    b.Property<Guid>("ContestantId")
-                        .HasColumnType("uniqueidentifier");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<bool?>("HasVoted")
+                    b.Property<bool>("Active")
                         .HasColumnType("bit");
 
-                    b.Property<Guid>("RegisteredVoterId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
 
-                    b.Property<Guid?>("StudentId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Years");
+                });
+
+            modelBuilder.Entity("PositionApplicationStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("PositionApplicationStatuses");
+                });
+
+            modelBuilder.Entity("Vote", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
+
+                    b.Property<string>("ContestantId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ElectionPositionId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
+
+                    b.Property<string>("RegisteredVoterId")
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(36)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("VotedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("VoterId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("RegisteredVoterId");
+                    b.HasIndex("ContestantId");
 
-                    b.HasIndex("StudentId");
+                    b.HasIndex("ElectionPositionId");
+
+                    b.HasIndex("RegisteredVoterId", "ElectionPositionId")
+                        .IsUnique();
 
                     b.ToTable("Votes");
                 });
@@ -994,17 +1890,13 @@ namespace OnlineVoting.Api.Migrations
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Address", b =>
                 {
-                    b.HasOne("OnlineVoting.Models.Entities.Staff", "Staff")
+                    b.HasOne("OnlineVoting.Models.Entities.User", "User")
                         .WithOne("Address")
-                        .HasForeignKey("OnlineVoting.Models.Entities.Address", "StaffId");
+                        .HasForeignKey("OnlineVoting.Models.Entities.Address", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasOne("OnlineVoting.Models.Entities.Student", "Student")
-                        .WithOne("Address")
-                        .HasForeignKey("OnlineVoting.Models.Entities.Address", "StudentId");
-
-                    b.Navigation("Staff");
-
-                    b.Navigation("Student");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.ApplicationRoleClaim", b =>
@@ -1079,21 +1971,13 @@ namespace OnlineVoting.Api.Migrations
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Contestant", b =>
                 {
-                    b.HasOne("OnlineVoting.Models.Entities.Position", "Position")
-                        .WithMany()
-                        .HasForeignKey("PositionId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("OnlineVoting.Models.Entities.PositionApplication", "PositionApplication")
+                        .WithOne("Contestant")
+                        .HasForeignKey("OnlineVoting.Models.Entities.Contestant", "PositionApplicationId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("OnlineVoting.Models.Entities.Student", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Position");
-
-                    b.Navigation("Student");
+                    b.Navigation("PositionApplication");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Department", b =>
@@ -1105,6 +1989,167 @@ namespace OnlineVoting.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Faculty");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Election", b =>
+                {
+                    b.HasOne("OnlineVoting.Models.Entities.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("OnlineVoting.Models.Entities.ElectionStatus", "ElectionStatus")
+                        .WithMany("Elections")
+                        .HasForeignKey("ElectionStatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OnlineVoting.Models.Entities.ElectionType", "ElectionType")
+                        .WithMany("Elections")
+                        .HasForeignKey("ElectionTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OnlineVoting.Models.Entities.Faculty", "Faculty")
+                        .WithMany()
+                        .HasForeignKey("FacultyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("OnlineVoting.Models.Entities.Year", "Year")
+                        .WithMany("Elections")
+                        .HasForeignKey("YearId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Department");
+
+                    b.Navigation("ElectionStatus");
+
+                    b.Navigation("ElectionType");
+
+                    b.Navigation("Faculty");
+
+                    b.Navigation("Year");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.ElectionPosition", b =>
+                {
+                    b.HasOne("OnlineVoting.Models.Entities.Election", "Election")
+                        .WithMany("ElectionPositions")
+                        .HasForeignKey("ElectionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OnlineVoting.Models.Entities.Position", "Position")
+                        .WithMany("ElectionPositions")
+                        .HasForeignKey("PositionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Election");
+
+                    b.Navigation("Position");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.ElectionType", b =>
+                {
+                    b.HasOne("OnlineVoting.Models.Entities.OnlineVoting.Models.Entities.ElectionScope", "ElectionScope")
+                        .WithMany("ElectionTypes")
+                        .HasForeignKey("ElectionScopeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ElectionScope");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Invoice", b =>
+                {
+                    b.HasOne("OnlineVoting.Models.Entities.InvoiceStatus", "InvoiceStatus")
+                        .WithMany("Invoices")
+                        .HasForeignKey("InvoiceStatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OnlineVoting.Models.Entities.PositionApplication", "PositionApplication")
+                        .WithOne("Invoice")
+                        .HasForeignKey("OnlineVoting.Models.Entities.Invoice", "PositionApplicationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("InvoiceStatus");
+
+                    b.Navigation("PositionApplication");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.PaymentTransaction", b =>
+                {
+                    b.HasOne("OnlineVoting.Models.Entities.Invoice", "Invoice")
+                        .WithMany("PaymentTransactions")
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OnlineVoting.Models.Entities.PaymentGateway", "PaymentGateway")
+                        .WithMany("PaymentTransactions")
+                        .HasForeignKey("PaymentGatewayId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OnlineVoting.Models.Entities.PaymentStatus", "PaymentStatus")
+                        .WithMany("PaymentTransactions")
+                        .HasForeignKey("PaymentStatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
+
+                    b.Navigation("PaymentGateway");
+
+                    b.Navigation("PaymentStatus");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Position", b =>
+                {
+                    b.HasOne("OnlineVoting.Models.Entities.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("OnlineVoting.Models.Entities.Faculty", "Faculty")
+                        .WithMany()
+                        .HasForeignKey("FacultyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Department");
+
+                    b.Navigation("Faculty");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.PositionApplication", b =>
+                {
+                    b.HasOne("OnlineVoting.Models.Entities.ElectionPosition", "ElectionPosition")
+                        .WithMany("Applications")
+                        .HasForeignKey("ElectionPositionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("PositionApplicationStatus", "PositionApplicationStatus")
+                        .WithMany("Applications")
+                        .HasForeignKey("PositionApplicationStatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OnlineVoting.Models.Entities.Student", "Student")
+                        .WithMany("PositionApplications")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ElectionPosition");
+
+                    b.Navigation("PositionApplicationStatus");
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.RefreshToken", b =>
@@ -1120,17 +2165,19 @@ namespace OnlineVoting.Api.Migrations
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.RegisteredVoter", b =>
                 {
-                    b.HasOne("OnlineVoting.Models.Entities.Department", "Department")
-                        .WithMany()
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("OnlineVoting.Models.Entities.Election", "Election")
+                        .WithMany("RegisteredVoters")
+                        .HasForeignKey("ElectionId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("OnlineVoting.Models.Entities.Student", "Student")
-                        .WithOne("RegisteredVoter")
-                        .HasForeignKey("OnlineVoting.Models.Entities.RegisteredVoter", "StudentId");
+                        .WithMany("RegisteredVoters")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Navigation("Department");
+                    b.Navigation("Election");
 
                     b.Navigation("Student");
                 });
@@ -1188,21 +2235,31 @@ namespace OnlineVoting.Api.Migrations
                     b.Navigation("UserType");
                 });
 
-            modelBuilder.Entity("OnlineVoting.Models.Entities.Vote", b =>
+            modelBuilder.Entity("Vote", b =>
                 {
-                    b.HasOne("OnlineVoting.Models.Entities.RegisteredVoter", "RegisteredVoter")
+                    b.HasOne("OnlineVoting.Models.Entities.Contestant", "Contestant")
                         .WithMany()
-                        .HasForeignKey("RegisteredVoterId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("ContestantId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("OnlineVoting.Models.Entities.Student", "Student")
+                    b.HasOne("OnlineVoting.Models.Entities.ElectionPosition", "ElectionPosition")
                         .WithMany()
-                        .HasForeignKey("StudentId");
+                        .HasForeignKey("ElectionPositionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OnlineVoting.Models.Entities.RegisteredVoter", "RegisteredVoter")
+                        .WithMany("Votes")
+                        .HasForeignKey("RegisteredVoterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Contestant");
+
+                    b.Navigation("ElectionPosition");
 
                     b.Navigation("RegisteredVoter");
-
-                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.AuditOutcome", b =>
@@ -1220,9 +2277,73 @@ namespace OnlineVoting.Api.Migrations
                     b.Navigation("Students");
                 });
 
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Election", b =>
+                {
+                    b.Navigation("ElectionPositions");
+
+                    b.Navigation("RegisteredVoters");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.ElectionPosition", b =>
+                {
+                    b.Navigation("Applications");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.ElectionStatus", b =>
+                {
+                    b.Navigation("Elections");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.ElectionType", b =>
+                {
+                    b.Navigation("Elections");
+                });
+
             modelBuilder.Entity("OnlineVoting.Models.Entities.Faculty", b =>
                 {
                     b.Navigation("Departments");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Invoice", b =>
+                {
+                    b.Navigation("PaymentTransactions");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.InvoiceStatus", b =>
+                {
+                    b.Navigation("Invoices");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.OnlineVoting.Models.Entities.ElectionScope", b =>
+                {
+                    b.Navigation("ElectionTypes");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.PaymentGateway", b =>
+                {
+                    b.Navigation("PaymentTransactions");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.PaymentStatus", b =>
+                {
+                    b.Navigation("PaymentTransactions");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Position", b =>
+                {
+                    b.Navigation("ElectionPositions");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.PositionApplication", b =>
+                {
+                    b.Navigation("Contestant");
+
+                    b.Navigation("Invoice");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.RegisteredVoter", b =>
+                {
+                    b.Navigation("Votes");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.Role", b =>
@@ -1232,20 +2353,17 @@ namespace OnlineVoting.Api.Migrations
                     b.Navigation("UserRoles");
                 });
 
-            modelBuilder.Entity("OnlineVoting.Models.Entities.Staff", b =>
-                {
-                    b.Navigation("Address");
-                });
-
             modelBuilder.Entity("OnlineVoting.Models.Entities.Student", b =>
                 {
-                    b.Navigation("Address");
+                    b.Navigation("PositionApplications");
 
-                    b.Navigation("RegisteredVoter");
+                    b.Navigation("RegisteredVoters");
                 });
 
             modelBuilder.Entity("OnlineVoting.Models.Entities.User", b =>
                 {
+                    b.Navigation("Address");
+
                     b.Navigation("Claims");
 
                     b.Navigation("Logins");
@@ -1264,6 +2382,16 @@ namespace OnlineVoting.Api.Migrations
             modelBuilder.Entity("OnlineVoting.Models.Entities.UserType", b =>
                 {
                     b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("OnlineVoting.Models.Entities.Year", b =>
+                {
+                    b.Navigation("Elections");
+                });
+
+            modelBuilder.Entity("PositionApplicationStatus", b =>
+                {
+                    b.Navigation("Applications");
                 });
 #pragma warning restore 612, 618
         }

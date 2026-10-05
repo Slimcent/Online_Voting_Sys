@@ -54,5 +54,80 @@
                 public const string InactiveAccount = "Account is not active. Contact the administrator.";
             }
         }
+
+        public static class ElectionStatusCodes
+        {
+            public const string Draft = "DRAFT";
+            public const string RegistrationOpen = "REGISTRATION_OPEN";
+            public const string RegistrationClosed = "REGISTRATION_CLOSED";
+            public const string VotingOpen = "VOTING_OPEN";
+            public const string Completed = "COMPLETED";
+            public const string Cancelled = "CANCELLED";
+        }
+
+        public static class ElectionScopeCodes
+        {
+            public const string University = "UNIVERSITY";
+            public const string Faculty = "FACULTY";
+            public const string Department = "DEPARTMENT";
+        }
+
+        public static class PositionApplicationStatuses
+        {
+            public const string PendingPayment = "PENDING_PAYMENT";
+            public const string PendingReview = "PENDING_REVIEW";
+            public const string Approved = "APPROVED";
+            public const string Rejected = "REJECTED";
+            public const string Withdrawn = "WITHDRAWN";
+        }
+
+        public static class InvoiceStatuses
+        {
+            public const string Unpaid = "UNPAID";
+            public const string Paid = "PAID";
+            public const string Cancelled = "CANCELLED";
+        }
+
+        public static class PaymentStatuses
+        {
+            public const string Pending = "PENDING";
+            public const string Succeeded = "SUCCEEDED";
+            public const string Failed = "FAILED";
+            public const string Cancelled = "CANCELLED";
+        }
+
+        public static class IdempotencyStatuses
+        {
+            public const string Processing = "Processing";
+            public const string Completed = "Completed";
+            public const string Failed = "Failed";
+        }
+
+        public static class IdempotencyOperations
+        {
+            public const string CreatePositionApplication = "CreatePositionApplication";
+            public const string InitiatePayment = "InitiatePayment";
+        }
+
+        public static class PaymentGateways
+        {
+            public const string Paystack = "PAYSTACK";
+            public const string Flutterwave = "FLUTTERWAVE";
+        }
+
+        public static class GatewayPaymentStatuses
+        {
+            public const string Pending = "PENDING";
+            public const string Succeeded = "SUCCEEDED";
+            public const string Failed = "FAILED";
+            public const string Cancelled = "CANCELLED";
+        }
+
+        public static class RoleNames
+        {
+            public const string Student = "student";
+            public const string Admin = "admin";
+            public const string SuperAdmin = "super-admin";
+        }
     }
 }

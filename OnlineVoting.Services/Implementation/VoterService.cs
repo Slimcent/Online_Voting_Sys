@@ -41,11 +41,11 @@ namespace OnlineVoting.Services.Implementation
             if (checkIfStudentExists == null)
                 throw new NotFoundException(request.RegNumber);
 
-            RegisteredVoter checkIfStudentAlreadyRegistered = await _registeredVoterRepo.GetSingleByAsync(x => x.StudentId == checkIfStudentExists.Id
-                && x.DepartmentId == checkIfStudentExists.DepartmentId);
+            //RegisteredVoter checkIfStudentAlreadyRegistered = await _registeredVoterRepo.GetSingleByAsync(x => x.StudentId == checkIfStudentExists.Id
+            //    && x.DepartmentId == checkIfStudentExists.DepartmentId);
 
-            if (checkIfStudentAlreadyRegistered != null)
-                throw new InvalidOperationException($"Student with regNo {checkIfStudentExists.RegNumber} has already registered to vote");
+            //if (checkIfStudentAlreadyRegistered != null)
+            //    throw new InvalidOperationException($"Student with regNo {checkIfStudentExists.RegNumber} has already registered to vote");
 
             string votingCode = VotingCodeExtention.StudentVotingCode();
 
@@ -53,7 +53,7 @@ namespace OnlineVoting.Services.Implementation
             {
                 StudentId = checkIfStudentExists.Id,
                 VotingCode = votingCode,
-                DepartmentId = checkIfStudentExists.DepartmentId,
+                //DepartmentId = checkIfStudentExists.DepartmentId,
             };
 
             await _registeredVoterRepo.AddAsync(registerVoter);
@@ -77,23 +77,23 @@ namespace OnlineVoting.Services.Implementation
             return "Voter registration was successful";
         }
 
-        public async Task<string> ToggleVoter(Guid id)
-        {
-            RegisteredVoter registeredVoter = await _registeredVoterRepo.GetSingleByAsync(x => x.Id == id);
+        //public async Task<string> ToggleVoter(Guid id)
+        //{
+        //    RegisteredVoter registeredVoter = await _registeredVoterRepo.GetSingleByAsync(x => x.Id == id);
 
-            if (registeredVoter == null)
-                throw new InvalidOperationException("Student not found");
+        //    if (registeredVoter == null)
+        //        throw new InvalidOperationException("Student not found");
 
-            registeredVoter.IsDeActivated = !registeredVoter.IsDeActivated;
+        //    registeredVoter.IsDeActivated = !registeredVoter.IsDeActivated;
 
-            if (registeredVoter.IsDeActivated == true)
-            {
-                return "Voter Deactivated successfully";
-            }
-            else
-            {
-                return "Voter activated successfully";
-            }
-        }
+        //    if (registeredVoter.IsDeActivated == true)
+        //    {
+        //        return "Voter Deactivated successfully";
+        //    }
+        //    else
+        //    {
+        //        return "Voter activated successfully";
+        //    }
+        //}
     }
 }
