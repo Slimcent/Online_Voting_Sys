@@ -1,8 +1,13 @@
-﻿
-using Asp.Versioning;
+﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OnlineVoting.Api.Documentation.Attributes;
+using OnlineVoting.Api.Documentation.Definitions.Keys;
+using OnlineVoting.Api.Extensions;
 using OnlineVoting.Models.Dtos.Request;
+using OnlineVoting.Models.Dtos.Response;
+using OnlineVoting.Models.Pagination;
+using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Interfaces;
 
 namespace OnlineVoting.Api.Controllers
@@ -11,7 +16,7 @@ namespace OnlineVoting.Api.Controllers
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
     [Authorize(Policy = "Authorization")]
-    public class VoterController : ControllerBase
+    public class VoterController : BaseController
     {
         private readonly IVoterService _voterService;
 
@@ -20,20 +25,31 @@ namespace OnlineVoting.Api.Controllers
             _voterService = voterService;
         }
 
-        [HttpPost("create-voter", Name = "Create-Voter")]
-        public async Task<IActionResult> CreateVoter([FromQuery] CreateVoterRequest model)
+        [HttpPost("register-voter", Name = "Register-Voter")]
+        [ApiDocumentation(VoterDocumentationKeys.RegisterVoter)]
+        public async Task<IActionResult> RegisterVoter([FromBody] RegisterVoterRequest request)
         {
-            string voter = await _voterService.CreateVoter(model);
+            Result<RegisteredVoterResponse> result = await _voterService.RegisterVoter(request);
 
-            return Ok(voter);
+            return result.ToActionResult(this);
         }
 
-        //[HttpPut("toggle-voter-status", Name = "Toggle-Voter-Status")]
-        //public async Task<IActionResult> ToggleVoterStatus([FromQuery] Guid id)
-        //{
-        //    string voter = await _voterService.ToggleVoter(id);
+        [HttpGet("{registeredVoterId}", Name = "Get-Registered-Voter")]
+        [ApiDocumentation(VoterDocumentationKeys.GetRegisteredVoter)]
+        public async Task<IActionResult> GetRegisteredVoter(string registeredVoterId)
+        {
+            Result<RegisteredVoterResponse> result = await _voterService.GetRegisteredVoter(registeredVoterId);
 
-        //    return Ok(voter);
-        //}
+            return result.ToActionResult(this);
+        }
+
+        [HttpGet("registered-voters", Name = "Get-Registered-Voters")]
+        [ApiDocumentation(VoterDocumentationKeys.GetRegisteredVoters)]
+        public async Task<IActionResult> GetRegisteredVoters([FromQuery] RegisteredVoterRequest request)
+        {
+            Result<PagedResponse<RegisteredVoterResponse>> result = await _voterService.GetRegisteredVoters(request);
+
+            return result.ToActionResult(this);
+        }
     }
 }

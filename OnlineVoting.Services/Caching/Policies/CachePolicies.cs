@@ -35,5 +35,10 @@ namespace OnlineVoting.Services.Caching.Policies
         {
             Tags = [CacheTags.PaymentTransaction]
         };
+
+        public static readonly CacheEntryOptions RegisteredVoter = new()
+        {
+            Tags = [CacheTags.RegisteredVoter]
+        };
     }
 }

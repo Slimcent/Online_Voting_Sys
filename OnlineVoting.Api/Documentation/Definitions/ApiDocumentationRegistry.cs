@@ -26,6 +26,7 @@ namespace OnlineVoting.Api.Documentation.Definitions
             AddOperations(operations, PositionApplicationDocumentation.Operations);
             AddOperations(operations, PaymentDocumentation.Operations);
             AddOperations(operations, ContestantDocumentation.Operations);
+            AddOperations(operations, VoterDocumentation.Operations);
 
             return operations;
         }
