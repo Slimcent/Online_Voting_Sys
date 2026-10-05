@@ -9,6 +9,8 @@ namespace OnlineVoting.Api.Mapper
         public StaffMappingProfile()
         {
             CreateMap<CreateStaffRequest, Staff>();
+
+            CreateMap<UpdateAddressRequest, Address>();
         }
     }
 }

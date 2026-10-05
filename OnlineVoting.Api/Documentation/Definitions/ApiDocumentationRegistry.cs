@@ -1,5 +1,6 @@
 ﻿using OnlineVoting.Api.Documentation.Definitions.EndpointDefinitions;
 using OnlineVoting.Api.Documentation.Models;
+using OnlineVoting.Models.Entities;
 
 namespace OnlineVoting.Api.Documentation.Definitions
 {
@@ -10,22 +11,19 @@ namespace OnlineVoting.Api.Documentation.Definitions
         private static IReadOnlyDictionary<string, ApiOperationDocumentation> BuildOperations()
         {
             Dictionary<string, ApiOperationDocumentation> operations = new();
-
             AddOperations(operations, AuthDocumentation.Operations);
-
             AddOperations(operations, StudentDocumentation.Operations);
-
             AddOperations(operations, StaffDocumentation.Operations);
-
             AddOperations(operations, RoleDocumentation.Operations);
-
             AddOperations(operations, PositionDocumentation.Operations);
-
             AddOperations(operations, FacultyDocumentation.Operations);
-
             AddOperations(operations, DepartmentDocumentation.Operations);
-
             AddOperations(operations, ClaimsDocumentation.Operations);
+            AddOperations(operations, ElectionDocumentation.Operations);
+            AddOperations(operations, ElectionTypeDocumentation.Operations);
+            AddOperations(operations, ElectionPositionDocumentation.Operations);
+            AddOperations(operations, PaymentDocumentation.Operations);
+            AddOperations(operations, ContestantDocumentation.Operations);
 
             return operations;
         }

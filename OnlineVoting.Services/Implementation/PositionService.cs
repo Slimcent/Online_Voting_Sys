@@ -165,7 +165,7 @@ namespace OnlineVoting.Services.Implementation
             return Result<PagedResponse<PositionResponse>>.Success(response);
         }
 
-        public async Task<Result<string>> UpdatePosition(Guid positionId, CreateWithNameRequest request)
+        public async Task<Result<string>> UpdatePosition(string positionId, CreateWithNameRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Name))
                 return Result<string>.ValidationError("Position name cannot be empty");

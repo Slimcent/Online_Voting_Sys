@@ -1,5 +1,4 @@
-﻿using OnlineVoting.Models.Enums;
-using OnlineVoting.Models.Interfaces;
+﻿using OnlineVoting.Models.Interfaces;
 using System.ComponentModel.DataAnnotations;
 
 namespace OnlineVoting.Models.Entities
@@ -20,6 +19,5 @@ namespace OnlineVoting.Models.Entities
         public int GenderId { get; set; }
         public virtual User? User { get; set; }
         public Gender Gender { get; set; }
-        public virtual Address? Address { get; set; }
     }
 }

@@ -109,7 +109,7 @@ namespace OnlineVoting.Api.Controllers
 
         [HttpPut("update-position", Name = "Update-Position")]
         [ApiDocumentation(PositionDocumentationKeys.UpdatePosition)]
-        public async Task<IActionResult> UpdatePosition([FromQuery] Guid id, [FromBody] CreateWithNameRequest request)
+        public async Task<IActionResult> UpdatePosition([FromQuery] string id, [FromBody] CreateWithNameRequest request)
         {
             Result<string> result = await _positionService.UpdatePosition(id, request);
 

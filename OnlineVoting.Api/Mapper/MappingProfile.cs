@@ -40,7 +40,7 @@ namespace OnlineVoting.Api.Mapper
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.User.Email))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
                 .ForMember(dest => dest.Address, opt => opt.MapFrom(src =>
-                $"{src.Address.PlotNo} {src.Address.StreetName} {src.Address.State} {src.Address.Nationality}"));
+                $"{src.User.Address.PlotNo} {src.User.Address.StreetName} {src.User.Address.State} {src.User.Address.Nationality}"));
 
             // Get Staff by Email
             CreateMap<User, StaffResponse>()
@@ -48,7 +48,7 @@ namespace OnlineVoting.Api.Mapper
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
                 .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.Staff.PhoneNumber))
                 .ForMember(dest => dest.Address, opt => opt.MapFrom(src =>
-                $"{src.Staff.Address.PlotNo} {src.Staff.Address.StreetName} {src.Staff.Address.State} {src.Staff.Address.Nationality}"));
+                $"{src.Address.PlotNo} {src.Address.StreetName} {src.Address.State} {src.Address.Nationality}"));
 
             CreateMap<CreateStudentRequest, CreateUserRequest>();
         }
