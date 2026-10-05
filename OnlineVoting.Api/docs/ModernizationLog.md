@@ -14,7 +14,7 @@ Entity Framework Core, REST APIs, authentication and authorization, software arc
 
 and DevOps practices.
 
-Revisiting this project provides an opportunity to apply that experience to an existing codebase. Rather than rewriting the application again, 
+Revisiting this project provides an opportunity to apply that experience to an existing codebase. Rather than rewriting the application again,
 
 the goal is to modernize it incrementally while preserving its existing functionality. This approach reflects how many production systems 
 
@@ -5348,5 +5348,1019 @@ and department names within a faculty.
 The migration was adjusted to copy existing address ownership to `UserId` before removing `StudentId` and `StaffId`.
 
 Existing data was checked for duplicates, invalid address relationships and values exceeding the new column limits before the migration was applied.
+
+---
+
+# Election, Application and Payment Workflow
+
+## Election Management
+
+### Goal
+
+Expanded the election model so elections can be configured properly instead of relying on fixed values in the original implementation.
+
+### Changes
+
+Added support for:
+
+- election types;
+- election scopes;
+- election statuses;
+- paginated election queries;
+- election status updates;
+- election status activation;
+- election type statistics;
+- department and faculty scoped elections.
+
+`ElectionScope` is stored as reference data.
+
+This makes election scope configurable from the database and keeps the domain model flexible.
+
+### Election Structure
+
+```
+Election
+   |
+   +--> Election Type
+   |
+   +--> Election Scope
+   |
+   +--> Election Status
+   |
+   +--> Department
+   |
+   +--> Faculty
+   |
+   +--> Voting Start
+   |
+   +--> Voting End
+```
+
+An election can be configured for either a department, a faculty depending or university on its scope.
+
+### Election Scope
+
+The scope determines which group of students the election belongs to.
+
+Examples include:
+
+```
+Department
+Faculty
+University
+```
+
+The relationship between the election and its department, faculty or university is handled according to the configured scope.
+
+### Election Status
+
+Election statuses are stored as reference data.
+
+The API supports:
+
+- retrieving election statuses;
+- paginated election status retrieval;
+- updating election statuses;
+- activating or deactivating election statuses;
+- retrieving statuses with the number of related elections.
+
+### API Design
+
+Election queries use the existing request/pagination pattern.
+
+Controllers remain thin:
+
+```
+Controller
+   |
+   v
+ElectionService
+   |
+   v
+Repository / UnitOfWork
+   |
+   v
+SQL Server
+```
+
+Business rules remain in `ElectionService`.
+
+### Database Changes
+
+Added the election scope relationship and the `ElectionScopes` table.
+
+---
+
+## Election Positions
+
+### Goal
+
+Allow each election to define the positions that students can apply for.
+
+A position such as President can exist independently, while `ElectionPosition` connects that position to a specific election.
+
+### Structure
+
+```
+Election
+   |
+   v
+Election Position
+   |
+   +--> Position
+   |
+   +--> Application Fee
+   |
+   +--> Currency
+   |
+   +--> Active
+```
+
+This means the same position can be reused across different elections while having different application fees or configuration.
+
+### ElectionPosition
+
+`ElectionPosition` contains:
+
+- election;
+- position;
+- application fee;
+- currency;
+- active state;
+- audit information.
+
+### API Operations
+
+Added support for:
+
+- retrieving paginated election positions;
+- retrieving election positions with applications;
+- activating or deactivating an election position;
+- creating election positions.
+
+### Activation
+
+Election positions are not deleted as part of the normal workflow.
+
+Their availability can be controlled using the `Active` flag.
+
+```
+Election Position
+      |
+      v
+   Active?
+   /     \
+ Yes      No
+ |        |
+Available Hidden/Disabled
+```
+
+---
+
+## Position Application Workflow
+
+### Goal
+
+Replace the old direct contestant-creation flow with an application process.
+
+A student now applies for an election position first.
+
+The student only becomes a contestant after the application has been paid and approved.
+
+### Main Relationship
+
+```
+Student
+   |
+   v
+Position Application
+   |
+   v
+Election Position
+```
+
+A `PositionApplication` links:
+
+- a student;
+- an election position;
+- an application status.
+
+### Application Statuses
+
+The following application statuses are seeded:
+
+```
+Pending Payment
+Pending Review
+Approved
+Rejected
+Withdrawn
+```
+
+### Main Flow
+
+```
+Student
+   |
+   v
+Select Election Position
+   |
+   v
+Create Position Application
+   |
+   v
+Pending Payment
+   |
+   | Payment succeeds
+   v
+Pending Review
+   |
+   +---------------------+
+   |                     |
+   v                     v
+Approved               Rejected
+   |
+   v
+Contestant Created
+```
+
+### Application Creation
+
+When an application is created:
+
+1. The current student is identified.
+2. The election position is validated.
+3. Existing applications are checked.
+4. The `Pending Payment` status is loaded.
+5. The application is created.
+6. An invoice is created using the election position fee and currency.
+7. The application response includes the invoice information.
+
+### Invoice Creation
+
+The invoice is created after the position application exists.
+
+```
+Position Application
+        |
+        v
+Application Fee
+        |
+        v
+Create Invoice
+```
+
+The invoice stores a reference back to the position application.
+
+### Application Cancellation
+
+A student can withdraw an application while it is still eligible for cancellation.
+
+For an unpaid application:
+
+```
+Position Application
+Pending Payment
+       |
+       v
+Withdrawn
+
+Invoice
+Unpaid
+  |
+  v
+Cancelled
+```
+
+Paid applications cannot be cancelled using this flow.
+
+### Administrative Review
+
+Applications waiting for review can be approved or rejected.
+
+Approval requires:
+
+```
+Position Application = Pending Review
+Invoice = Paid
+```
+
+Only applications that satisfy those conditions can become contestants.
+
+---
+
+## Contestant Workflow
+
+### Goal
+
+Create contestants only from approved applications.
+
+The previous direct student-to-contestant creation flow is no longer used for this process.
+
+### Relationship
+
+```
+Student
+   |
+   v
+Position Application
+   |
+   v
+Approved
+   |
+   v
+Contestant
+```
+
+`Contestant` references the approved `PositionApplication`.
+
+### Contestant Creation
+
+When an application is approved:
+
+1. The application is validated.
+2. Payment status is checked.
+3. The application is changed to `Approved`.
+4. A contestant is created if one does not already exist.
+
+A contestant is created only once.
+
+### Contestant Reads
+
+Added support for:
+
+- paginated contestant retrieval;
+- filtering;
+- retrieving a contestant by identifier;
+- activation changes.
+
+The main contestant query supports filters instead of introducing separate methods for each query type.
+
+### Contestant Activation
+
+Contestants are not deleted as part of the normal workflow.
+
+```
+Contestant
+   |
+   v
+ Active
+   |
+Toggle
+   |
+   v
+Inactive
+```
+
+This preserves the contestant record while allowing it to be excluded from active election operations.
+
+---
+
+## Invoice Model
+
+### Goal
+
+Keep the business record for an application fee separate from individual payment attempts.
+
+### Relationship
+
+```
+Position Application
+        |
+        v
+      Invoice
+```
+
+An invoice stores:
+
+- position application;
+- student;
+- user;
+- payer first name;
+- payer last name;
+- payer email;
+- registration number;
+- amount;
+- currency;
+- invoice status;
+- payment information.
+
+### Invoice Status
+
+Invoice status is stored using reference data.
+
+Current workflow uses statuses such as:
+
+```
+Unpaid
+Paid
+Cancelled
+```
+
+### Invoice Reads
+
+Added:
+
+```
+GetInvoice
+GetInvoices
+```
+
+`GetInvoice` retrieves one invoice by identifier.
+
+`GetInvoices` supports:
+
+- pagination;
+- invoice status filtering;
+- student filtering;
+- position application filtering;
+- search.
+
+Search includes:
+
+- invoice number;
+- payer first name;
+- payer last name;
+- payer email;
+- registration number.
+
+---
+
+## Payment Transaction Model
+
+### Goal
+
+Keep provider-specific payment attempts separate from the invoice.
+
+### Relationship
+
+```
+Position Application
+        |
+        v
+      Invoice
+        |
+        v
+Payment Transaction
+        |
+        +--> Payment Gateway
+        |
+        +--> Payment Status
+```
+
+An invoice represents what needs to be paid.
+
+A payment transaction represents one payment attempt.
+
+### PaymentTransaction
+
+The transaction stores:
+
+- invoice;
+- payment gateway;
+- payment status;
+- internal payment reference;
+- provider reference;
+- checkout URL;
+- student;
+- user;
+- payer information;
+- amount;
+- currency;
+- failure reason;
+- payment time.
+
+This allows an invoice and payment-provider state to evolve independently.
+
+---
+
+## Payment Gateway Abstraction
+
+### Goal
+
+Avoid coupling `PaymentService` directly to Paystack.
+
+### Structure
+
+```
+PaymentService
+     |
+     v
+IPaymentGatewayResolver
+     |
+     v
+IPaymentGateway
+     |
+     +--> Paystack
+     |
+     +--> Future Gateway
+```
+
+`PaymentService` works with the `IPaymentGateway` abstraction.
+
+The resolver selects the correct implementation using the configured gateway code.
+
+This makes additional providers easier to add later.
+
+---
+
+## Payment Initiation
+
+### Flow
+
+```
+Client
+  |
+  v
+Initiate Payment
+  |
+  v
+Validate Invoice
+  |
+  v
+Check Idempotency
+  |
+  v
+Check Existing Pending Payment
+  |
+  v
+Create Payment Transaction
+  |
+  v
+Persist Pending Transaction
+  |
+  v
+Call Payment Gateway
+  |
+  +----------------------+
+  |                      |
+  v                      v
+Success                Failure
+  |                      |
+  v                      v
+Save Provider         Mark Transaction
+Reference + URL       Failed
+  |                      |
+  v                      v
+Return Checkout       Return Failure
+```
+
+The application creates its own payment reference before contacting the provider.
+
+The provider can then return:
+
+- provider reference;
+- checkout URL.
+
+### Idempotency
+
+Payment initiation uses an `IdempotencyRecord`.
+
+Possible states are:
+
+```
+Processing
+Failed
+Completed
+```
+
+The idempotency record stores:
+
+- key;
+- user;
+- operation;
+- request hash;
+- resource ID;
+- response;
+- response status.
+
+### Repeated Requests
+
+For the same key and same request:
+
+```
+Completed Request
+      |
+      v
+Return Stored Response
+```
+
+For the same key with different request data:
+
+```
+Same Idempotency Key
+Different Request Hash
+        |
+        v
+409 Conflict
+```
+
+### Existing Pending Transactions
+
+Before creating another transaction, the service checks for an existing pending payment for the invoice.
+
+The existing transaction is verified with the provider before another payment attempt is created.
+
+This avoids creating unnecessary duplicate payment attempts.
+
+---
+
+## Payment Verification
+
+### Goal
+
+Make provider verification explicit.
+
+Reading a payment transaction does not contact the payment provider.
+
+`VerifyPayment` is responsible for provider reconciliation.
+
+### Flow
+
+```
+Client
+  |
+  v
+VerifyPayment
+  |
+  v
+Load Local Transaction
+  |
+  v
+Resolve Gateway
+  |
+  v
+Provider Verification
+  |
+  v
+Validate:
+- Reference
+- Amount
+- Currency
+  |
+  v
+Reconcile Status
+```
+
+### Successful Payment
+
+```
+Provider
+Succeeded
+   |
+   v
+Payment Transaction
+Succeeded
+   |
+   v
+Invoice
+Paid
+   |
+   v
+Position Application
+Pending Review
+```
+
+On successful verification:
+
+- transaction becomes `Succeeded`;
+- provider reference is updated;
+- paid time is recorded;
+- invoice becomes `Paid`;
+- invoice paid time is recorded;
+- pending application moves to `Pending Review`.
+
+### Failed Payment
+
+```
+Provider
+Failed
+  |
+  v
+Payment Transaction
+Failed
+```
+
+The invoice remains unchanged.
+
+### Cancelled Payment
+
+```
+Provider
+Cancelled
+   |
+   v
+Payment Transaction
+Cancelled
+```
+
+The invoice remains unchanged.
+
+### Pending Payment
+
+```
+Provider
+Pending
+  |
+  v
+Return Current Status
+```
+
+No local state change is required.
+
+The payment can be verified again later.
+
+---
+
+## Payment Webhook
+
+### Goal
+
+Reuse the same reconciliation rules for provider webhooks.
+
+### Flow
+
+```
+Payment Provider
+      |
+      v
+Webhook Endpoint
+      |
+      v
+Validate Webhook
+      |
+      v
+Locate Transaction
+      |
+      v
+Verify Payment
+      |
+      v
+Existing Reconciliation Logic
+```
+
+The webhook does not maintain a second payment-state implementation.
+
+It uses the same verification and reconciliation logic used by `VerifyPayment`.
+
+Already successful payments are treated as already processed.
+
+---
+
+## Payment Transaction Reads
+
+Added:
+
+```
+GetPaymentTransaction
+GetPaymentTransactions
+```
+
+### GetPaymentTransaction
+
+Retrieves a payment transaction using the application's payment reference.
+
+```
+Payment Reference
+      |
+      v
+Local Database / Cache
+      |
+      v
+PaymentTransactionResponse
+```
+
+This endpoint does not contact the payment provider.
+
+### GetPaymentTransactions
+
+Supports:
+
+- pagination;
+- payment gateway filtering;
+- payment status filtering;
+- invoice filtering;
+- student filtering;
+- user filtering;
+- search.
+
+Search supports:
+
+- payment reference;
+- provider reference;
+- payer first name;
+- payer last name;
+- payer email;
+- registration number.
+
+---
+
+## Invoice and Payment Caching
+
+The invoice and payment transaction read operations now use the existing caching infrastructure.
+
+Added cache configuration for:
+
+```
+Invoice
+PaymentTransaction
+```
+
+Each has:
+
+- cache keys;
+- cache tag;
+- cache policy.
+
+### Read Flow
+
+```
+Request
+   |
+   v
+Cache
+   |
+   +---- Hit ----> Return Response
+   |
+   +---- Miss
+          |
+          v
+       Database
+          |
+          v
+       AutoMapper
+          |
+          v
+        Cache
+          |
+          v
+       Response
+```
+
+The repository query is inside the cache factory.
+
+This means the database query runs only on a cache miss.
+
+### Invoice Invalidation
+
+Invoice cache entries are invalidated after invoice data changes.
+
+Examples include:
+
+- invoice creation;
+- application cancellation;
+- successful payment reconciliation.
+
+### Payment Transaction Invalidation
+
+Payment transaction cache entries are invalidated after transaction changes are persisted.
+
+During payment initiation:
+
+```
+Create Transaction
+      |
+      v
+Save
+      |
+      v
+Invalidate PaymentTransaction Cache
+```
+
+After gateway failure:
+
+```
+Transaction -> Failed
+      |
+      v
+Save
+      |
+      v
+Invalidate PaymentTransaction Cache
+```
+
+After successful gateway initialization:
+
+```
+Update Provider Reference / Checkout URL
+      |
+      v
+Save
+      |
+      v
+Invalidate PaymentTransaction Cache
+```
+
+### Successful Payment Reconciliation
+
+Successful reconciliation changes three resource types:
+
+```
+Payment Transaction
+Invoice
+Position Application
+        |
+        v
+Save Changes
+        |
+        v
+Invalidate:
+- PaymentTransaction
+- Invoice
+- PositionApplication
+```
+
+### Failed or Cancelled Reconciliation
+
+Only the payment transaction changes.
+
+```
+Payment Transaction
+      |
+      v
+Save
+      |
+      v
+Invalidate PaymentTransaction
+```
+
+No unnecessary invoice or application invalidation is performed.
+
+---
+
+## API Documentation
+
+Centralized API documentation was added for the new payment read endpoints.
+
+Documented operations include:
+
+```
+GetInvoice
+GetInvoices
+GetPaymentTransaction
+GetPaymentTransactions
+```
+
+The implementation follows the existing:
+
+```
+PaymentDocumentation
+PaymentDocumentationKeys
+ApiDocumentationAttribute
+```
+
+---
+
+## Testing
+
+The election, application, contestant and payment changes were covered incrementally with controller, mapping and service tests.
+
+### Payment Service
+
+```
+29 passed
+0 failed
+```
+
+The tests cover:
+
+- payment initiation;
+- payment verification;
+- invoice reads;
+- invoice filtering;
+- payment transaction reads;
+- payment transaction filtering;
+- single payment transaction lookup;
+- not-found handling.
+
+### Payment Controller
+
+```
+7 passed
+0 failed
+```
+
+The tests cover the payment controller endpoints including the new invoice and transaction reads.
+
+### Full Regression Suite
+
+After the latest payment transaction and cache work:
+
+```
+873 passed
+0 failed
+0 skipped
+```
+
+### Final Build
+
+After adding the API documentation:
+
+```
+6 succeeded
+0 failed
+2 up-to-date
+1 skipped
+```
 
 ---
