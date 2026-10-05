@@ -11,6 +11,7 @@ namespace OnlineVoting.Api.Documentation.Definitions
         private static IReadOnlyDictionary<string, ApiOperationDocumentation> BuildOperations()
         {
             Dictionary<string, ApiOperationDocumentation> operations = new();
+            AddOperations(operations, AuditTrailDocumentation.Operations);
             AddOperations(operations, AuthDocumentation.Operations);
             AddOperations(operations, StudentDocumentation.Operations);
             AddOperations(operations, StaffDocumentation.Operations);
@@ -22,6 +23,7 @@ namespace OnlineVoting.Api.Documentation.Definitions
             AddOperations(operations, ElectionDocumentation.Operations);
             AddOperations(operations, ElectionTypeDocumentation.Operations);
             AddOperations(operations, ElectionPositionDocumentation.Operations);
+            AddOperations(operations, PositionApplicationDocumentation.Operations);
             AddOperations(operations, PaymentDocumentation.Operations);
             AddOperations(operations, ContestantDocumentation.Operations);
 
