@@ -8,6 +8,7 @@ using OnlineVoting.Caching.Interfaces;
 using OnlineVoting.Data.Interfaces;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
+using OnlineVoting.Models.Interfaces;
 using OnlineVoting.Models.Pagination;
 using OnlineVoting.Services.Caching.Tags;
 using OnlineVoting.Services.Implementation;
@@ -25,12 +26,17 @@ namespace OnlineVoting.Tests.Factories
         public Mock<IRepository<Student>> StudentRepository { get; }
         public Mock<IRepository<RegisteredVoter>> RegisteredVoterRepository { get; }
         public Mock<IRepository<Election>> ElectionRepository { get; }
+        public Mock<IRepository<ElectionPosition>> ElectionPositionRepository { get; }
+        public Mock<IRepository<Contestant>> ContestantRepository { get; }
+        public Mock<IRepository<Vote>> VoteRepository { get; }
+
         public Mock<ICacheService> CacheService { get; }
         public Mock<IUnitOfWork> UnitOfWork { get; }
         public Mock<IServiceFactory> ServiceFactory { get; }
         public Mock<IMapper> Mapper { get; }
         public Mock<ILoggerMessage> LoggerMessage { get; }
         public Mock<IBackgroundTaskQueue> BackgroundTaskQueue { get; }
+        public Mock<ICurrentUserContext> CurrentUserContext { get; }
 
         public VoterService Service { get; }
 
@@ -43,13 +49,17 @@ namespace OnlineVoting.Tests.Factories
             StudentRepository = new Mock<IRepository<Student>>();
             RegisteredVoterRepository = new Mock<IRepository<RegisteredVoter>>();
             ElectionRepository = new Mock<IRepository<Election>>();
+            ElectionPositionRepository = new Mock<IRepository<ElectionPosition>>();
+            ContestantRepository = new Mock<IRepository<Contestant>>();
+            VoteRepository = new Mock<IRepository<Vote>>();
 
+            CacheService = new Mock<ICacheService>();
             UnitOfWork = new Mock<IUnitOfWork>();
             ServiceFactory = new Mock<IServiceFactory>();
             Mapper = new Mock<IMapper>();
             LoggerMessage = new Mock<ILoggerMessage>();
-            CacheService = new Mock<ICacheService>();
             BackgroundTaskQueue = new Mock<IBackgroundTaskQueue>();
+            CurrentUserContext = new Mock<ICurrentUserContext>();
 
             SetupRepositories();
             SetupUnitOfWork();
@@ -64,10 +74,16 @@ namespace OnlineVoting.Tests.Factories
             SetupRepository(StudentRepository);
             SetupRepository(RegisteredVoterRepository);
             SetupRepository(ElectionRepository);
+            SetupRepository(ElectionPositionRepository);
+            SetupRepository(ContestantRepository);
+            SetupRepository(VoteRepository);
 
             UnitOfWork.Setup(x => x.GetRepository<Student>()).Returns(StudentRepository.Object);
             UnitOfWork.Setup(x => x.GetRepository<RegisteredVoter>()).Returns(RegisteredVoterRepository.Object);
             UnitOfWork.Setup(x => x.GetRepository<Election>()).Returns(ElectionRepository.Object);
+            UnitOfWork.Setup(x => x.GetRepository<ElectionPosition>()).Returns(ElectionPositionRepository.Object);
+            UnitOfWork.Setup(x => x.GetRepository<Contestant>()).Returns(ContestantRepository.Object);
+            UnitOfWork.Setup(x => x.GetRepository<Vote>()).Returns(VoteRepository.Object);
         }
 
         private void SetupUnitOfWork()
@@ -81,8 +97,9 @@ namespace OnlineVoting.Tests.Factories
             ServiceFactory.Setup(x => x.GetService<IUnitOfWork>()).Returns(UnitOfWork.Object);
             ServiceFactory.Setup(x => x.GetService<IMapper>()).Returns(Mapper.Object);
             ServiceFactory.Setup(x => x.GetService<ILoggerMessage>()).Returns(LoggerMessage.Object);
-            ServiceFactory.Setup(x => x.GetService<IBackgroundTaskQueue>()).Returns(BackgroundTaskQueue.Object);
             ServiceFactory.Setup(x => x.GetService<ICacheService>()).Returns(CacheService.Object);
+            ServiceFactory.Setup(x => x.GetService<IBackgroundTaskQueue>()).Returns(BackgroundTaskQueue.Object);
+            ServiceFactory.Setup(x => x.GetService<ICurrentUserContext>()).Returns(CurrentUserContext.Object);
         }
 
         private void SetupCacheService()
@@ -102,6 +119,26 @@ namespace OnlineVoting.Tests.Factories
                     CacheEntryOptions? cacheEntryOptions, CancellationToken cancellationToken) => cacheFactory(cancellationToken));
 
             CacheService.Setup(x => x.RemoveByTag(CacheTags.RegisteredVoter, It.IsAny<CancellationToken>()))
+                .Returns(ValueTask.CompletedTask);
+
+            CacheService.Setup(x => x.GetOrCreate(It.IsAny<string>(),
+                It.IsAny<Func<CancellationToken, ValueTask<PagedResponse<VoteHistoryResponse>>>>(),
+                It.IsAny<CacheEntryOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Returns((string cacheKey, Func<CancellationToken, ValueTask<PagedResponse<VoteHistoryResponse>>> cacheFactory,
+                CacheEntryOptions? cacheEntryOptions, CancellationToken cancellationToken) => cacheFactory(cancellationToken));
+
+            CacheService.Setup(x => x.RemoveByTag(CacheTags.VoteHistory, It.IsAny<CancellationToken>()))
+                .Returns(ValueTask.CompletedTask);
+
+            CacheService.Setup(x => x.GetOrCreate(It.IsAny<string>(),
+                It.IsAny<Func<CancellationToken, ValueTask<PagedResponse<ElectionResultResponse>>>>(),
+                It.IsAny<CacheEntryOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .Returns((string cacheKey, Func<CancellationToken, ValueTask<PagedResponse<ElectionResultResponse>>> cacheFactory,
+                CacheEntryOptions? cacheEntryOptions, CancellationToken cancellationToken) => cacheFactory(cancellationToken));
+
+            CacheService.Setup(x => x.RemoveByTag(CacheTags.ElectionResult, It.IsAny<CancellationToken>()))
                 .Returns(ValueTask.CompletedTask);
         }
 

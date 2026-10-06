@@ -160,5 +160,133 @@ namespace OnlineVoting.Tests.Controllers
 
             voterService.Verify(x => x.GetRegisteredVoters(request), Times.Once);
         }
+
+        [Fact]
+        public async Task CastVote_ReturnsCreated_WhenVoteIsSuccessful()
+        {
+            Mock<IVoterService> voterService = new Mock<IVoterService>();
+
+            CastVoteRequest request = new()
+            {
+                RegisteredVoterId = Guid.NewGuid().ToString(),
+                VotingCode = "VOTE123",
+                ElectionPositionId = Guid.NewGuid().ToString(),
+                ContestantId = Guid.NewGuid().ToString()
+            };
+
+            voterService.Setup(x => x.CastVote(request))
+                .ReturnsAsync(Result<string>.Created("Vote cast successfully."));
+
+            VoterController controller = new VoterController(voterService.Object);
+
+            IActionResult actionResult = await controller.CastVote(request);
+
+            ObjectResult createdResult = Assert.IsType<ObjectResult>(actionResult);
+
+            Assert.Equal(StatusCodes.Status201Created, createdResult.StatusCode);
+            Assert.Equal("Vote cast successfully.", createdResult.Value);
+
+            voterService.Verify(x => x.CastVote(request), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetMyVotes_ReturnsOk_WhenVotesAreRetrievedSuccessfully()
+        {
+            Mock<IVoterService> voterService = new Mock<IVoterService>();
+
+            VoteHistoryRequest request = new()
+            {
+                PageNumber = 1,
+                PageSize = 10,
+                ElectionId = Guid.NewGuid().ToString(),
+                ElectionPositionId = Guid.NewGuid().ToString()
+            };
+
+            PagedResponse<VoteHistoryResponse> response = new()
+            {
+                Items =
+                [
+                    new VoteHistoryResponse
+            {
+                VoteId = Guid.NewGuid().ToString(),
+                ElectionId = request.ElectionId,
+                ElectionName = "Student Election 2026",
+                ElectionPositionId = request.ElectionPositionId,
+                PositionName = "President",
+                ContestantId = Guid.NewGuid().ToString(),
+                ContestantName = "Jane Doe",
+                VotedAt = DateTime.UtcNow
+            }
+                ]
+            };
+
+            voterService.Setup(x => x.GetMyVotes(request))
+                .ReturnsAsync(Result<PagedResponse<VoteHistoryResponse>>.Success(response));
+
+            VoterController controller = new VoterController(voterService.Object);
+
+            IActionResult actionResult = await controller.GetMyVotes(request);
+
+            OkObjectResult okResult = Assert.IsType<OkObjectResult>(actionResult);
+            SuccessResponse successResponse = Assert.IsType<SuccessResponse>(okResult.Value);
+            PagedResponse<VoteHistoryResponse> result = Assert.IsType<PagedResponse<VoteHistoryResponse>>(successResponse.Data);
+
+            Assert.Single(result.Items);
+            Assert.Equal(response.Items.Single().VoteId, result.Items.Single().VoteId);
+
+            voterService.Verify(x => x.GetMyVotes(request), Times.Once);
+        }
+
+        [Fact]
+        public async Task GetElectionResults_ReturnsOk_WhenResultsAreRetrievedSuccessfully()
+        {
+            Mock<IVoterService> voterService = new Mock<IVoterService>();
+
+            ElectionResultRequest request = new()
+            {
+                PageNumber = 1,
+                PageSize = 10,
+                ElectionId = Guid.NewGuid().ToString(),
+                ElectionPositionId = Guid.NewGuid().ToString()
+            };
+
+            PagedResponse<ElectionResultResponse> response = new()
+            {
+                Items =
+                [
+                    new ElectionResultResponse
+            {
+                ElectionId = request.ElectionId,
+                ElectionName = "Student Election 2026",
+                ElectionPositionId = request.ElectionPositionId,
+                PositionName = "President",
+                ContestantId = Guid.NewGuid().ToString(),
+                ContestantName = "Jane Doe",
+                VoteCount = 3,
+                TotalVotes = 5,
+                Percentage = 60m
+            }
+                ]
+            };
+
+            voterService.Setup(x => x.GetElectionResults(request))
+                .ReturnsAsync(Result<PagedResponse<ElectionResultResponse>>.Success(response));
+
+            VoterController controller = new VoterController(voterService.Object);
+
+            IActionResult actionResult = await controller.GetElectionResults(request);
+
+            OkObjectResult okResult = Assert.IsType<OkObjectResult>(actionResult);
+            SuccessResponse successResponse = Assert.IsType<SuccessResponse>(okResult.Value);
+            PagedResponse<ElectionResultResponse> result = Assert.IsType<PagedResponse<ElectionResultResponse>>(successResponse.Data);
+
+            Assert.Single(result.Items);
+            Assert.Equal(response.Items.Single().ContestantId, result.Items.Single().ContestantId);
+            Assert.Equal(3, result.Items.Single().VoteCount);
+            Assert.Equal(5, result.Items.Single().TotalVotes);
+            Assert.Equal(60m, result.Items.Single().Percentage);
+
+            voterService.Verify(x => x.GetElectionResults(request), Times.Once);
+        }
     }
 }
