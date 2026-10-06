@@ -13,5 +13,8 @@
         public string? ResetPasswordToken { get; set; }
         public string? NewEmail { get; set; }
         public string? RecoveryEmail { get; set; }
+        public string ElectionName { get; set; }
+        public string PositionName { get; set; }
+        public DateTime VotedAt { get; set; }
     }
 }

@@ -51,5 +51,29 @@ namespace OnlineVoting.Api.Controllers
 
             return result.ToActionResult(this);
         }
+
+        [HttpPost("cast-vote", Name = "Cast-Vote")]
+        [ApiDocumentation(VoterDocumentationKeys.CastVote)]
+        public async Task<IActionResult> CastVote([FromBody] CastVoteRequest request)
+        {
+            Result<string> result = await _voterService.CastVote(request);
+            return result.ToActionResult(this);
+        }
+
+        [HttpGet("my-votes", Name = "Get-My-Votes")]
+        [ApiDocumentation(VoterDocumentationKeys.GetMyVotes)]
+        public async Task<IActionResult> GetMyVotes([FromQuery] VoteHistoryRequest request)
+        {
+            Result<PagedResponse<VoteHistoryResponse>> result = await _voterService.GetMyVotes(request);
+            return result.ToActionResult(this);
+        }
+
+        [HttpGet("election-results", Name = "Get-Election-Results")]
+        [ApiDocumentation(VoterDocumentationKeys.GetElectionResults)]
+        public async Task<IActionResult> GetElectionResults([FromQuery] ElectionResultRequest request)
+        {
+            Result<PagedResponse<ElectionResultResponse>> result = await _voterService.GetElectionResults(request);
+            return result.ToActionResult(this);
+        }
     }
 }

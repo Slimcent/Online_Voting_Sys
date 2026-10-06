@@ -10,5 +10,8 @@ namespace OnlineVoting.Services.Interfaces
         Task<Result<RegisteredVoterResponse>> RegisterVoter(RegisterVoterRequest request);
         Task<Result<RegisteredVoterResponse>> GetRegisteredVoter(string registeredVoterId);
         Task<Result<PagedResponse<RegisteredVoterResponse>>> GetRegisteredVoters(RegisteredVoterRequest request);
+        Task<Result<string>> CastVote(CastVoteRequest request);
+        Task<Result<PagedResponse<VoteHistoryResponse>>> GetMyVotes(VoteHistoryRequest request);
+        Task<Result<PagedResponse<ElectionResultResponse>>> GetElectionResults(ElectionResultRequest request);
     }
 }

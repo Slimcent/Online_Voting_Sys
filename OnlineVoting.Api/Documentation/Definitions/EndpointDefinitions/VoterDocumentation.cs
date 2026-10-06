@@ -59,7 +59,56 @@ namespace OnlineVoting.Api.Documentation.Definitions.EndpointDefinitions
                     ["401"] = CommonApiResponses.Unauthorized(),
                     ["403"] = CommonApiResponses.Forbidden()
                 }
-            }
+            },
+
+            [VoterDocumentationKeys.CastVote] = new ApiOperationDocumentation
+            {
+                Summary = "Casts a vote.",
+                Description = "Casts a vote for a contestant in an election position using the registered voter credentials of the authenticated user.",
+                Responses = new Dictionary<string, ApiResponseDocumentation>
+                {
+                    ["201"] = new ApiResponseDocumentation
+                    {
+                        Description = "The vote was cast successfully.",
+                        ResponseType = typeof(string)
+                    },
+                    ["400"] = CommonApiResponses.BadRequest("The voting information is invalid."),
+                    ["401"] = CommonApiResponses.Unauthorized(),
+                    ["403"] = CommonApiResponses.Forbidden("The voter credentials are invalid or do not belong to the authenticated user."),
+                    ["404"] = CommonApiResponses.NotFound("The election position or contestant could not be found."),
+                    ["409"] = CommonApiResponses.Conflict("Voting is unavailable, the voting period is invalid, or a vote has already been cast for the specified election position.")
+                }
+            },
+
+            [VoterDocumentationKeys.GetMyVotes] = new ApiOperationDocumentation
+            {
+                Summary = "Gets the authenticated user's voting history.",
+                Description = "Returns a paginated and searchable list of votes cast by the authenticated user, with optional election and election-position filters.",
+                Responses = new Dictionary<string, ApiResponseDocumentation>
+                {
+                    ["200"] = new ApiResponseDocumentation
+                    {
+                        Description = "The voting history was retrieved successfully.",
+                        ResponseType = typeof(PagedResponse<VoteHistoryResponse>)
+                    },
+                    ["401"] = CommonApiResponses.Unauthorized()
+                }
+            },
+
+            [VoterDocumentationKeys.GetElectionResults] = new ApiOperationDocumentation
+            {
+                Summary = "Gets election results.",
+                Description = "Returns paginated election results for completed elections, including each contestant's vote count, total votes for the election position and vote percentage.",
+                Responses = new Dictionary<string, ApiResponseDocumentation>
+                {
+                    ["200"] = new ApiResponseDocumentation
+                    {
+                        Description = "The election results were retrieved successfully.",
+                        ResponseType = typeof(PagedResponse<ElectionResultResponse>)
+                    },
+                    ["401"] = CommonApiResponses.Unauthorized()
+                }
+            },
         };
     }
 }

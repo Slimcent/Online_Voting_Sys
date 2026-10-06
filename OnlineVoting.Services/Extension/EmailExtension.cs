@@ -178,5 +178,42 @@ namespace OnlineVoting.Services.Extension
 
             return emailData;
         }
+
+        public static EmailDataDto SendVoteConfirmationEmailData(EmailRequestDto request)
+        {
+            MimeMessage emailMessage = new();
+
+            MailboxAddress from = new MailboxAddress(request.FromName, request.FromEmail);
+            emailMessage.From.Add(from);
+
+            MailboxAddress to = new MailboxAddress(request.ToName, request.ToEmail);
+            emailMessage.To.Add(to);
+
+            emailMessage.Subject = "Vote Casting Confirmation";
+
+            emailMessage.Date = DateTime.Now;
+
+            string templatePath = EmailTemplatePath.Default.GetStringValue();
+            string MailText = GetFilePath(templatePath);
+
+            string votedAt = request.VotedAt.ToString("dd MMMM yyyy HH:mm");
+
+            MailText = MailText.Replace("[Header]", $"Hello {request.ToName}")
+                .Replace("[Body]", $"Your vote has been successfully recorded for the {request.ElectionName}.")
+                .Replace("[Button-Text]", "View Election")
+                .Replace("[intro]", $"Position: {request.PositionName}<br/>Vote recorded at: {votedAt}")
+                .Replace("[url]", request.AppUrl ?? "#");
+
+            BodyBuilder emailBodyBuilder = new BodyBuilder();
+            emailBodyBuilder.HtmlBody = MailText;
+            emailMessage.Body = emailBodyBuilder.ToMessageBody();
+
+            EmailDataDto emailData = new EmailDataDto()
+            {
+                MessageBody = emailMessage
+            };
+
+            return emailData;
+        }
     }
 }

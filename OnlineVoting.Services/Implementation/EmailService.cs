@@ -189,7 +189,30 @@ namespace OnlineVoting.Services.Implementation
 
             return Result<string>.Success("A link to change your email will be sent to you if an account with this email exist");
         }
-                               
+
+        public async Task SendVoteConfirmationEmail(VoteConfirmationEmailRequest request)
+        {
+            _loggerMessage.LogInfo($"Vote confirmation email request received for {request.Email}.");
+
+            EmailRequestDto emailRequest = new()
+            {
+                FromName = _emailSettings.SenderName,
+                FromEmail = _emailSettings.SenderEmail,
+                ToName = request.FirstName,
+                ToEmail = request.Email,
+                AppUrl = _emailSettings.AppUrl,
+                ElectionName = request.ElectionName,
+                PositionName = request.PositionName,
+                VotedAt = request.VotedAt
+            };
+
+            EmailDataDto emailData = EmailExtension.SendVoteConfirmationEmailData(emailRequest);
+
+            await SendEmail(emailData);
+
+            _loggerMessage.LogInfo($"Vote confirmation email processing completed for {request.Email}.");
+        }
+
         protected virtual async Task<bool> SendEmail(EmailDataDto request)
         {
             SmtpClient client = new();

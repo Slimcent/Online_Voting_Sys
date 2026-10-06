@@ -40,5 +40,15 @@ namespace OnlineVoting.Services.Caching.Policies
         {
             Tags = [CacheTags.RegisteredVoter]
         };
+
+        public static readonly CacheEntryOptions VoteHistory = new()
+        {
+            Tags = [CacheTags.VoteHistory]
+        };
+
+        public static readonly CacheEntryOptions ElectionResult = new()
+        {
+            Tags = [CacheTags.ElectionResult]
+        };
     }
 }
