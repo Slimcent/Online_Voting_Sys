@@ -5,18 +5,13 @@ using OnlineVoting.Data.Interfaces;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
-using OnlineVoting.Models.Interfaces;
 using OnlineVoting.Models.Pagination;
 using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Caching.Keys;
 using OnlineVoting.Services.Caching.Policies;
 using OnlineVoting.Services.Caching.Tags;
 using OnlineVoting.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using VotingSystem.Data.Extensions;
-using VotingSystem.Data.Implementation;
 using VotingSystem.Logger;
 
 namespace OnlineVoting.Services.Implementation

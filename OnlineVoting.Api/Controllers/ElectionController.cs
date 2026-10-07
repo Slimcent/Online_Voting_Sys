@@ -24,7 +24,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> CreateElection([FromBody] CreateElectionRequest request)
         {
             Result<string> result = await _electionService.CreateElection(request);
-
             return result.ToActionResult(this);
         }
 
@@ -33,7 +32,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetElections([FromQuery] ElectionRequest request)
         {
             Result<IEnumerable<ElectionResponse>> result = await _electionService.GetElections(request);
-
             return result.ToActionResult(this);
         }
 
@@ -98,7 +96,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> UpdateElectionStatus([FromBody] UpdateElectionStatusRequest request)
         {
             Result<string> result = await _electionService.UpdateElectionStatus(request);
-
             return result.ToActionResult(this);
         }
 

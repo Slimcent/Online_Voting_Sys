@@ -5,7 +5,6 @@ using OnlineVoting.Api.Controllers;
 using OnlineVoting.Models.Constants;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
-using OnlineVoting.Models.GlobalMessage;
 using OnlineVoting.Models.Pagination;
 using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Infrastructures;

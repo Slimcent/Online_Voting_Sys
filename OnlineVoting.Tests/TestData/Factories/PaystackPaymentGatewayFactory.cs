@@ -2,7 +2,6 @@
 using Moq;
 using OnlineVoting.Models.Configurations;
 using OnlineVoting.Services.Implementation.Payments;
-using System.Net;
 using VotingSystem.Logger;
 
 namespace OnlineVoting.Tests.TestData.Factories

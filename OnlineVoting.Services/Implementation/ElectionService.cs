@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using OnlineVoting.Data.Interfaces;
 using OnlineVoting.Models.Constants;
 using OnlineVoting.Models.Dtos.Request;
@@ -11,7 +10,6 @@ using OnlineVoting.Models.Pagination;
 using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Interfaces;
 using VotingSystem.Data.Extensions;
-using VotingSystem.Data.Implementation;
 using VotingSystem.Logger;
 
 namespace OnlineVoting.Services.Implementation

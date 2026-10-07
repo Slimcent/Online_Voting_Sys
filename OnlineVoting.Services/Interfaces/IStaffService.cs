@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.JsonPatch;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
-using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Pagination;
 using OnlineVoting.Models.Results;
 
@@ -11,7 +10,6 @@ namespace OnlineVoting.Services.Interfaces
     {
         Task<Result<string>> CreateStaff(CreateStaffRequest request);
         Task<Result<string>> UpdateStaffAddress(Guid staffId, UpdateAddressRequest request);
-        //Task<IEnumerable<StaffResponseDto>> GetAllStaff();
         Task<Result<StaffResponse>> GetStaff(Guid id);
         Result<int> GetTotalNumberOfStaff();
         Task<Result<string>> DeleteStaffById(Guid id);

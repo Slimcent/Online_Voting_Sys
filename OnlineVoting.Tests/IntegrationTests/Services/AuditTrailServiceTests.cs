@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Constants;
-using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Pagination;

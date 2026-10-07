@@ -1,7 +1,6 @@
 ﻿using Moq;
 using OnlineVoting.Models.Dtos.Request.Email;
 using OnlineVoting.Models.Entities;
-using OnlineVoting.Models.Enums;
 using OnlineVoting.Models.Results;
 using OnlineVoting.Tests.TestData.Data;
 using OnlineVoting.Tests.TestData.Factories;

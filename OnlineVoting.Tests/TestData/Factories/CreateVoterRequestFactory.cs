@@ -2,13 +2,14 @@
 
 namespace OnlineVoting.Tests.TestData.Factories
 {
-    public static class CreateVoterRequestFactory
+    public static class RegisterVoterRequestFactory
     {
-        public static CreateVoterRequest CreateValid()
+        public static RegisterVoterRequest Create(string regNumber, string electionId)
         {
-            return new CreateVoterRequest
+            return new RegisterVoterRequest
             {
-                RegNumber = "CS/2025/001"
+                RegNumber = regNumber,
+                ElectionId = electionId
             };
         }
     }

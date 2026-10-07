@@ -29,4 +29,8 @@
     <ProjectReference Include="..\OnlineVoting.BackgroundTasks\OnlineVoting.BackgroundTasks.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Helpers\" />
+  </ItemGroup>
+
 </Project>
