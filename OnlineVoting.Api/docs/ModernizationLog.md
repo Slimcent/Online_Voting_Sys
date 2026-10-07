@@ -6364,3 +6364,206 @@ After adding the API documentation:
 ```
 
 ---
+
+## Voter Registration and Voting
+
+### Overview
+
+Completed the voter registration and voting flow.
+
+The implementation now allows eligible students to register for an election, receive voter credentials, cast votes securely, view their own voting history 
+and view election results after voting has ended.
+
+---
+
+## Voter Registration
+
+Added voter registration using:
+
+- student registration number;
+- election identifier.
+
+The registration flow validates that:
+
+- the student exists;
+- the election exists;
+- the election is active;
+- voter registration is within the configured registration period;
+- the student has not already registered for the election.
+
+A `RegisteredVoter` record is created with a generated voting code.
+
+The response includes the registered voter, student, election, voting code and active status.
+
+Registered voter reads were also added with pagination, filtering, search, and caching.
+
+---
+
+## Vote Casting
+
+Added secure vote casting.
+
+A vote request contains:
+
+- registered voter id;
+- voting code;
+- election position id;
+- contestant id.
+
+Before storing a vote, the service checks that:
+
+- the authenticated user exists;
+- the voter credentials are valid;
+- the voter credentials belong to the authenticated user;
+- the registered voter is active;
+- the election position exists and is active;
+- the voter belongs to the same election;
+- the election is active;
+- the voting period is configured;
+- voting has started;
+- voting has not ended;
+- the contestant exists and is active;
+- the contestant belongs to the selected election position;
+- the voter has not already voted for that election position.
+
+Votes are stored using the existing `Vote` entity.
+
+The database also enforces one vote per registered voter per election position using the unique constraint on `RegisteredVoterId` and `ElectionPositionId`.
+
+After a successful vote, a confirmation email is queued in the background.
+
+The email does not include the selected contestant so the voter's choice is not exposed through email.
+
+---
+
+## Vote History
+
+Added a private voting history endpoint for the authenticated user.
+
+The endpoint returns:
+
+- election;
+- election position;
+- contestant;
+- voting time.
+
+It supports:
+
+- pagination;
+- election filtering;
+- election-position filtering;
+- search.
+
+The query is restricted using the authenticated user's id, so users can only retrieve their own voting history.
+
+Voting codes and other voter credentials are not returned.
+
+Vote history responses are cached using a user-specific cache key.
+
+The vote history cache is invalidated after a new vote is successfully stored.
+
+---
+
+## Election Results
+
+Added election result retrieval.
+
+Results are only returned for elections where voting has already ended.
+
+The result query starts from `Contestant` instead of `Vote` so contestants with zero votes are still included in the result.
+
+For each contestant, the response includes:
+
+- election;
+- election position;
+- contestant;
+- vote count;
+- total votes for the position;
+- vote percentage.
+
+For example:
+
+    President
+
+    Contestant A -> 3 votes
+    Contestant B -> 2 votes
+    Contestant C -> 0 votes
+
+    Total votes = 5
+
+    Contestant A -> 60%
+    Contestant B -> 40%
+    Contestant C -> 0%
+
+Election results support:
+
+- pagination;
+- election filtering;
+- election-position filtering;
+- search.
+
+Election result responses are cached.
+
+The election result cache is invalidated after a successful vote.
+
+---
+
+## API Documentation
+
+Added centralized Swagger documentation for the voter endpoints using the existing documentation structure:
+
+- `VoterDocumentationKeys`;
+- `VoterDocumentation`;
+- `ApiDocumentation`.
+
+Documentation was added for the new `GetMyVotes` and `GetElectionResults` endpoints.
+
+The request models also include XML documentation and example values.
+
+---
+
+## Caching
+
+Added cache support for:
+
+- `RegisteredVoter`;
+- `VoteHistory`;
+- `ElectionResult`.
+
+Cache invalidation happens only after successful persistence.
+
+After a vote is saved:
+
+    Vote saved
+        |
+        v
+    Invalidate VoteHistory cache
+        |
+        v
+    Invalidate ElectionResult cache
+
+---
+
+## Testing
+
+The voter functionality was tested incrementally.
+
+### Voter Service Tests
+
+    60 passed
+    0 failed
+
+### Voter Controller Tests
+
+    6 passed
+    0 failed
+
+### Full Regression Suite
+
+    939 passed
+    0 failed
+    0 skipped
+
+Final verified build:
+
+    Build succeeded

@@ -7,7 +7,6 @@ using OnlineVoting.Caching.Interfaces;
 using OnlineVoting.Data.Interfaces;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
-using OnlineVoting.Models.Interfaces;
 using OnlineVoting.Models.Pagination;
 using OnlineVoting.Services.Implementation;
 using OnlineVoting.Services.Interfaces;

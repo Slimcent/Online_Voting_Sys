@@ -1,5 +1,4 @@
 ﻿using FluentValidation;
-using Microsoft.AspNetCore.Identity;
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Validators.Shared;
 

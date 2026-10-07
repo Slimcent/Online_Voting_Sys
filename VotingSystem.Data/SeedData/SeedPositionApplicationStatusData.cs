@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OnlineVoting.Models.Constants;
 using OnlineVoting.Models.Context;
-using OnlineVoting.Models.Entities;
 
 namespace VotingSystem.Data.SeedData
 {

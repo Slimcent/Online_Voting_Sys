@@ -26,7 +26,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> AddUserToClaims([FromBody] UserClaimsRequest request)
         {
             Result<UserClaimsResponse> result = await _claimsService.CreateUserClaims(request);
-
             return result.ToActionResult(this);
         }
 
@@ -35,7 +34,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> DeleteClaim([FromBody] UserClaimsRequest request)
         {
             Result<string> result = await _claimsService.DeleteClaims(request);
-
             return result.ToActionResult(this);
         }
 
@@ -44,7 +42,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> EditClaim([FromBody] UserClaimsRequest request)
         {
             Result<UserClaimsResponse> result = await _claimsService.EditUserClaims(request);
-
             return result.ToActionResult(this);
         }
 
@@ -53,7 +50,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetUserClaims([FromQuery] string email)
         {
             Result<IEnumerable<UserClaimsResponse>> result = await _claimsService.GetUserClaims(email);
-
             return result.ToActionResult(this);
         }
     }

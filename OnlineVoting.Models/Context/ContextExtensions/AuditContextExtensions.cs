@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 using OnlineVoting.Models.Entities;
 using OnlineVoting.Models.Interfaces;
-using OnlineVoting.Models.ContextExtensions;
 
 namespace OnlineVoting.Models.ContextExtensions
 {

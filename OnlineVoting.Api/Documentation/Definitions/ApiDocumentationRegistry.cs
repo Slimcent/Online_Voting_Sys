@@ -1,6 +1,5 @@
 ﻿using OnlineVoting.Api.Documentation.Definitions.EndpointDefinitions;
 using OnlineVoting.Api.Documentation.Models;
-using OnlineVoting.Models.Entities;
 
 namespace OnlineVoting.Api.Documentation.Definitions
 {
@@ -26,6 +25,7 @@ namespace OnlineVoting.Api.Documentation.Definitions
             AddOperations(operations, PositionApplicationDocumentation.Operations);
             AddOperations(operations, PaymentDocumentation.Operations);
             AddOperations(operations, ContestantDocumentation.Operations);
+            AddOperations(operations, VoterDocumentation.Operations);
 
             return operations;
         }

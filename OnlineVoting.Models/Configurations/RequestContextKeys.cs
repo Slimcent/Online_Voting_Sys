@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace OnlineVoting.Models.Configurations
+﻿namespace OnlineVoting.Models.Configurations
 {
     public static class RequestContextKeys
     {

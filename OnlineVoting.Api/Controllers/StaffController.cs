@@ -26,23 +26,11 @@ namespace OnlineVoting.Api.Controllers
             _staffService = staffService;
         }
 
-        //[HttpGet("all-staff", Name = "All-Staff")]
-        //public async Task<IActionResult> GetAllStaff()
-        //{
-        //    IEnumerable<StaffResponseDto> allStaff = await _staffService.GetAllStaff();
-
-        //    if (allStaff.Any())
-        //        return Ok(allStaff);
-
-        //    return BadRequest(new ResponseError { Status = ResponseStatus.NOT_FOUND, Message = $"No User found" });
-        //}
-
         [HttpGet("all-active-staff", Name = "All-Active-Staff")]
         [ApiDocumentation(StaffDocumentationKeys.GetAllActiveStaff)]
         public async Task<IActionResult> GetAllActiveStaff()
         {
             Result<IEnumerable<StaffResponse>> result = await _staffService.GetAllActiveStaff();
-
             return result.ToActionResult(this);
         }
 
@@ -51,7 +39,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetAllDeletedStaff()
         {
             Result<IEnumerable<StaffResponse>> result = await _staffService.GetAllDeletedStaff();
-
             return result.ToActionResult(this);
         }
 
@@ -60,7 +47,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> AllPagedStaff([FromQuery] StaffRequest request)
         {
             Result<PagedResponse<StaffResponse>> result = await _staffService.AllStaff(request);
-
             return result.ToActionResult(this);
         }
 
@@ -69,7 +55,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> AllPagedActiveStaff([FromQuery] StaffRequest request)
         {
             Result<PagedResponse<StaffResponse>> result = await _staffService.AllActiveStaff(request);
-
             return result.ToActionResult(this);
         }
 
@@ -78,7 +63,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> AllPagedDeletedStaff([FromQuery] StaffRequest request)
         {
             Result<PagedResponse<StaffResponse>> result = await _staffService.AllDeletedStaff(request);
-
             return result.ToActionResult(this);
         }
 
@@ -87,7 +71,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetStaffById([FromQuery] Guid id)
         {
             Result<StaffResponse> result = await _staffService.GetStaff(id);
-
             return result.ToActionResult(this);
         }
 
@@ -96,7 +79,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetStaffByEmail([FromQuery] string email)
         {
             Result<StaffResponse> result = await _staffService.GetStaffByEmail(email);
-
             return result.ToActionResult(this);
         }
                 
@@ -105,7 +87,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> CreateStaff([FromBody] CreateStaffRequest request)
         {
             Result<string> result = await _staffService.CreateStaff(request);
-
             return result.ToActionResult(this);
         }
 
@@ -114,7 +95,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> UpdateStaff([FromQuery] Guid id, [FromBody] JsonPatchDocument<UpdateStaffRequest> model)
         {
             Result<string> result = await _staffService.UpdateStaff(id, model);
-
             return result.ToActionResult(this);
         }
 
@@ -123,7 +103,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> EditStaff([FromQuery] Guid staffId, [FromBody] UpdateStaffRequest model)
         {
             Result<string> result = await _staffService.EditStaff(staffId, model);
-
             return result.ToActionResult(this);
         }
 
@@ -132,7 +111,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> PatchStaffAddress([FromQuery] Guid id, [FromBody] JsonPatchDocument<UpdateAddressRequest> model)
         {
             Result<string> result = await _staffService.PatchStaffAddress(id, model);
-
             return result.ToActionResult(this);
         }
 
@@ -141,7 +119,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> ToggleStaffStatus([FromQuery] Guid staffId)
         {
             Result<string> result = await _staffService.ToggleStaffStatus(staffId);
-
             return result.ToActionResult(this);
         }
 
@@ -150,7 +127,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> UpdateStaffAddress([FromQuery] Guid staffId, [FromBody] UpdateAddressRequest model)
         {
             Result<string> result = await _staffService.UpdateStaffAddress(staffId, model);
-
             return result.ToActionResult(this);
         }
 
@@ -159,7 +135,6 @@ namespace OnlineVoting.Api.Controllers
         public IActionResult GetTotalNumberOfStaff()
         {
             Result<int> result = _staffService.GetTotalNumberOfStaff();
-
             return result.ToActionResult(this);
         }
 
@@ -168,7 +143,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> DeleteStaff([FromQuery] Guid id)
         {
             Result<string> result = await _staffService.DeleteStaffById(id);
-
             return result.ToActionResult(this);
         }
     }

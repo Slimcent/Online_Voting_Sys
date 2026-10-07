@@ -12,7 +12,6 @@
         public const string ToggleElectionActivation = "Election.ToggleElectionActivation";
         public const string GetElectionStatus = "Election.GetElectionStatus";
         public const string UpdateElectionStatus = "Election.UpdateElectionStatus";
-
         public const string GetElectionScopes = "Election.GetElectionScopes";
         public const string GetPagedElectionScopes = "Election.GetPagedElectionScopes";
         public const string GetElectionScope = "Election.GetElectionScope";

@@ -53,7 +53,6 @@ namespace OnlineVoting.Api.Controllers
             string signature = Request.Headers["x-paystack-signature"].ToString();
 
             Result<string> result = await _paymentService.ProcessPaymentWebhook(ApplicationConstants.PaymentGateways.Paystack, payload, signature);
-
             return result.ToActionResult(this);
         }
 
@@ -62,7 +61,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetInvoice(string invoiceId)
         {
             Result<InvoiceResponse> result = await _paymentService.GetInvoice(invoiceId);
-
             return result.ToActionResult(this);
         }
 
@@ -71,7 +69,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetInvoices([FromQuery] InvoiceRequest request)
         {
             Result<PagedResponse<InvoiceResponse>> result = await _paymentService.GetInvoices(request);
-
             return result.ToActionResult(this);
         }
 
@@ -80,7 +77,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetPaymentTransactions([FromQuery] PaymentTransactionRequest request)
         {
             Result<PagedResponse<PaymentTransactionResponse>> result = await _paymentService.GetPaymentTransactions(request);
-
             return result.ToActionResult(this);
         }
 
@@ -89,7 +85,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetPaymentTransaction(string paymentReference)
         {
             Result<PaymentTransactionResponse> result = await _paymentService.GetPaymentTransaction(paymentReference);
-
             return result.ToActionResult(this);
         }
     }

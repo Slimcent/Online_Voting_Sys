@@ -9,5 +9,6 @@ namespace OnlineVoting.Services.Interfaces
         Task SendCreateUserEmail(CreateUserEmailRequest request);
         Task<Result<string>> SendResetPasswordEmail(string email);
         Task<Result<string>> SendChangeEmail(ChangeEmailRequest request);
+        Task SendVoteConfirmationEmail(VoteConfirmationEmailRequest request);
     }
 }

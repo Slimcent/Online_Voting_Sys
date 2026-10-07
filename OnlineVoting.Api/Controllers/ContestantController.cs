@@ -30,7 +30,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetContestants([FromQuery] ContestantRequest request)
         {
             Result<PagedResponse<ContestantResponse>> result = await _contestantService.GetContestants(request);
-
             return result.ToActionResult(this);
         }
 
@@ -39,7 +38,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetContestant(string contestantId)
         {
             Result<ContestantResponse> result = await _contestantService.GetContestant(contestantId);
-
             return result.ToActionResult(this);
         }
 
@@ -48,7 +46,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> ToggleContestantActivation(string contestantId)
         {
             Result<string> result = await _contestantService.ToggleContestantActivation(contestantId);
-
             return result.ToActionResult(this);
         }
     }
