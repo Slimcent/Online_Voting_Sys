@@ -2,7 +2,6 @@
 using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Entities;
-using OnlineVoting.Services;
 
 namespace OnlineVoting.Tests.TestData
 {

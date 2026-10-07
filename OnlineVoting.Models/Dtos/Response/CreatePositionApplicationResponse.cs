@@ -1,6 +1,4 @@
-﻿using OnlineVoting.Models.Dtos.Request;
-
-namespace OnlineVoting.Models.Dtos.Response
+﻿namespace OnlineVoting.Models.Dtos.Response
 {
     /// <summary>
     /// Represents the response returned after a position application and its invoice are created.

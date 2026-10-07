@@ -8,7 +8,6 @@ using OnlineVoting.Tests.TestData.Data;
 using OnlineVoting.Tests.TestData.Factories;
 using System.Security.Claims;
 using OnlineVoting.Services.Implementation;
-using OnlineVoting.Services.Interfaces;
 using System.Net;
 using System.Text;
 

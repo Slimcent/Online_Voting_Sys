@@ -30,7 +30,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> CreateDepartment([FromBody] CreateDepartmentRequest request)
         {
             Result<string> result = await _departmentService.CreateDepartment(request);
-
             return result.ToActionResult(this);
         }
 
@@ -39,7 +38,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetDepartments([FromQuery] DepartmentRequestParameters parameters)
         {
             Result<PagedResponse<DepartmentResponse>> result = await _departmentService.GetDepartments(parameters);
-
             return result.ToActionResult(this);
         }
 
@@ -48,7 +46,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetDepartment(long id)
         {
             Result<DepartmentResponse> result = await _departmentService.GetDepartment(id);
-
             return result.ToActionResult(this);
         }
 
@@ -57,7 +54,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetDepartmentsByFacultyId(long facultyId)
         {
             Result<IEnumerable<DepartmentResponse>> result = await _departmentService.GetDepartmentsByFacultyId(facultyId);
-
             return result.ToActionResult(this);
         }
 
@@ -66,7 +62,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetDepartmentsByFacultyId(long facultyId, [FromQuery] DepartmentRequestParameters parameters)
         {
             Result<PagedResponse<DepartmentResponse>> result = await _departmentService.GetDepartmentsByFacultyId(facultyId, parameters);
-
             return result.ToActionResult(this);
         }
 
@@ -75,7 +70,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> UpdateDepartment(long id, [FromBody] CreateDepartmentRequest request)
         {
             Result<string> result = await _departmentService.UpdateDepartment(id, request);
-
             return result.ToActionResult(this);
         }
 
@@ -84,7 +78,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> ToggleDepartmentActivation(long id)
         {
             Result<string> result = await _departmentService.ToggleDepartmentActivation(id);
-
             return result.ToActionResult(this);
         }
 
@@ -93,7 +86,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> DeleteDepartment(long id)
         {
             Result<string> result = await _departmentService.DeleteDepartment(id);
-
             return result.ToActionResult(this);
         }
     }

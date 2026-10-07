@@ -38,7 +38,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             Result<LoggedInUserResponse> result = await _userService.UserLogin(request);
-
             return result.ToActionResult(this);
         }
 
@@ -48,7 +47,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> VerifyUser([FromBody] VerifyAccountRequest request)
         {
             Result<string> result = await _userService.VerifyUser(request);
-
             return result.ToActionResult(this);
         }
 
@@ -58,7 +56,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> SendResetPasswordMail([FromQuery] string email)
         {
             Result<string> result = await _emailService.SendResetPasswordEmail(email);
-
             return result.ToActionResult(this);
         }
 
@@ -68,7 +65,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
             Result<string> result = await _userService.ResetPassword(request);
-
             return result.ToActionResult(this);
         }
 
@@ -77,7 +73,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> ChangePassword([FromQuery] string userId, [FromBody] ChangePasswordRequest request)
         {
             Result<string> result = await _userService.ChangePassword(userId, request);
-
             return result.ToActionResult(this);
         }
 
@@ -87,7 +82,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> UpdateRecoveryEmail([FromQuery] string userId, [FromQuery] string email)
         {
             Result<string> result = await _userService.UpdateRecoveryEmail(userId, email);
-
             return result.ToActionResult(this);
         }
 
@@ -97,7 +91,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> SendChangeEmailMail([FromBody] ChangeEmailRequest request)
         {
             Result<string> result = await _emailService.SendChangeEmail(request);
-
             return result.ToActionResult(this);
         }
 
@@ -107,7 +100,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> ChangeEmail([FromQuery] string userId, [FromBody] ChangeEmailRequestDto request)
         {
             Result<string> result = await _userService.ChangeEmail(userId, request);
-
             return result.ToActionResult(this);
         }
 
@@ -117,7 +109,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> RefreshToken()
         {
             Result<JwtToken> result = await _refreshTokenService.RefreshAccessToken();
-
             return result.ToActionResult(this);
         }
 
@@ -127,7 +118,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> Logout()
         {
             Result<string> result = await _refreshTokenService.RevokeCurrentRefreshToken();
-
             return result.ToActionResult(this);
         }
 
@@ -137,7 +127,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> LogoutAll()
         {
             Result<string> result = await _refreshTokenService.RevokeAllCurrentUserTokens();
-
             return result.ToActionResult(this);
         }
     }

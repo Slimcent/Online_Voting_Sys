@@ -29,7 +29,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetAuditTrails([FromQuery] AuditTrailRequest request)
         {
             Result<PagedResponse<AuditTrailResponse>> result = await _auditTrailService.GetAuditTrails(request);
-
             return result.ToActionResult(this);
         }
     }

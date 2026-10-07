@@ -1,6 +1,5 @@
 ﻿using DinkToPdf.Contracts;
 using Moq;
-using OnlineVoting.Services.Implementation;
 using VotingSystem.Logger;
 
 namespace OnlineVoting.Tests.TestData.Factories

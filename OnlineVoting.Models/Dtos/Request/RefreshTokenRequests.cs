@@ -13,7 +13,6 @@
     public class RefreshTokenRevocationRequest
     {
         public required string RefreshToken { get; set; }
-
         public required string Reason { get; set; }
     }
 

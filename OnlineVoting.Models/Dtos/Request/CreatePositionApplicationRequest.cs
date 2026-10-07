@@ -1,5 +1,4 @@
-﻿using OnlineVoting.Models.Dtos.Response;
-using OnlineVoting.Models.Pagination;
+﻿using OnlineVoting.Models.Pagination;
 
 namespace OnlineVoting.Models.Dtos.Request
 {

@@ -9,6 +9,8 @@ namespace OnlineVoting.Api.Mapper
     {
         public DepartmentMappingProfile() 
         {
+            CreateMap<CreateDepartmentRequest, Department>();
+
             CreateMap<Department, DepartmentResponse>()
             .ForMember(destination => destination.FacultyName, option => option.MapFrom(source => source.Faculty.Name));
 

@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage;
-using OnlineVoting.Data.Interfaces;
 
 namespace OnlineVoting.Data.Interfaces
 {

@@ -30,7 +30,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> CreatePositionApplication(CreatePositionApplicationRequest request)
         {
             Result<CreatePositionApplicationResponse> result = await _positionApplicationService.CreatePositionApplication(request);
-
             return result.ToActionResult(this);
         }
 
@@ -39,7 +38,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> CancelPositionApplication(string positionApplicationId)
         {
             Result<string> result = await _positionApplicationService.CancelPositionApplication(positionApplicationId);
-
             return result.ToActionResult(this);
         }
 
@@ -48,7 +46,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetMyPositionApplications([FromQuery] PositionApplicationRequest request)
         {
             Result<PagedResponse<PositionApplicationResponse>> result = await _positionApplicationService.GetMyPositionApplications(request);
-
             return result.ToActionResult(this);
         }
 
@@ -57,7 +54,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetMyPositionApplication(string positionApplicationId)
         {
             Result<PositionApplicationResponse> result = await _positionApplicationService.GetPositionApplication(positionApplicationId);
-
             return result.ToActionResult(this);
         }
 
@@ -66,7 +62,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetPositionApplications([FromQuery] PositionApplicationRequest request)
         {
             Result<PagedResponse<PositionApplicationResponse>> result = await _positionApplicationService.GetPositionApplications(request);
-
             return result.ToActionResult(this);
         }
 
@@ -75,7 +70,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetPositionApplication(string positionApplicationId)
         {
             Result<PositionApplicationResponse> result = await _positionApplicationService.GetPositionApplication(positionApplicationId);
-
             return result.ToActionResult(this);
         }
 
@@ -84,7 +78,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> ApproveOrRejectPositionApplication(ApproveOrRejectPositionApplicationRequest request)
         {
             Result<string> result = await _positionApplicationService.ApproveOrRejectPositionApplication(request);
-
             return result.ToActionResult(this);
         }
 
@@ -93,7 +86,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetPositionApplicationsWithContestants([FromQuery] PositionApplicationWithContestantRequest request)
         {
             Result<PagedResponse<PositionApplicationResponse>> result = await _positionApplicationService.GetPositionApplicationsWithContestants(request);
-
             return result.ToActionResult(this);
         }
     }

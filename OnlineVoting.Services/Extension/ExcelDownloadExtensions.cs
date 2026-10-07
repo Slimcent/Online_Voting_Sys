@@ -2,7 +2,6 @@
 using OfficeOpenXml.DataValidation;
 using OfficeOpenXml.DataValidation.Contracts;
 using OfficeOpenXml.Style;
-using OnlineVoting.Models.Dtos.Response;
 using OnlineVoting.Models.Enums;
 using OnlineVoting.Services.Utilities;
 

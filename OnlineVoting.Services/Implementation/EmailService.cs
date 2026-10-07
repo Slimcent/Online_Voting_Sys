@@ -8,7 +8,6 @@ using OnlineVoting.Models.Entities.Email;
 using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Extension;
 using OnlineVoting.Services.Interfaces;
-using System.Net;
 using VotingSystem.Logger;
 
 namespace OnlineVoting.Services.Implementation

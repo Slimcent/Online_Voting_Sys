@@ -31,7 +31,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetAll([FromQuery] PositionRequest request)
         {
             Result<PagedResponse<PositionResponse>> result = await _positionService.AllPositions(request);
-
             return result.ToActionResult(this);
         }
 
@@ -40,7 +39,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> AllPagedActivePositions([FromQuery] PositionRequest request)
         {
             Result<PagedResponse<PositionResponse>> result = await _positionService.AllActivePositions(request);
-
             return result.ToActionResult(this);
         }
 
@@ -49,7 +47,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> AllPagedDeletedPositions([FromQuery] PositionRequest request)
         {
             Result<PagedResponse<PositionResponse>> result = await _positionService.AllDeletedPositions(request);
-
             return result.ToActionResult(this);
         }
 
@@ -58,7 +55,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetAllPosition()
         {
             Result<IEnumerable<PositionResponse>> result = await _positionService.GetAllPositions();
-
             return result.ToActionResult(this);
         }
 
@@ -67,7 +63,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetAllActivePosition()
         {
             Result<IEnumerable<PositionResponse>> result = await _positionService.GetAllActivePositions();
-
             return result.ToActionResult(this);
         }
 
@@ -76,7 +71,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetAllDeletedPosition()
         {
             Result<IEnumerable<PositionResponse>> result = await _positionService.GetAllDeletedPositions();
-
             return result.ToActionResult(this);
         }
 
@@ -85,7 +79,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> GetPositionById([FromQuery] Guid id)
         {
             Result<PositionResponse> result = await _positionService.GetAPosition(id);
-
             return result.ToActionResult(this);
         }
 
@@ -94,7 +87,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> CreatePosition([FromBody] CreateWithNameRequest request)
         {
             Result<string> result = await _positionService.CreatePosition(request);
-
             return result.ToActionResult(this);
         }
 
@@ -103,7 +95,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> PatchPosition([FromQuery] Guid id, [FromBody] JsonPatchDocument<CreateWithNameRequest> request)
         {
             Result<string> result = await _positionService.PatchPosition(id, request);
-
             return result.ToActionResult(this);
         }
 
@@ -112,7 +103,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> UpdatePosition([FromQuery] string id, [FromBody] CreateWithNameRequest request)
         {
             Result<string> result = await _positionService.UpdatePosition(id, request);
-
             return result.ToActionResult(this);
         }
 
@@ -121,7 +111,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> DeletePosition([FromQuery] Guid id)
         {
             Result<string> result = await _positionService.DeletePosition(id);
-
             return result.ToActionResult(this);
         }
     }

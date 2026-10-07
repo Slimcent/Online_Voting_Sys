@@ -33,7 +33,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> CreateStudent([FromBody] CreateStudentRequest request)
         {
             Result<Response> result = await _studentService.CreateStudent(request);
-
             return result.ToActionResult(this);
         }
 
@@ -43,7 +42,6 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> DownloadStudentsExcelTemplate()
         {
             Models.Dtos.Response.FileStreamResponse excelSheet = await _studentService.DownloadStudentsList();
-
             return File(excelSheet.FileStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excelSheet.FileName);
         }
 
@@ -53,17 +51,7 @@ namespace OnlineVoting.Api.Controllers
         public async Task<IActionResult> UploadStudents([FromForm] UploadStudentRequest students)
         {
             Result<string> result = await _studentService.UploadStudents(students);
-
             return result.ToActionResult(this);
         }
-
-        //[HttpPost("create-contestant", Name = "Create-Contestants")]
-        //[ApiDocumentation(StudentDocumentationKeys.CreateContestant)]
-        //public async Task<IActionResult> CreateContestant([FromQuery] string regNo, [FromQuery] string position)
-        //{
-        //    Result<Response> result = await _studentService.CreateContestant(regNo, position);
-
-        //    return result.ToActionResult(this);
-        //}
     }
 }

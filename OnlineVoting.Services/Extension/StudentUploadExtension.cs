@@ -1,6 +1,5 @@
 ﻿using OnlineVoting.Models.Dtos.Request;
 using OnlineVoting.Models.Entities;
-using OnlineVoting.Services.Exceptions;
 using VotingSystem.Logger;
 
 namespace OnlineVoting.Services.Extension

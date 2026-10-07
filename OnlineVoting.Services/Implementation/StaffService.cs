@@ -86,15 +86,8 @@ namespace OnlineVoting.Services.Implementation
             _loggerMessage.LogInfo($"Staff created successfully for user {userResult.Value}.");
 
             return Result<string>.Created($"Staff with email {request.Email} was created successfully");
-        }
-                
-        //public async Task<IEnumerable<StaffResponseDto>> GetAllStaff()
-        //{
-        //    IEnumerable<Staff> allStaff = await _staffRepo.GetAllAndInclude(x => x.Address, x => x.User);
-
-        //    return _mapper.Map<IEnumerable<StaffResponseDto>>(allStaff);
-        //}
-                
+        }       
+                        
         public async Task<Result<string>> UpdateStaffAddress(Guid staffId, UpdateAddressRequest model)
         {
             Staff staff = await _staffRepo.GetSingleByAsync(x => x.Id == staffId);

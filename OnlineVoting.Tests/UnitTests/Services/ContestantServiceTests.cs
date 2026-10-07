@@ -10,9 +10,6 @@ using OnlineVoting.Services.Caching.Tags;
 using OnlineVoting.Tests.Factories;
 using OnlineVoting.Tests.TestData;
 using Microsoft.EntityFrameworkCore;
-using OnlineVoting.Caching.Configuration;
-using OnlineVoting.Models.Entities;
-using OnlineVoting.Models.Results;
 
 namespace OnlineVoting.Tests.Services
 {

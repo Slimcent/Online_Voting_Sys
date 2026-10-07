@@ -1,6 +1,5 @@
 ﻿using OnlineVoting.Api.Documentation.Definitions.EndpointDefinitions;
 using OnlineVoting.Api.Documentation.Models;
-using OnlineVoting.Models.Entities;
 
 namespace OnlineVoting.Api.Documentation.Definitions
 {

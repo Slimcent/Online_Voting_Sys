@@ -8,7 +8,6 @@ using OnlineVoting.Models.Pagination;
 using OnlineVoting.Models.Results;
 using OnlineVoting.Services.Exceptions;
 using OnlineVoting.Services.Interfaces;
-using Org.BouncyCastle.Asn1.Ocsp;
 using VotingSystem.Logger;
 
 namespace OnlineVoting.Services.Implementation

@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using OnlineVoting.BackgroundTasks.Implementation;
 using OnlineVoting.BackgroundTasks.Interfaces;
 using OnlineVoting.Caching.Interfaces;
 using OnlineVoting.Data.Interfaces;
