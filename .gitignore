@@ -370,3 +370,21 @@ MigrationBackup/
 FodyWeavers.xsd
 /OnlineVoting.Api/.env
 /OnlineVoting.Api/.env.docker
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Local secrets and credentials
+secrets.json
+*.pem
+*.key
+*.p12
+
+# Local VS Code settings
+.vscode/*
+!.vscode/extensions.json
+
+# Generated diagnostic logs
+**/internal_logs/
