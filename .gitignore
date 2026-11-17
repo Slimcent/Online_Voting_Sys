@@ -388,3 +388,21 @@ secrets.json
 
 # Generated diagnostic logs
 **/internal_logs/
+
+# Local IDE configuration
+.idea/
+
+# Local AI tool configuration
+.claude/settings.local.json
+.codex/
+.cursor/
+.agent/
+.agents/
+
+# Local database files
+*.sqlite
+*.sqlite3
+
+# Operating system files
+.DS_Store
+Thumbs.db
