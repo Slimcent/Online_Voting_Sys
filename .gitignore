@@ -33,14 +33,11 @@ bld/
 [Ll]og/
 [Ll]ogs/
 
-Nlog/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
 
-.appsettings.json/
 
-.appsettings/
 
 # Uncomment if you have tasks that create the project's static files in wwwroot
 #wwwroot/
@@ -406,3 +403,39 @@ secrets.json
 # Operating system files
 .DS_Store
 Thumbs.db
+
+# NLog generated files
+**/[Nn]log/logs/
+
+# Windows operating system
+desktop.ini
+$RECYCLE.BIN/
+*.stackdump
+
+# macOS operating system
+.AppleDouble
+.LSOverride
+.Spotlight-V100/
+.Trashes/
+._*
+
+# Linux desktop and temporary files
+.directory
+.Trash-*/
+*.swp
+*.swo
+*.orig
+
+# Local application configuration
+appsettings.Local.json
+appsettings.*.local.json
+
+# Additional testing output
+.coverage
+.coverage.*
+*.trx
+*.testlog
+
+# Local development tools
+.history/
+.direnv/
